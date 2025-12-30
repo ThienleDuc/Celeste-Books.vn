@@ -10,7 +10,7 @@ class ProductDetail extends Model
     protected $table = 'product_details';
     protected $primaryKey = 'id';
     public $incrementing = false;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'id',
