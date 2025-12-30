@@ -10,7 +10,7 @@ class MessageNotification extends Model
     protected $table = 'message_notifications';
     protected $primaryKey = 'id';
     public $incrementing = true;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'user_id',
