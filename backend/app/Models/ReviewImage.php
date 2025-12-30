@@ -10,7 +10,7 @@ class ReviewImage extends Model
     protected $table = 'review_images';
     protected $primaryKey = 'id';
     public $incrementing = true;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'review_id',
