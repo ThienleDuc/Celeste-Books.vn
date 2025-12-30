@@ -10,7 +10,7 @@ class Product extends Model
     protected $table = 'products';
     protected $primaryKey = 'id';
     public $incrementing = false;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'id',
