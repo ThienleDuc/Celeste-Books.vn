@@ -11,14 +11,10 @@ class OrderShippingDiscount extends Model
 
     protected $table = 'order_shipping_discounts';
     protected $fillable = [
-        'order_id',
         'type',
         'amount',
-        'quantity',
-        'created_at',
+        'created_at'
     ];
 
-    public function order() {
-        return $this->belongsTo(Order::class);
-    }
+    public $timestamps = false;
 }
