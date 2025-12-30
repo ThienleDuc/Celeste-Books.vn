@@ -10,7 +10,7 @@ class ProductNotification extends Model
     protected $table = 'product_notifications';
     protected $primaryKey = 'id';
     public $incrementing = false;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'id',
