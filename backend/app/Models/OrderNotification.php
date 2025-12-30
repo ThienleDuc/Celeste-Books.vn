@@ -10,7 +10,7 @@ class OrderNotification extends Model
     protected $table = 'order_notifications';
     protected $primaryKey = 'id';
     public $incrementing = false;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'id',
