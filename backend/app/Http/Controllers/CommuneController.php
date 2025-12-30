@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class Commune extends Controller
+class CommuneController extends Controller
 {
     //
 }

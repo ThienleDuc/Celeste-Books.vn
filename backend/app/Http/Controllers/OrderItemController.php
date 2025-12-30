@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class MessageNotification extends Controller
+class OrderItemController extends Controller
 {
     //
 }
