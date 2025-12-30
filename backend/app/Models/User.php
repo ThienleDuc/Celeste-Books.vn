@@ -29,7 +29,7 @@ class User extends Authenticatable
         'email',
         'is_active',
         'created_at',
-        'per_id',
+        'role_id',
     ];
 
     /**
