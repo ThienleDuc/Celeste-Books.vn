@@ -15,8 +15,9 @@ class OrderDiscountDetail extends Model
         'product_discount_id',
         'shipping_discount_id',
         'amount',
-        'created_at',
     ];
+
+    public $timestamps = false;
 
     public function order() {
         return $this->belongsTo(Order::class);
