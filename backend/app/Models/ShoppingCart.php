@@ -10,7 +10,7 @@ class ShoppingCart extends Model
     protected $table = 'shopping_carts';
     protected $primaryKey = 'id';
     public $incrementing = false;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'id',
