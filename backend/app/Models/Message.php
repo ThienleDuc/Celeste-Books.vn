@@ -10,7 +10,7 @@ class Message extends Model
     protected $table = 'messages';
     protected $primaryKey = 'id';
     public $incrementing = true;
-    protected $keyType = 'bigint';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'sender_id',
