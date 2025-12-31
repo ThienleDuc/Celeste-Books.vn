@@ -11,6 +11,7 @@ class Product extends Model
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'int';
+    public $timestamps = false;
 
     protected $fillable = [
         'id',
@@ -22,7 +23,19 @@ class Product extends Model
         'publication_year',
         'language',
         'status',
-        'view',
         'created_at',
     ];
+
+    // App\Models\Product.php
+    public function details() {
+        return $this->hasOne(ProductDetail::class, 'product_id', 'id');
+    }
+
+    public function categories() {
+        return $this->belongsToMany(Category::class, 'product_categories', 'product_id', 'category_id');
+    }
+
+    public function images() {
+        return $this->hasMany(ProductImage::class, 'product_id', 'id');
+    }
 }
