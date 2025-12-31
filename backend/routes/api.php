@@ -17,5 +17,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-});
 
+});
+// Message Routes
+//all messages
+Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index']);
+//show detail messages
+Route::get('message/{id}', [\App\Http\Controllers\MessageController::class, 'getMessage']);
+//send message
+Route::post('message/{id}', [\App\Http\Controllers\MessageController::class, 'sendMessage']);
