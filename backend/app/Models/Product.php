@@ -22,7 +22,13 @@ class Product extends Model
         'publication_year',
         'language',
         'status',
-        'view',
+        'Views',
         'created_at',
     ];
+    public function detail()
+    {
+        return $this->hasMany(ProductDetail::class, 'product_id', 'id');
+    }
+     public $timestamps = false;
 }
+

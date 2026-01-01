@@ -27,4 +27,9 @@ class ProductDetail extends Model
         'height',
         'created_at',
     ];
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id', 'id');
+    }
+     public $timestamps = false;
 }
