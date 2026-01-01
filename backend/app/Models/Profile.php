@@ -12,6 +12,8 @@ class Profile extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    Public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'full_name',
