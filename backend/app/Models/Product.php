@@ -23,6 +23,7 @@ class Product extends Model
         'publication_year',
         'language',
         'status',
+        'Views',
         'created_at',
     ];
 
