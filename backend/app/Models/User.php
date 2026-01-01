@@ -17,21 +17,14 @@ class User extends Authenticatable
     public $incrementing = false;
     protected $keyType = 'string';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'id',
         'username',
-        'password_hash',
         'email',
+        'password_hash',
         'is_active',
         'role_id',
     ];
-
-    public $timestamps = false;
 
     protected $hidden = [
         'password_hash',
@@ -39,9 +32,12 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
         'created_at' => 'datetime',
     ];
+
+    public $timestamps = false;
 
     public function getAuthPassword()
     {
@@ -53,19 +49,27 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id', 'id');
     }
 
+    // 🔗 1 - 1 Profile
     public function profile()
     {
         return $this->hasOne(Profile::class, 'user_id', 'id');
     }
 
-        public function addresses()
+    // 🔗 1 - N Address
+    public function addresses()
     {
         return $this->hasMany(Address::class, 'user_id', 'id');
     }
 
+    // 🔗 1 - N Order
     public function orders()
     {
         return $this->hasMany(Order::class, 'user_id', 'id');
     }
 
+    // 🔗 1 - N Notification
+    public function notifications()
+    {
+        return $this->hasMany(UserNotification::class, 'user_id', 'id');
+    }
 }

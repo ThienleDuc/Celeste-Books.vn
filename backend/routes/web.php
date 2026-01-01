@@ -16,3 +16,6 @@ use App\Http\Controllers\UserController;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
+Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index']);

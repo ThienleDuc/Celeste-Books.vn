@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Address;
 use App\Models\Role;
-use App\Http\Controllers\UserNotificationController;
+use App\Models\UserNotification;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -69,7 +70,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with(['role', 'profile', 'addresses', 'orders'])
+        $user = User::with(['role', 'profile', 'addresses', 'notifications'])
                     ->find($id);
         
         if (!$user) {
@@ -90,31 +91,10 @@ class UserController extends Controller
      */
     private function generateUserId($roleId)
     {
-        // Prefix dựa trên role
-        $prefixes = [
-            'R01' => 'AD',  // Admin
-            'R02' => 'MN',  // Manager
-            'R03' => 'ST',  // Staff
-            'R04' => 'CT',  // Customer
-            'R05' => 'SP',  // Shipper
-        ];
-        
-        $prefix = $prefixes[$roleId] ?? 'US'; // Mặc định US nếu không tìm thấy
-        
-        // Tìm user cuối cùng có cùng prefix
-        $lastUser = User::where('id', 'like', $prefix . '%')
-                       ->orderBy('id', 'desc')
-                       ->first();
-        
-        if ($lastUser) {
-            // Lấy số từ ID cũ và tăng lên
-            $lastNumber = (int) substr($lastUser->id, strlen($prefix));
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
-        
-        return $prefix . $newNumber;
+        $userCount = User::where('role_id', $roleId)->count();
+        $nextNumber = $userCount + 1;
+        $formattedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        return $roleId . $formattedNumber; 
     }
     
     /**
@@ -167,11 +147,8 @@ class UserController extends Controller
                 ]);
             }
             
-            // Lấy thông tin người tạo (nếu có xác thực)
-            $createdBy = auth()->check() ? auth()->user()->username : 'System';
-            
             // Tạo thông báo hệ thống
-            UserNotificationController::notifyUserCreated($user, $createdBy);
+            $this->createUserNotification($user->id, 'system', 'Tài khoản được tạo', 'Tài khoản của bạn đã được tạo thành công.');
             
             DB::commit();
             
@@ -191,7 +168,66 @@ class UserController extends Controller
     }
     
     /**
-     * Cập nhật người dùng
+     * Cập nhật thông tin cơ bản (từ nhánh feature/User/UpdateUser)
+     */
+    public function updateBasicInfo(Request $request, $id)
+    {
+        $request->validate([
+            'email'     => 'nullable|email',
+            'username'  => 'nullable|string|max:255',
+            'full_name' => 'nullable|string|max:255',
+            'phone'     => 'nullable|string|max:20',
+            'birthday'  => 'nullable|date',
+            'gender'    => 'nullable|in:male,female,other'
+        ]);
+
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            $user->fill($request->only(['email', 'username']));
+            $userChanged = $user->isDirty();
+
+            $profile = $user->profile()->firstOrNew(['user_id' => $user->id]);
+            $profile->fill($request->only(['full_name', 'phone', 'birthday', 'gender']));
+            $profileChanged = $profile->isDirty();
+
+            // ❌ Không có gì thay đổi
+            if (!$userChanged && !$profileChanged) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Không có thông tin nào thay đổi'
+                ], 200);
+            }
+
+            // ✅ Có thay đổi → save
+            if ($userChanged) $user->save();
+            if ($profileChanged) $profile->save();
+
+            DB::commit();
+
+            // ✅ CHỈ tạo thông báo khi có thay đổi
+            $this->createUserNotification($user->id);
+
+            return response()->json([
+                'message' => 'Cập nhật thông tin thành công',
+                'data' => $user->load('profile')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Cập nhật thất bại',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Cập nhật toàn bộ thông tin người dùng (admin)
      */
     public function update(Request $request, $id)
     {
@@ -260,19 +296,8 @@ class UserController extends Controller
                 }
             }
             
-            // Lấy thông tin người cập nhật
-            $updatedBy = auth()->check() ? auth()->user()->username : 'System';
-            
-            // Xác định các trường thay đổi
-            $changes = [];
-            foreach ($updateData as $key => $value) {
-                if (isset($oldUserData[$key]) && $oldUserData[$key] != $value) {
-                    $changes[$key] = $value;
-                }
-            }
-            
             // Tạo thông báo hệ thống
-            UserNotificationController::notifyUserUpdated($user, $updatedBy, $changes);
+            $this->createUserNotification($user->id, 'system', 'Thông tin tài khoản được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
             
             DB::commit();
             
@@ -291,7 +316,71 @@ class UserController extends Controller
         }
     }
     
-  
+    /**
+     * Upload avatar (từ nhánh feature/User/UpdateUser)
+     */
+    public function uploadAvatar(Request $request, $id)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpg,jpeg,png|max:2048'
+        ]);
+
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // Lưu file
+        $path = $request->file('avatar')->store('avatars', 'public');
+
+        // Lưu DB
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['avatar_url' => $path]
+        );
+
+        $this->createUserNotification($user->id);
+
+        return response()->json([
+            'message' => 'Upload avatar thành công',
+            'avatar_url' => asset('storage/' . $path)
+        ], 200);
+    }
+    
+    /**
+     * Đổi mật khẩu (từ nhánh feature/User/UpdateUser)
+     */
+    public function changePassword(Request $request, $id)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:6|confirmed'
+        ]);
+
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // ✅ CHECK mật khẩu cũ (text vs hash)
+        if (!Hash::check($request->current_password, $user->password_hash)) {
+            return response()->json([
+                'message' => 'Mật khẩu hiện tại không đúng'
+            ], 400);
+        }
+
+        // ✅ HASH mật khẩu mới
+        $user->password_hash = Hash::make($request->new_password);
+        $user->save();
+        $this->createUserNotification($user->id);
+        return response()->json([
+            'message' => 'Đổi mật khẩu thành công'
+        ]);
+    }
+    
+    /**
+     * Xóa (vô hiệu hóa) người dùng
+     */
     public function destroy($id)
     {
         $user = User::find($id);
@@ -323,33 +412,23 @@ class UserController extends Controller
                 'full_name' => $user->profile ? $user->profile->full_name : null
             ];
             
-            // Lấy thông tin người xóa
-            $deletedBy = auth()->check() ? auth()->user()->username : 'System';
-            
-            // 1. Xóa thông tin profile TRƯỚC (vì có khóa ngoại)
-            if ($user->profile) {
-                $user->profile->delete();
-            }
-            
-            UserNotificationController::notifyUserInfoDeleted($userData, $deletedBy);
-
+            // Vô hiệu hóa tài khoản thay vì xóa
             $user->update([
-                'username' => 'deleted_user_' . $user->id, // Đổi username để tránh trùng
-                'email' => 'deleted_' . time() . '_' . $user->email, // Đánh dấu email đã xóa
-                'password_hash' => '', // Xóa password
-                'is_active' => false, // Vô hiệu hóa tài khoản
-                'role_id' => 'R04', // Đặt về role customer mặc định (hoặc giữ nguyên)
+                'username' => '',
+                'email' => '',
+                'password_hash' => '',
+                'is_active' => false,
             ]);
-          
+            
+            UserNotificationController::notifyUserInfoDeleted($userData, auth()->user()->username ?? 'System');
             DB::commit();
             
             return response()->json([
                 'success' => true,
-                'message' => 'Đã xóa thông tin người dùng thành công. Các thông báo và dữ liệu liên quan vẫn được giữ nguyên.',
+                'message' => 'Đã vô hiệu hóa tài khoản thành công',
                 'data' => [
                     'user_id' => $userData['id'],
-                    'deleted_info' => ['profile', 'email', 'password', 'username'],
-                    'preserved_data' => ['user_notifications', 'orders', 'addresses', 'reviews', 'messages']
+                    'deactivated_info' => ['email', 'password', 'username'],
                 ]
             ]);
             
@@ -357,75 +436,11 @@ class UserController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi khi xóa thông tin người dùng: ' . $e->getMessage()
+                'message' => 'Lỗi khi vô hiệu hóa tài khoản: ' . $e->getMessage()
             ], 500);
         }
     }
-
-    /**
-     * Xóa hoàn toàn người dùng (xóa cả thông báo và tất cả dữ liệu liên quan)
-     * CHỈ DÙNG KHI CẦN THIẾT
-     */
-    public function forceDestroy($id)
-    {
-        // Chỉ admin mới được thực hiện
-        if (!auth()->check() || auth()->user()->role_id !== 'R01') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Chỉ quản trị viên mới có quyền xóa hoàn toàn người dùng'
-            ], 403);
-        }
-        
-        $user = User::find($id);
-        
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Người dùng không tồn tại'
-            ], 404);
-        }
-        
-        try {
-            DB::beginTransaction();
-            
-            // Lưu thông tin trước khi xóa (cho log)
-            $userData = [
-                'username' => $user->username,
-                'email' => $user->email,
-                'role_id' => $user->role_id
-            ];
-            
-            // 1. Xóa tất cả thông báo của user trước
-            \App\Models\UserNotification::where('user_id', $id)->delete();
-            
-            // 2. Xóa profile
-            if ($user->profile) {
-                $user->profile->delete();
-            }
-            
-            // 3. Xóa user
-            $user->delete();
-            
-            // 4. Tạo thông báo cho admin về việc xóa hoàn toàn
-            $deletedBy = auth()->user()->username;
-            UserNotificationController::notifyUserForceDeleted($userData, $deletedBy);
-            
-            DB::commit();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Đã xóa hoàn toàn người dùng và tất cả dữ liệu liên quan'
-            ]);
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi xóa hoàn toàn người dùng: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-        
+    
     /**
      * Kích hoạt/Vô hiệu hóa người dùng
      */
@@ -443,11 +458,13 @@ class UserController extends Controller
         $newStatus = !$user->is_active;
         $user->update(['is_active' => $newStatus]);
         
-        // Lấy thông tin người thay đổi
-        $changedBy = auth()->check() ? auth()->user()->username : 'System';
-        
         // Tạo thông báo hệ thống
-        UserNotificationController::notifyUserStatusChanged($user, $newStatus, $changedBy);
+        $this->createUserNotification(
+            $user->id, 
+            'system', 
+            $newStatus ? 'Tài khoản được kích hoạt' : 'Tài khoản bị vô hiệu hóa',
+            $newStatus ? 'Tài khoản của bạn đã được kích hoạt.' : 'Tài khoản của bạn đã bị vô hiệu hóa.'
+        );
         
         return response()->json([
             'success' => true,
@@ -502,28 +519,30 @@ class UserController extends Controller
     }
     
     /**
-     * Lấy lịch sử đơn hàng của người dùng
+     * Tạo thông báo người dùng
      */
-    public function orderHistory($id)
+    private function createUserNotification($userId, $type = 'system', $title = null, $content = null)
     {
-        $user = User::find($id);
-        
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Người dùng không tồn tại'
-            ], 404);
+        if (!$title) {
+            $title = 'Thông tin tài khoản đã được cập nhật';
         }
         
-        $orders = $user->orders()
-                      ->with(['orderItems.product'])
-                      ->orderBy('created_at', 'desc')
-                      ->paginate(10);
+        if (!$content) {
+            $content = 'Thông tin tài khoản của bạn đã được cập nhật. Nếu không phải do bạn thực hiện, vui lòng liên hệ quản trị viên.';
+        }
         
-        return response()->json([
-            'success' => true,
-            'data' => $orders
+        $last = UserNotification::orderBy('id', 'desc')->first();
+        $newId = $last ? $last->id + 1 : 1;
+
+        UserNotification::create([
+            'id'         => $newId,
+            'user_id'    => $userId,
+            'type'       => $type,
+            'title'      => $title,
+            'content'    => $content,
+            'is_read'    => false,
+            'created_at'=> now(),
+            'updated_at'=> now(),
         ]);
     }
-
 }

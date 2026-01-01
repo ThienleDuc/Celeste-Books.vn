@@ -22,4 +22,9 @@ class Address extends Model
         'is_default',
         'created_at',
     ];
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+     public $timestamps = false;
 }

@@ -205,45 +205,6 @@ class UserNotificationController extends Controller
         ]);
     }
     
-    /**
-     * Đánh dấu tất cả thông báo đã đọc
-     */
-    public function markAllAsRead(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id'
-        ]);
-        
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-        
-        $user = auth()->user();
-        $userId = $request->user_id;
-        
-        // Kiểm tra quyền: chỉ user sở hữu hoặc admin có thể đánh dấu đọc
-        if ($user->role_id !== 'R01' && $user->id !== $userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không có quyền thực hiện thao tác này'
-            ], 403);
-        }
-        
-        $updated = UserNotification::where('user_id', $userId)
-                                   ->where('is_read', false)
-                                   ->update([
-                                       'is_read' => true,
-                                       'updated_at' => now()
-                                   ]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => "Đã đánh dấu {$updated} thông báo là đã đọc"
-        ]);
-    }
     
     /**
      * Xóa thông báo
