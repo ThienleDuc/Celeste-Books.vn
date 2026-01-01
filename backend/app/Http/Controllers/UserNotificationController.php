@@ -122,36 +122,7 @@ class UserNotificationController extends Controller
             self::createSystemNotification($user->id, "Chào mừng bạn đến với hệ thống", "Tài khoản của bạn đã được tạo thành công. Vui lòng kiểm tra email để xác thực tài khoản.", 'system');
         }
     }
-    
-    /**
-     * Tạo thông báo cập nhật người dùng
-     * Được gọi từ UserController sau khi cập nhật user thành công
-     */
-    public static function notifyUserUpdated($user, $updatedBy = null, $changes = [])
-    {
-        $title = "Thông tin tài khoản được cập nhật";
-        $content = "Tài khoản {$user->username} đã được cập nhật thông tin.";
         
-        if (!empty($changes)) {
-            $changeList = implode(', ', array_keys($changes));
-            $content .= " Các thay đổi: {$changeList}.";
-        }
-        
-        if ($updatedBy) {
-            $content .= " Cập nhật bởi: {$updatedBy}.";
-        }
-        
-        // Tạo thông báo cho admin/manager
-        $adminUsers = User::whereIn('role_id', ['R01', 'R02'])->get();
-        
-        foreach ($adminUsers as $adminUser) {
-            self::createSystemNotification($adminUser->id, $title, $content, 'system');
-        }
-        
-        // Tạo thông báo cho chính user đó
-        self::createSystemNotification($user->id, "Thông tin tài khoản đã được cập nhật", "Thông tin tài khoản của bạn đã được cập nhật. Nếu không phải do bạn thực hiện, vui lòng liên hệ quản trị viên.", 'system');
-    }
-    
     /**
      * Tạo thông báo xóa người dùng
      * Được gọi từ UserController sau khi xóa user thành công
