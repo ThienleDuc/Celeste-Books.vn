@@ -20,9 +20,18 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 });
 // Message Routes
-//all messages
-Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index']);
+//all contacts 
+Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'getContactList']);
 //show detail messages
 Route::get('message/{id}', [\App\Http\Controllers\MessageController::class, 'getMessage']);
 //send message
 Route::post('message/{id}', [\App\Http\Controllers\MessageController::class, 'sendMessage']);
+
+
+
+//notification
+//show all notifications
+Route::get('/notifications', [\App\Http\Controllers\MessageNotificationController::class, 'getNotifications']);
+//xem chi tiết thông báo
+Route::get('/notification/{id}', [\App\Http\Controllers\MessageNotificationController::class, 'getNotificationDetail']);
+
