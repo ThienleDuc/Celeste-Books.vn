@@ -1,10 +1,104 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\Message;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
+    
 class MessageController extends Controller
 {
-    //
+    public function getMessage(Request $request)
+    {
+        $anotherPerson = $request->id;
+        if (!$anotherPerson) {
+             return response()->json(['status' => 'error', 'message' => 'Contact ID is required'], 400);
+            }
+
+     //vì chưa đăng nhập nên chưa lấy được id của tôi 
+     //    $myId = auth()->id();
+        $myId = 'U01';
+        try {
+            $messages= Message::with('sender', 'receiver')
+                ->where(function ($query) use ($anotherPerson, $myId){
+                    $query->where('sender_id',$myId)
+                            ->where('receiver_id',$anotherPerson);
+                })
+            ->orWhere(function ($query) use($anotherPerson, $myId){
+                $query->where('sender_id',$anotherPerson)
+                        ->where('receiver_id',$myId);
+            })
+            ->orderBy('created_at','ASC')
+            ->get();
+
+            DB::table('messages')
+                ->where('sender_id', $anotherPerson)
+                ->where('receiver_id', $myId)
+                ->update(['is_read' => true]);
+            return response()->json([
+                'status' => 'success',
+                'myid' => $myId,
+                'anotherPerson' => $anotherPerson,
+                'data' => $messages
+            ], 200);
+
+
+        }
+        catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve messages.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+        
+    }
+    public function sendMessage(Request $request)
+    {
+        $receiverId = $request->id;
+        $content = $request->input('content');
+        //vì chưa đăng nhập nên chưa lấy được id của tôi
+        // $myId = auth()->id();
+        $myId = 'U01';
+
+        if (!$receiverId || !$content) {
+            return response()->json(['status' => 'error', 'message' => 'Receiver ID and content are required'], 400);
+        }
+
+        try {
+           $message = DB::table('messages')->insert([
+                'sender_id' => $myId,
+                'receiver_id' => $receiverId,
+                'message' => $content,
+                'is_read' => false,
+                
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $message
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to send message.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    // public function getContactList()
+    // {
+    //     //vì chưa đăng nhập nên chưa lấy được id của tôi
+    //     // $myId = auth()->id();    
+    //     $myId = 'U01';
+    //     try {
+    //         $contacts= DB::table('messages')
+                
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Failed to retrieve contact list.',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 }
