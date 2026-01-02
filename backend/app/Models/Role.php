@@ -10,6 +10,7 @@ class Role extends Model
     protected $table = 'roles';
     protected $primaryKey = 'id';
     public $incrementing = false;
+    public $timestamps = false; // Thêm mới dòng này
     protected $keyType = 'string';
 
     protected $fillable = [
