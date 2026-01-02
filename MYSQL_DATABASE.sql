@@ -1,4 +1,3 @@
--- Tạo CSDL
 DROP DATABASE IF EXISTS book_store_db_2;
 CREATE DATABASE IF NOT EXISTS book_store_db_2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE book_store_db_2;
@@ -11,15 +10,17 @@ SET FOREIGN_KEY_CHECKS = 0;
 CREATE TABLE roles (
     id VARCHAR(10) PRIMARY KEY,
     name VARCHAR(50) UNIQUE,
-    description VARCHAR(255)
+    description VARCHAR(255),
+    slug varchar(255) -- Thêm mới
 );
 
 -- =============================================
 -- 2. Bảng permissions (Quyền hạn)
 CREATE TABLE permissions (
-    id INT PRIMARY KEY,
+    id INT PRIMARY KEY NOT NULL AUTO_INCREMENT, -- Thêm mới
     name VARCHAR(100) UNIQUE,
-    description VARCHAR(255)
+    description VARCHAR(255),
+	slug varchar(255) -- thêm mới
 );
 
 -- =============================================
@@ -114,6 +115,7 @@ CREATE TABLE products (
     cover_image TEXT,
     language VARCHAR(50),
     status BOOLEAN,
+    Views BIGINT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     -- Đã xóa dấu phẩy thừa ở đây
 );
@@ -234,7 +236,7 @@ CREATE TABLE distance_fees (
 -- Bảng: shipping_type_fees (Phí theo loại hình)
 CREATE TABLE shipping_type_fees (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    shipping_type ENUM('standard', 'express', 'cod') NOT NULL,
+    shipping_type ENUM('standard', 'express') NOT NULL,
     multiplier DECIMAL(5,2) NOT NULL,   -- hệ số nhân theo loại hình
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -415,25 +417,24 @@ SET FOREIGN_KEY_CHECKS = 1;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 1. Roles
-INSERT INTO roles (id, name, description) VALUES
-('R01', 'Admin', 'Quản trị viên hệ thống'),
-('R02', 'Manager', 'Quản lý cửa hàng'),
-('R03', 'Staff', 'Nhân viên bán hàng'),
-('R04', 'Customer', 'Khách hàng'),
-('R05', 'Shipper', 'Nhân viên giao hàng');
-
+INSERT INTO roles (id, name, description, slug) VALUES
+('R01', 'Admin', 'Quản trị viên hệ thống', 'admin'),
+('R02', 'Manager', 'Quản lý cửa hàng', 'manager'),
+('R03', 'Staff', 'Nhân viên bán hàng', 'staff'),
+('R04', 'Customer', 'Khách hàng', 'customer'),
+('R05', 'Shipper', 'Nhân viên giao hàng', 'shipper');
 -- 2. Permissions
-INSERT INTO permissions (id, name, description) VALUES
-(1, 'view_users', 'Xem danh sách người dùng'),
-(2, 'create_users', 'Tạo người dùng mới'),
-(3, 'edit_users', 'Sửa thông tin người dùng'),
-(4, 'delete_users', 'Xóa người dùng'),
-(5, 'view_products', 'Xem sản phẩm'),
-(6, 'create_products', 'Tạo sản phẩm mới'),
-(7, 'edit_products', 'Sửa sản phẩm'),
-(8, 'delete_products', 'Xóa sản phẩm'),
-(9, 'manage_orders', 'Quản lý đơn hàng'),
-(10, 'view_reports', 'Xem báo cáo doanh thu');
+INSERT INTO permissions (name, description, slug) VALUES
+('view_users', 'Xem danh sách người dùng', 'view-users'),
+('create_users', 'Tạo người dùng mới', 'create-users'),
+('edit_users', 'Sửa thông tin người dùng', 'edit-users'),
+('delete_users', 'Xóa người dùng', 'delete-users'),
+('view_products', 'Xem sản phẩm', 'view-products'),
+('create_products', 'Tạo sản phẩm mới', 'create-products'),
+('edit_products', 'Sửa sản phẩm', 'edit-products'),
+('delete_products', 'Xóa sản phẩm', 'delete-products'),
+('manage_orders', 'Quản lý đơn hàng', 'manage-orders'),
+('view_reports', 'Xem báo cáo doanh thu', 'view-reports');
 
 -- 3. Role_Per
 INSERT INTO role_per (role_id, per_id) VALUES
@@ -536,17 +537,17 @@ INSERT INTO product_categories (product_id, category_id) VALUES
 (10, 10);
 
 -- 11. Products 
-INSERT INTO products (id, name, slug, description, author, publisher, publication_year, cover_image, language, status) VALUES
-(1, 'Nhà Giả Kim', 'nha-gia-kim', 'Hành trình theo đuổi ước mơ', 'Paulo Coelho', 'NXB Văn Học', 2020, NULL, 'Tiếng Việt', 1),
-(2, 'Đắc Nhân Tâm', 'dac-nhan-tam', 'Nghệ thuật thu phục lòng người', 'Dale Carnegie', 'NXB Tổng Hợp', 2021, NULL, 'Tiếng Việt', 1),
-(3, 'Clean Code', 'clean-code', 'Mã sạch và con đường trở thành nghệ nhân', 'Robert C. Martin', 'NXB Xây Dựng', 2019, NULL, 'Tiếng Anh', 1),
-(4, 'Mắt Biếc', 'mat-biec', 'Chuyện tình thanh xuân buồn', 'Nguyễn Nhật Ánh', 'NXB Trẻ', 2018, NULL, 'Tiếng Việt', 1),
-(5, 'Doraemon Tập 1', 'doraemon-1', 'Mèo máy đến từ tương lai', 'Fujiko F. Fujio', 'NXB Kim Đồng', 2022, NULL, 'Tiếng Việt', 1),
-(6, 'Nguyên Lý Marketing', 'marketing-principles', 'Sách gối đầu giường dân Marketer', 'Philip Kotler', 'NXB Lao Động', 2020, NULL, 'Tiếng Việt', 1),
-(7, 'Steve Jobs', 'steve-jobs', 'Tiểu sử người sáng lập Apple', 'Walter Isaacson', 'NXB Trẻ', 2017, NULL, 'Tiếng Việt', 1),
-(8, 'Rừng Na Uy', 'rung-na-uy', 'Kiệt tác của Murakami', 'Haruki Murakami', 'NXB Hội Nhà Văn', 2016, NULL, 'Tiếng Việt', 1),
-(9, 'Tuổi Trẻ Đáng Giá Bao Nhiêu', 'tuoi-tre-dang-gia', 'Sách kỹ năng cho giới trẻ', 'Rosie Nguyễn', 'NXB Nhã Nam', 2018, NULL, 'Tiếng Việt', 1),
-(10, 'One Piece Tập 100', 'one-piece-100', 'Đảo hải tặc tập đặc biệt', 'Eiichiro Oda', 'NXB Kim Đồng', 2023, NULL, 'Tiếng Việt', 1);
+INSERT INTO products (id, name, slug, description, author, publisher, publication_year, cover_image, language, status, views) VALUES
+(1, 'Nhà Giả Kim', 'nha-gia-kim', 'Hành trình theo đuổi ước mơ', 'Paulo Coelho', 'NXB Văn Học', 2020, NULL, 'Tiếng Việt', 1, 1500),
+(2, 'Đắc Nhân Tâm', 'dac-nhan-tam', 'Nghệ thuật thu phục lòng người', 'Dale Carnegie', 'NXB Tổng Hợp', 2021, NULL, 'Tiếng Việt', 1, 2500),
+(3, 'Clean Code', 'clean-code', 'Mã sạch và con đường trở thành nghệ nhân', 'Robert C. Martin', 'NXB Xây Dựng', 2019, NULL, 'Tiếng Anh', 1, 3200),
+(4, 'Mắt Biếc', 'mat-biec', 'Chuyện tình thanh xuân buồn', 'Nguyễn Nhật Ánh', 'NXB Trẻ', 2018, NULL, 'Tiếng Việt', 1, 1800),
+(5, 'Doraemon Tập 1', 'doraemon-1', 'Mèo máy đến từ tương lai', 'Fujiko F. Fujio', 'NXB Kim Đồng', 2022, NULL, 'Tiếng Việt', 1, 4200),
+(6, 'Nguyên Lý Marketing', 'marketing-principles', 'Sách gối đầu giường dân Marketer', 'Philip Kotler', 'NXB Lao Động', 2020, NULL, 'Tiếng Việt', 1, 1200),
+(7, 'Steve Jobs', 'steve-jobs', 'Tiểu sử người sáng lập Apple', 'Walter Isaacson', 'NXB Trẻ', 2017, NULL, 'Tiếng Việt', 1, 2100),
+(8, 'Rừng Na Uy', 'rung-na-uy', 'Kiệt tác của Murakami', 'Haruki Murakami', 'NXB Hội Nhà Văn', 2016, NULL, 'Tiếng Việt', 1, 1600),
+(9, 'Tuổi Trẻ Đáng Giá Bao Nhiêu', 'tuoi-tre-dang-gia', 'Sách kỹ năng cho giới trẻ', 'Rosie Nguyễn', 'NXB Nhã Nam', 2018, NULL, 'Tiếng Việt', 1, 3800),
+(10, 'One Piece Tập 100', 'one-piece-100', 'Đảo hải tặc tập đặc biệt', 'Eiichiro Oda', 'NXB Kim Đồng', 2023, NULL, 'Tiếng Việt', 1, 5500);
 
 -- 12. Product Details
 INSERT INTO product_details (id, product_id, product_type, sku, original_price, sale_price, stock, file_url, weight, length, width, height) VALUES
@@ -613,7 +614,6 @@ INSERT INTO order_items (id, order_id, product_id, product_details_id, product_t
 (8, 7, 10, 10, 'Sách giấy', 1, 22000, 22000),
 (9, 8, 7, 7, 'Sách giấy', 1, 280000, 280000), 
 (10, 9, 7, 7, 'Sách giấy', 1, 280000, 280000);
-
 
 -- 17. Reviews
 INSERT INTO reviews (id, order_item_id, user_id, rating, title, content) VALUES
@@ -739,8 +739,7 @@ INSERT INTO distance_fees (min_distance, max_distance, multiplier) VALUES
 -- 3. Shipping Type Fees
 INSERT INTO shipping_type_fees (shipping_type, multiplier) VALUES
 ('standard', 1.00),
-('express', 1.50),
-('cod', 1.10);
+('express', 1.50);
 
 -- 4. Order Product Discounts
 INSERT INTO order_product_discounts (type, amount) VALUES

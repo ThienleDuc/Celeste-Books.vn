@@ -7,8 +7,19 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    public function index(){
+    $products = Product::all();
+    return response()->json([
+        'message' => 'Lấy danh sách sản phẩm thành công',
+        'data' => $products
+    ]);
+    }
+    
    public function show($id)
 {
+
+   
+
     $product = Product::with('detail')->find($id);
 
     if (!$product) {

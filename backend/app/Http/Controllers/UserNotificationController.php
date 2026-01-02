@@ -119,7 +119,7 @@ class UserNotificationController extends Controller
         
         // Tạo thông báo cho chính user đó nếu họ là staff/customer/shipper
         if (in_array($user->role_id, ['R03', 'R04', 'R05'])) {
-            self::createSystemNotification($user->id, "Chào mừng bạn đến với hệ thống", "Tài khoản của bạn đã được tạo thành công. Vui lòng kiểm tra email để xác thực tài khoản.", 'system');
+            self::createSystemNotification($user->id, "Chào mừng bạn đến với hệ thống", "Tài khoản '+$user->id+' đã được tạo thành công. Vui lòng kiểm tra email để xác thực tài khoản.", 'system');
         }
     }
         
@@ -166,7 +166,7 @@ class UserNotificationController extends Controller
         
         // Tạo thông báo cho chính user đó nếu bị vô hiệu hóa
         if (!$newStatus) {
-            self::createSystemNotification($user->id, "Tài khoản bị vô hiệu hóa", "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để biết thêm chi tiết.", 'system');
+            self::createSystemNotification($user->id, "Tài khoản '+$user->id+' bị vô hiệu hóa", "Tài khoản '+$user->id+' đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để biết thêm chi tiết.", 'system');
         }
     }
     

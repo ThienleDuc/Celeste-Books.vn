@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserNotificationController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,3 +57,6 @@ Route::prefix('notifications')->group(function () {
     });
 });
 
+Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::get('/products/{id}/suggest', [ProductController::class, 'suggest']);
+Route::put('/addresses/{id}', [AddressController::class, 'update']);

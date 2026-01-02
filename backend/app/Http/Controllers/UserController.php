@@ -297,7 +297,7 @@ class UserController extends Controller
             }
             
             // Tạo thông báo hệ thống
-            $this->createUserNotification($user->id, 'system', 'Thông tin tài khoản được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
+            $this->createUserNotification($user->id, 'system', 'Thông tin'+user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
             
             DB::commit();
             
@@ -414,9 +414,9 @@ class UserController extends Controller
             
             // Vô hiệu hóa tài khoản thay vì xóa
             $user->update([
-                'username' => '',
-                'email' => '',
-                'password_hash' => '',
+                'username' => 'null',
+                'email' => 'null',
+                'password_hash' => 'null',
                 'is_active' => false,
             ]);
             
@@ -462,8 +462,8 @@ class UserController extends Controller
         $this->createUserNotification(
             $user->id, 
             'system', 
-            $newStatus ? 'Tài khoản được kích hoạt' : 'Tài khoản bị vô hiệu hóa',
-            $newStatus ? 'Tài khoản của bạn đã được kích hoạt.' : 'Tài khoản của bạn đã bị vô hiệu hóa.'
+            $newStatus ? 'Tài khoản '+$user->id+' được kích hoạt' : 'Tài khoản '+$user->id+' bị vô hiệu hóa',
+            $newStatus ? 'Tài khoản '+$user->id+ 'đã được kích hoạt.' : 'Tài khoản '+$user->id+' đã bị vô hiệu hóa.'
         );
         
         return response()->json([
@@ -521,25 +521,17 @@ class UserController extends Controller
     /**
      * Tạo thông báo người dùng
      */
-    private function createUserNotification($userId, $type = 'system', $title = null, $content = null)
+    private function createUserNotification($userId)
     {
-        if (!$title) {
-            $title = 'Thông tin tài khoản đã được cập nhật';
-        }
-        
-        if (!$content) {
-            $content = 'Thông tin tài khoản của bạn đã được cập nhật. Nếu không phải do bạn thực hiện, vui lòng liên hệ quản trị viên.';
-        }
-        
         $last = UserNotification::orderBy('id', 'desc')->first();
         $newId = $last ? $last->id + 1 : 1;
-
+    
         UserNotification::create([
             'id'         => $newId,
             'user_id'    => $userId,
-            'type'       => $type,
-            'title'      => $title,
-            'content'    => $content,
+            'type'       => 'system',
+          'title'       => 'Thông tin tài khoản ' . $userId . ' đã được cập nhật',
+            'content'     => 'Thông tin tài khoản người dùng ' . $userId . ' đã được cập nhật.',
             'is_read'    => false,
             'created_at'=> now(),
             'updated_at'=> now(),
