@@ -116,7 +116,7 @@ CREATE TABLE products (
     cover_image TEXT,
     language VARCHAR(50),
     status BOOLEAN,
-    Views BIGINT DEFAULT 1,
+    Views BIGINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     -- Đã xóa dấu phẩy thừa ở đây
 );
@@ -218,9 +218,9 @@ CREATE TABLE order_items (
 -- Bảng: weight_fees (Phí theo cân nặng)
 CREATE TABLE weight_fees (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    min_weight DECIMAL(10,2) NOT NULL, -- kg
-    max_weight DECIMAL(10,2) NOT NULL,
-    multiplier DECIMAL(5,2) NOT NULL,  -- hệ số nhân theo cân nặng
+    min_weight DECIMAL(10,2) NOT NULL,   -- kg
+    max_weight DECIMAL(10,2) NOT NULL,   -- kg
+    base_price DECIMAL(12,2) NOT NULL,   -- Giá cơ sở theo khoảng cân nặng
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -261,16 +261,30 @@ CREATE TABLE order_shipping_fee_details (
 -- Bảng: order_product_discounts (giảm giá sản phẩm)
 CREATE TABLE order_product_discounts (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
     type ENUM('promo_code', 'member_discount', 'voucher') DEFAULT 'promo_code',
+
     amount DECIMAL(12,2) NOT NULL,
+
+    -- Số lượng áp dụng
+    quantity INT NOT NULL DEFAULT 1,
+    used_quantity INT NOT NULL DEFAULT 0,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Bảng: order_shipping_discounts (giảm giá phí ship)
 CREATE TABLE order_shipping_discounts (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
     type ENUM('promo_code', 'member_discount', 'voucher') DEFAULT 'promo_code',
+
     amount DECIMAL(12,2) NOT NULL,
+
+    -- Số lượng áp dụng
+    quantity INT NOT NULL DEFAULT 1,
+    used_quantity INT NOT NULL DEFAULT 0,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -367,36 +381,74 @@ CREATE TABLE product_images (
 
 -- =============================================
 -- 22. Bảng messages (Tin nhắn)
-CREATE TABLE messages (
+CREATE TABLE conversations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    sender_id VARCHAR(10) NOT NULL,
-    receiver_id VARCHAR(10) NOT NULL,
-    product_id BIGINT,   
-    order_item_id BIGINT,  
-    message TEXT,
-    is_read BOOLEAN DEFAULT FALSE,
+    participant1_id VARCHAR(10) NOT NULL,
+    participant2_id VARCHAR(10) NOT NULL,
+    product_id BIGINT,
+    order_item_id BIGINT,
+    last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    FOREIGN KEY (participant1_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (participant2_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
-    FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE SET NULL
+    FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE SET NULL,
+
+    CHECK (participant1_id <> participant2_id),
+
+    INDEX idx_conversation_users (participant1_id, participant2_id),
+    INDEX idx_last_message_at (last_message_at DESC)
 );
 
--- =============================================
--- 23. Bảng message_notifications (Thông báo tin nhắn)
-CREATE TABLE message_notifications (
+
+CREATE TABLE messages (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id BIGINT NOT NULL,
+    sender_id VARCHAR(10) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    INDEX idx_message_conversation (conversation_id, created_at)
+);
+
+CREATE TABLE conversation_notifications (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id BIGINT NOT NULL,
     user_id VARCHAR(10) NOT NULL,
-    message_id BIGINT NOT NULL,
-    type ENUM('new_message', 'reply', 'system_alert') DEFAULT 'new_message', 
-    title VARCHAR(255),
-    content TEXT,
-    is_read BOOLEAN DEFAULT FALSE DEFAULT FALSE,
+
+    -- Loại thông báo
+    type ENUM('new', 'update', 'recall', 'system') DEFAULT 'new',
+
+    -- Nội dung hiển thị
+    title VARCHAR(255) NOT NULL,
+    content VARCHAR(500),
+
+    -- Trạng thái đọc
+    unread_count INT DEFAULT 0,
+    is_read BOOLEAN DEFAULT FALSE,
+
+    -- Liên kết tin nhắn
+    last_message_id BIGINT,
+
+    -- Thời gian
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
+    -- Khóa ngoại
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+    FOREIGN KEY (last_message_id) REFERENCES messages(id) ON DELETE SET NULL,
+
+    -- Ràng buộc
+    UNIQUE KEY uq_user_conversation (user_id, conversation_id),
+
+    -- Index
+    INDEX idx_notification_user (user_id, is_read, updated_at DESC),
+    INDEX idx_notification_type (type)
 );
 
 -- =============================================
@@ -683,31 +735,83 @@ INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUE
 (10, 'https://th.bing.com/th/id/R.6f58c15429706e56ab044e4e34e2fa69?rik=aHeAdleRhefqjQ&pid=ImgRaw&r=0', 1, 1),
 (10, 'https://th.bing.com/th/id/R.6f58c15429706e56ab044e4e34e2fa69?rik=aHeAdleRhefqjQ&pid=ImgRaw&r=0', 0, 2);
 
--- 22. Messages
-INSERT INTO messages (sender_id, receiver_id, product_id, order_item_id, message, is_read) VALUES
-('U05', 'U01', 1, NULL, 'Sách Nhà Giả Kim còn bản bìa cứng không shop?', 0),
-('U01', 'U05', 1, NULL, 'Dạ hiện tại bên em chỉ còn bản bìa mềm ạ.', 0), 
-('U06', 'U02', NULL, 3, 'Đơn hàng Clean Code của mình bao giờ giao tới ạ?', 1), 
-('U02', 'U06', NULL, 3, 'Shipper đang trên đường giao rồi bạn nhé.', 1),
-('U05', 'U03', 5, NULL, 'Truyện Doraemon này là bản in năm bao nhiêu?', 0),
-('U03', 'U05', 5, NULL, 'Bản tái bản mới nhất 2022 ạ.', 1),
-('U10', 'U01', NULL, NULL, 'Shop có tuyển cộng tác viên không?', 0),
-('U09', 'U01', NULL, NULL, 'Sách bị lỗi in ấn đổi trả thế nào?', 0),
-('U01', 'U09', NULL, NULL, 'Bạn vui lòng gửi ảnh chụp trang lỗi qua đây nhé.', 1),
-('U05', 'U04', NULL, NULL, 'Anh shipper ơi em đổi địa chỉ nhận hàng chút được không?', 1);
+-- Bảng: conversations
+INSERT INTO conversations (id, participant1_id, participant2_id, product_id, order_item_id)
+VALUES
+(1, 'U05', 'U01', 1, NULL),   -- Hỏi sách Nhà Giả Kim
+(2, 'U06', 'U02', NULL, 3),   -- Hỏi đơn Clean Code
+(3, 'U05', 'U03', 5, NULL),   -- Hỏi Doraemon
+(4, 'U10', 'U01', NULL, NULL),-- Tuyển CTV
+(5, 'U09', 'U01', NULL, NULL),-- Lỗi in ấn
+(6, 'U05', 'U04', NULL, NULL);-- Đổi địa chỉ giao hàng
 
--- 23. Message Notifications
-INSERT INTO message_notifications (user_id, message_id, type, title, content, is_read) VALUES
-('U01', 1, 'new_message', 'Tin nhắn mới từ Phạm Tuấn', 'Sách Nhà Giả Kim còn bản bìa cứng...', 0),
-('U05', 2, 'reply', 'Phản hồi từ Admin', 'Dạ hiện tại bên em chỉ còn bản bìa...', 0),
-('U02', 3, 'new_message', 'Tin nhắn mới từ Lê Thị Hoa', 'Đơn hàng Clean Code của mình bao giờ...', 1),
-('U06', 4, 'reply', 'Phản hồi từ  Quản Lý', 'Shipper đang trên đường giao rồi...', 1),
-('U03', 5, 'new_message', 'Hỏi về sản phẩm', 'Truyện Doraemon này là bản in năm...', 0),
-('U01', 7, 'new_message', 'Câu hỏi chung', 'Shop có tuyển cộng tác viên không?', 0),
-('U01', 8, 'new_message', 'Yêu cầu hỗ trợ', 'Sách bị lỗi in ấn đổi trả thế nào?', 0),
-('U09', 9, 'reply', 'Hỗ trợ đổi trả', 'Bạn vui lòng gửi ảnh chụp trang lỗi...', 1),
-('U04', 10, 'new_message', 'Tin nhắn từ khách hàng', 'Anh shipper ơi em đổi địa chỉ...', 1),
-('U05', 6, 'reply', 'Phản hồi sản phẩm', 'Bản tái bản mới nhất 2022 ạ.', 1);
+-- Bảng: messages
+INSERT INTO messages (id, conversation_id, sender_id, message) VALUES
+(1, 1, 'U05', 'Sách Nhà Giả Kim còn bản bìa cứng không shop?'),
+(2, 1, 'U01', 'Dạ hiện tại bên em chỉ còn bản bìa mềm ạ.'),
+
+(3, 2, 'U06', 'Đơn hàng Clean Code của mình bao giờ giao tới ạ?'),
+(4, 2, 'U02', 'Shipper đang trên đường giao rồi bạn nhé.'),
+
+(5, 3, 'U05', 'Truyện Doraemon này là bản in năm bao nhiêu?'),
+(6, 3, 'U03', 'Bản tái bản mới nhất 2022 ạ.'),
+
+(7, 4, 'U10', 'Shop có tuyển cộng tác viên không?'),
+
+(8, 5, 'U09', 'Sách bị lỗi in ấn đổi trả thế nào?'),
+(9, 5, 'U01', 'Bạn vui lòng gửi ảnh chụp trang lỗi qua đây nhé.'),
+
+(10, 6, 'U05', 'Anh shipper ơi em đổi địa chỉ nhận hàng chút được không?');
+
+-- Bảng: conversation_notifications
+INSERT INTO conversation_notifications
+(
+    conversation_id,
+    user_id,
+    type,
+    title,
+    content,
+    unread_count,
+    is_read,
+    last_message_id,
+    created_at
+)
+VALUES
+-- Conversation 1: Hỏi sách Nhà Giả Kim
+(1, 'U01', 'new', 'Tin nhắn mới từ khách hàng',
+ 'Sách Nhà Giả Kim còn bản bìa cứng không shop?', 1, 0, 1, NOW()),
+(1, 'U05', 'new', 'Phản hồi từ Shop',
+ 'Dạ hiện tại bên em chỉ còn bản bìa mềm ạ.', 0, 1, 2, NOW()),
+
+-- Conversation 2: Hỏi đơn Clean Code
+(2, 'U02', 'new', 'Tin nhắn mới từ khách hàng',
+ 'Đơn hàng Clean Code của mình bao giờ giao tới ạ?', 0, 1, 4, NOW()),
+(2, 'U06', 'new', 'Phản hồi từ Shop',
+ 'Shipper đang trên đường giao rồi bạn nhé.', 0, 1, 4, NOW()),
+
+-- Conversation 3: Hỏi Doraemon
+(3, 'U03', 'new', 'Tin nhắn mới từ khách hàng',
+ 'Truyện Doraemon này là bản in năm bao nhiêu?', 0, 1, 6, NOW()),
+(3, 'U05', 'new', 'Phản hồi sản phẩm',
+ 'Bản tái bản mới nhất 2022 ạ.', 1, 0, 5, NOW()),
+
+-- Conversation 4: Tuyển CTV
+(4, 'U01', 'new', 'Tin nhắn mới',
+ 'Shop có tuyển cộng tác viên không?', 1, 0, 7, NOW()),
+(4, 'U10', 'new', 'Đã gửi tin nhắn',
+ 'Shop có tuyển cộng tác viên không?', 0, 1, 7, NOW()),
+
+-- Conversation 5: Lỗi in ấn
+(5, 'U01', 'new', 'Yêu cầu hỗ trợ',
+ 'Sách bị lỗi in ấn đổi trả thế nào?', 1, 0, 8, NOW()),
+(5, 'U09', 'new', 'Phản hồi hỗ trợ',
+ 'Bạn vui lòng gửi ảnh chụp trang lỗi qua đây nhé.', 0, 1, 9, NOW()),
+
+-- Conversation 6: Đổi địa chỉ giao hàng
+(6, 'U04', 'new', 'Tin nhắn mới từ khách hàng',
+ 'Anh shipper ơi em đổi địa chỉ nhận hàng chút được không?', 0, 1, 10, NOW()),
+(6, 'U05', 'new', 'Đã gửi tin nhắn',
+ 'Anh shipper ơi em đổi địa chỉ nhận hàng chút được không?', 0, 1, 10, NOW());
 
 -- 24. Review Images
 INSERT INTO review_images (review_id, image_url) VALUES
@@ -724,11 +828,11 @@ INSERT INTO review_images (review_id, image_url) VALUES
 
 -- ===========================================
 -- 1. Weight Fees
-INSERT INTO weight_fees (min_weight, max_weight, multiplier) VALUES
-(0, 1, 1.00),
-(1.01, 5, 1.50),
-(5.01, 10, 2.00),
-(10.01, 20, 2.50);
+INSERT INTO weight_fees (min_weight, max_weight, base_price) VALUES
+(0, 1, 10000.00),       -- 0-1 kg → 10,000 VND
+(1.01, 5, 15000.00),    -- 1.01-5 kg → 15,000 VND
+(5.01, 10, 20000.00),   -- 5.01-10 kg → 20,000 VND
+(10.01, 20, 25000.00);  -- 10.01-20 kg → 25,000 VND
 
 -- 2. Distance Fees
 INSERT INTO distance_fees (min_distance, max_distance, multiplier) VALUES
@@ -743,16 +847,17 @@ INSERT INTO shipping_type_fees (shipping_type, multiplier) VALUES
 ('express', 1.50);
 
 -- 4. Order Product Discounts
-INSERT INTO order_product_discounts (type, amount) VALUES
-('promo_code', 10000),
-('member_discount', 5000),
-('voucher', 20000);
+INSERT INTO order_product_discounts (type, amount, quantity, used_quantity) VALUES
+('promo_code', 10000, 10, 0),       -- promo_code áp dụng tối đa 10 lần
+('member_discount', 5000, 5, 0),    -- member discount áp dụng 5 lần
+('voucher', 20000, 1, 0);           -- voucher chỉ dùng 1 lần
+
 
 -- 5. Order Shipping Discounts
-INSERT INTO order_shipping_discounts (type, amount) VALUES
-('promo_code', 5000),
-('member_discount', 3000),
-('voucher', 10000);
+INSERT INTO order_shipping_discounts (type, amount, quantity, used_quantity) VALUES
+('promo_code', 5000, 10, 0),        -- promo_code áp dụng tối đa 10 lần
+('member_discount', 3000, 5, 0),    -- member discount áp dụng 5 lần
+('voucher', 10000, 1, 0);           -- voucher chỉ dùng 1 lần
 
 -- 6. Order Shipping Fee Details (giả sử order_id 1, 2)
 INSERT INTO order_shipping_fee_details (order_id, weight_fee_id, distance_fee_id, shipping_type_fee_id, amount) VALUES
