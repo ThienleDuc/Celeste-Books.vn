@@ -10,6 +10,7 @@ class ProductCategory extends Model
     protected $table = 'product_categories';
     protected $primaryKey = null; // Pivot table without single primary key
     public $incrementing = false;
+    public $timestamps = false;
 
     protected $fillable = [
         'product_id',

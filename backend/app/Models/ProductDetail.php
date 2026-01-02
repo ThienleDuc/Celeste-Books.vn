@@ -11,6 +11,7 @@ class ProductDetail extends Model
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'int';
+    public $timestamps = false;
 
     protected $fillable = [
         'id',
@@ -31,5 +32,4 @@ class ProductDetail extends Model
     {
         return $this->belongsTo(Product::class, 'product_id', 'id');
     }
-     public $timestamps = false;
 }

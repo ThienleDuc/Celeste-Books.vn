@@ -350,3 +350,6 @@ $this->mock(Role::class, function ($mock) {
 - Giới hạn vòng lặp tạo ID/slug (100 lần)
 - Sử dụng transaction để rollback khi lỗi
 - Kiểm tra tồn tại trước khi xóa
+
+------------------------------------------------------------------------------------------
+thêm phương thức update view -> mỗi lần người dùng click vào prodcut nó tăng lượt view lên 

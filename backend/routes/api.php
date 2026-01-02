@@ -7,8 +7,9 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RolePerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserNotificationController;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,9 +128,28 @@ Route::prefix('notifications')->group(function () {
     });
 });
 
+// ==================== CATEGORY ROUTES ====================
+Route::prefix('categories')->group(function () {
+    Route::get('/', [CategoryController::class, 'index']);
+    Route::post('/', [CategoryController::class, 'store']);
+    Route::put('/{id}', [CategoryController::class, 'update'])
+        ->where('id', '[0-9]+');
+    Route::delete('/{id}', [CategoryController::class, 'destroy'])
+        ->where('id', '[0-9]+');
+    // Thêm route lấy category theo slug (nếu cần)
+    Route::get('/{slug}', [CategoryController::class, 'showBySlug'])
+        ->where('slug', '^[a-zA-Z0-9_-]+$');
+});
+
 // ==================== PRODUCT ROUTES ====================
 Route::prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::post('/', [ProductController::class, 'store']);
     Route::get('/{id}', [ProductController::class, 'show'])
+        ->where('id', '[0-9]+');
+    Route::put('/{id}', [ProductController::class, 'update'])
+        ->where('id', '[0-9]+');
+    Route::delete('/{id}', [ProductController::class, 'destroy'])
         ->where('id', '[0-9]+');
     Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
         ->where('id', '[0-9]+');
@@ -137,6 +157,21 @@ Route::prefix('products')->group(function () {
 
 // ==================== ADDRESS ROUTES ====================
 Route::prefix('addresses')->group(function () {
-    Route::put('/{id}', [AddressController::class, 'update'])
+    // Tìm địa chỉ theo user_id
+    Route::get('/user/{userId}', [AddressController::class, 'getByUser']);
+    
+    // Cập nhật địa chỉ của user - ĐỔI THÀNH 'update' (đúng với controller)
+    Route::put('/user/{userId}', [AddressController::class, 'update']);
+    
+    // Cập nhật địa chỉ theo address id - THÊM ROUTE MỚI
+    Route::put('/{id}', [AddressController::class, 'updateById'])
+        ->where('id', '[0-9]+');
+    
+    // Các route CRUD theo address id
+    Route::get('/', [AddressController::class, 'index']);
+    Route::post('/', [AddressController::class, 'store']);
+    Route::get('/{id}', [AddressController::class, 'show'])
+        ->where('id', '[0-9]+');
+    Route::delete('/{id}', [AddressController::class, 'destroy'])
         ->where('id', '[0-9]+');
 });
