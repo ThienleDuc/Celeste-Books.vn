@@ -191,9 +191,9 @@ private function createUserNotification($userId)
         'id'         => $newId,
         'user_id'    => $userId,
         'type'       => 'system',
-        'title'      => 'Thông tin tài khoản đã được cập nhật',
-        'content'    => 'Thông tin tài khoản của bạn đã được cập nhật. Nếu không phải do bạn thực hiện, vui lòng liên hệ quản trị viên.',
-        'is_read'    => false,
+       'title'       => 'Thông tin tài khoản ' . $userId . ' đã được cập nhật',
+        'content'     => 'Thông tin tài khoản người dùng ' . $userId . ' đã được cập nhật.',
+           'is_read'    => false,
         'created_at'=> now(),
         'updated_at'=> now(),
     ]);

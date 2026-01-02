@@ -9,89 +9,100 @@ use Illuminate\Support\Facades\DB;
 
 class AddressController extends Controller
 {
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'label'           => 'nullable|string|max:50',
-            'receiver_name'   => 'required|string|max:255',
-            'phone'           => 'required|string|max:20',
-            'street_address'  => 'required|string|max:255',
-            'commune_id'      => 'required|integer',
-            'is_default'      => 'nullable|boolean'
-        ]);
+public function update(Request $request, $userId)
+{
+    $request->validate([
+        'label'          => 'nullable|string|max:50',
+        'receiver_name'  => 'nullable|string|max:255',
+        'phone'          => 'nullable|string|max:20',
+        'street_address' => 'nullable|string|max:255',
+        'commune_id'     => 'nullable|exists:communes,id',
+        'is_default'     => 'nullable|boolean',
+    ]);
 
-        $address = Address::find($id);
-        if (!$address) {
-            return response()->json([
-                'message' => 'Address not found'
-            ], 404);
-        }
+    // 🔹 LẤY DATA THỰC SỰ GỬI LÊN
+    $data = array_filter(
+        $request->only([
+            'label',
+            'receiver_name',
+            'phone',
+            'street_address',
+            'commune_id',
+            'is_default',
+        ]),
+        fn ($value) => !is_null($value)
+    );
 
-        DB::beginTransaction();
-        try {
+    // ❌ KHÔNG CÓ GÌ → THOÁT
+    if (empty($data)) {
+        return response()->json([
+            'message' => 'Không có thông tin nào thay đổi'
+        ], 200);
+    }
 
-            // 1️⃣ Fill dữ liệu mới
-            $address->fill([
-                'label'           => $request->label,
-                'receiver_name'   => $request->receiver_name,
-                'phone'           => $request->phone,
-                'street_address'  => $request->street_address,
-                'commune_id'      => $request->commune_id,
-                'is_default'      => $request->has('is_default')
-                    ? $request->boolean('is_default')
-                    : $address->is_default,
-            ]);
+    DB::beginTransaction();
 
-            // 2️⃣ Không có thay đổi → thoát
+    try {
+        // 1️⃣ LẤY ĐỊA CHỈ HIỆN TẠI (LẤY 1 CÁI)
+        $address = Address::where('user_id', $userId)->first();
+
+        if ($address) {
+            // 🔄 CÓ RỒI → UPDATE
+            $address->fill($data);
+
+            // ❌ DATA GIỐNG HỆT → KHÔNG LÀM GÌ
             if (!$address->isDirty()) {
                 DB::rollBack();
                 return response()->json([
-                    'message' => 'Không có thông tin địa chỉ nào thay đổi'
+                    'message' => 'Thông tin địa chỉ không thay đổi'
                 ], 200);
             }
 
-            // 3️⃣ Nếu set mặc định → bỏ mặc định address khác
-            if ($address->is_default) {
-                Address::where('user_id', $address->user_id)
-                    ->where('id', '!=', $address->id)
-                    ->update(['is_default' => 0]);
-            }
-
-            // 4️⃣ Save địa chỉ
             $address->save();
-
-            // 5️⃣ Tạo notification (CHỈ KHI CÓ THAY ĐỔI)
-            $this->createUserNotification($address->user_id);
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Cập nhật địa chỉ thành công',
-                'data' => $address
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'message' => 'Cập nhật địa chỉ thất bại',
-                'error' => $e->getMessage()
-            ], 500);
+        } else {
+            // ➕ CHƯA CÓ → TẠO MỚI
+            $address = Address::create(array_merge(
+                ['user_id' => $userId],
+                $data
+            ));
         }
-    }
 
-    /**
-     * ✅ Tạo thông báo cho user
-     * (DB auto increment ID)
-     */
-    private function createUserNotification($userId)
-    {
-        UserNotification::create([
-            'user_id' => $userId,
-            'type'    => 'system',
-            'title'   => 'Địa chỉ giao hàng đã được cập nhật',
-            'content' => 'Địa chỉ giao hàng của bạn đã được cập nhật. Nếu không phải do bạn thực hiện, vui lòng liên hệ quản trị viên.',
-            'is_read' => false,
-        ]);
+        // 2️⃣ TẠO THÔNG BÁO (CHỈ KHI CÓ THAY ĐỔI)
+        $this->createUserNotification($userId);
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Cập nhật địa chỉ thành công',
+            'data'    => $address
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'message' => 'Cập nhật địa chỉ thất bại',
+            'error'   => $e->getMessage()
+        ], 500);
     }
+}
+
+
+
+  private function createUserNotification($userId)
+{
+    $last = UserNotification::orderBy('id', 'desc')->first();
+    $newId = $last ? $last->id + 1 : 1;
+
+    UserNotification::create([
+        'id'         => $newId,
+        'user_id'    => $userId,
+        'type'       => 'system',
+      'title'       => 'Thông tin tài khoản ' . $userId . ' đã được cập nhật',
+        'content'     => 'Thông tin tài khoản người dùng ' . $userId . ' đã được cập nhật.',
+        'is_read'    => false,
+        'created_at'=> now(),
+        'updated_at'=> now(),
+    ]);
+}
 }

@@ -36,7 +36,7 @@ Route::put('/users/{id}/password', [UserController::class, 'changePassword']);
 Route::put('/users/{user_id}/address', [UserController::class, 'updateByUser']);
 use App\Http\Controllers\AddressController;
 
-Route::put('/addresses/{id}', [AddressController::class, 'update']);
+Route::put('/addresses/{id}', [AddressController::class, 'update']);//ko dùng để đó rảnh thì xóa
 use App\Http\Controllers\ProductController;
 
 Route::get('/products/{id}', [ProductController::class, 'show']);
