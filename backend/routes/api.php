@@ -19,7 +19,24 @@ use App\Http\Controllers\ProductController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+
 });
+// Message Routes
+//all contacts 
+Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'getContactList']);
+//show detail messages
+Route::get('message/{id}', [\App\Http\Controllers\MessageController::class, 'getMessage']);
+//send message
+Route::post('message/{id}', [\App\Http\Controllers\MessageController::class, 'sendMessage']);
+//xóa message
+Route::delete('message/{id}', [\App\Http\Controllers\MessageController::class, 'deleteMessage']);
+
+
+//notification
+//show all notifications
+Route::get('/notifications', [\App\Http\Controllers\MessageNotificationController::class, 'getNotifications']);
+//xem chi tiết thông báo
+Route::get('/notification/{id}', [\App\Http\Controllers\MessageNotificationController::class, 'getNotificationDetail']);
 
 // ==================== ROLE ROUTES ====================
 Route::prefix('roles')->group(function () {

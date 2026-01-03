@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Celeste-Books.vn
 
 "config": {
@@ -353,3 +354,7 @@ $this->mock(Role::class, function ($mock) {
 
 ------------------------------------------------------------------------------------------
 thêm phương thức update view -> mỗi lần người dùng click vào prodcut nó tăng lượt view lên 
+
+phía admin -> xem toàn bộ log người dùng gửi tới , message được tạo ra 
+( che route content send tin nhắn ) 
+
