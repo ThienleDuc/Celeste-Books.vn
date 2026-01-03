@@ -22,11 +22,11 @@ class ProductController extends Controller
             'message' => $message,
             'data' => $data
         ];
-        
+
         if ($errors) {
             $response['errors'] = $errors;
         }
-        
+
         return response()->json($response, $status);
     }
 
@@ -35,37 +35,37 @@ class ProductController extends Controller
     {
         try {
             $query = Product::with(['detail', 'categories', 'images']);
-            
+
             // Lọc theo trạng thái
             if ($request->has('status')) {
                 $query->where('status', $request->status);
             }
-            
+
             // Lọc theo ngôn ngữ
             if ($request->has('language')) {
                 $query->where('language', $request->language);
             }
-            
+
             // Tìm kiếm theo tên
             if ($request->has('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
-            
+
             // Sắp xếp
             $sortBy = $request->get('sort_by', 'created_at');
             $sortOrder = $request->get('sort_order', 'desc');
             $query->orderBy($sortBy, $sortOrder);
-            
+
             // Phân trang (nếu cần)
             $perPage = $request->get('per_page', 20);
             $products = $query->paginate($perPage);
-            
+
             return $this->jsonResponse($products, 'Lấy danh sách sản phẩm thành công');
         } catch (\Exception $e) {
             return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
         }
     }
-    
+
     // 2. LẤY CHI TIẾT SẢN PHẨM
     public function show($id)
     {
@@ -75,10 +75,10 @@ class ProductController extends Controller
             if (!$product) {
                 return $this->jsonResponse([], 'Không tìm thấy sản phẩm', 404);
             }
-            
+
             // Tăng lượt xem
             $product->increment('Views');
-            
+
             return $this->jsonResponse($product, 'Lấy chi tiết sản phẩm thành công');
         } catch (\Exception $e) {
             return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
@@ -121,7 +121,7 @@ class ProductController extends Controller
             'cover_image' => 'nullable|url',
             'language' => 'nullable|string|max:50',
             'status' => 'nullable|integer|in:0,1',
-            
+
             // Product detail validation
             'product_type' => 'required|string',
             'original_price' => 'required|numeric|min:0',
@@ -132,10 +132,10 @@ class ProductController extends Controller
             'length' => 'nullable|numeric|min:0',
             'width' => 'nullable|numeric|min:0',
             'height' => 'nullable|numeric|min:0',
-            
+
             'category_ids' => 'nullable|array',
             'category_ids.*' => 'integer|exists:categories,id',
-            
+
             'images' => 'nullable|array',
             'images.*.url' => 'required|url',
             'images.*.is_primary' => 'boolean',
@@ -210,11 +210,25 @@ class ProductController extends Controller
                 }
             }
 
+            // Thêm thông báo cho sản phẩm mới
+            $notificationId = (ProductNotification::max('id') ?? 0) + 1;
+            ProductNotification::create([
+                'id' => $notificationId,
+                'user_id' => $request->admin_id ?? 'U01',
+                'product_id' => $productId,
+                'type' => 'promotion',
+                'title' => 'Sản phẩm mới ra mắt',
+                'content' => "Sản phẩm '{$product->name}' vừa được thêm vào cửa hàng.",
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
             DB::commit();
-            
+
             // Load lại relationships để trả về đầy đủ
             $product->load(['detail', 'categories', 'images']);
-            
+
             return $this->jsonResponse($product, 'Thêm sản phẩm thành công', 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -226,7 +240,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $product = Product::find($id);
-        
+
         if (!$product) {
             return $this->jsonResponse([], 'Không tìm thấy sản phẩm', 404);
         }
@@ -241,15 +255,15 @@ class ProductController extends Controller
             'cover_image' => 'nullable|url',
             'language' => 'nullable|string|max:50',
             'status' => 'nullable|integer|in:0,1',
-            
+
             'product_type' => 'nullable|string',
             'original_price' => 'nullable|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
-            
+
             'category_ids' => 'nullable|array',
             'category_ids.*' => 'integer|exists:categories,id',
-            
+
             'images' => 'nullable|array',
             'images.*.url' => 'required|url',
             'images.*.is_primary' => 'boolean',
@@ -278,7 +292,9 @@ class ProductController extends Controller
         try {
             // Lưu giá cũ để so sánh
             $oldPrice = $product->detail->sale_price ?? 0;
-            
+            $oldStock = $detail->stock ?? 0;
+            $oldStatus = $product->status;
+
             // Cập nhật sản phẩm chính
             $product->update([
                 'name' => $request->name,
@@ -307,8 +323,8 @@ class ProductController extends Controller
                     'width' => $request->width ?? $detail->width,
                     'height' => $request->height ?? $detail->height,
                 ]);
-                
-                // Tạo thông báo nếu giá giảm
+
+                // Tạo thông báo nếu giá giảm (price_drop)
                 $newPrice = $detail->sale_price;
                 if ($newPrice < $oldPrice) {
                     ProductNotification::create([
@@ -318,6 +334,20 @@ class ProductController extends Controller
                         'type' => 'price_drop',
                         'title' => 'Giảm giá cực sốc',
                         'content' => "Sản phẩm {$product->name} vừa giảm giá từ " . number_format($oldPrice) . " xuống " . number_format($newPrice),
+                        'is_read' => false
+                    ]);
+                }
+
+                // Tạo thông báo Nhập hàng/Mở bán lại (restock)
+                // Kích hoạt khi stock từ 0 lên > 0 HOẶC status từ ẩn (0) sang hiện (1)
+                if (($oldStock == 0 && $detail->stock > 0) || ($oldStatus == 0 && $product->status == 1)) {
+                    ProductNotification::create([
+                        'id' => (ProductNotification::max('id') ?? 0) + 1,
+                        'user_id' => 'U01',
+                        'product_id' => $id,
+                        'type' => 'restock',
+                        'title' => 'Sản phẩm có hàng lại',
+                        'content' => "Sản phẩm '{$product->name}' đã sẵn sàng để phục vụ khách hàng.",
                         'is_read' => false
                     ]);
                 }
@@ -348,10 +378,10 @@ class ProductController extends Controller
             }
 
             DB::commit();
-            
+
             // Load lại dữ liệu
             $product->refresh()->load(['detail', 'categories', 'images']);
-            
+
             return $this->jsonResponse($product, 'Cập nhật sản phẩm thành công');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -364,7 +394,7 @@ class ProductController extends Controller
     {
         try {
             $product = Product::find($id);
-            
+
             if (!$product) {
                 return $this->jsonResponse([], 'Không tìm thấy sản phẩm', 404);
             }
@@ -376,10 +406,51 @@ class ProductController extends Controller
             // }
 
             $product->delete();
-            
+
             return $this->jsonResponse([], 'Xóa sản phẩm thành công');
         } catch (\Exception $e) {
             return $this->jsonResponse([], 'Xóa sản phẩm thất bại', 500, $e->getMessage());
+        }
+    }
+
+    // 7. LỌC SẢN PHẨM THEO LOẠI SÁCH
+    public function filterByType(Request $request)
+    {
+        try {
+            // Lấy giá trị lọc từ query string (ví dụ: ?type=sach-giay)
+            $typeSlug = $request->query('type');
+
+            if (!$typeSlug) {
+                return $this->jsonResponse([], 'Vui lòng cung cấp loại sách cần lọc', 400);
+            }
+
+            // Ánh xạ slug từ URL sang giá trị ENUM trong database (bảng product_details)
+            $typeMap = [
+                'sach-giay' => 'Sách giấy',
+                'sach-dien-tu' => 'Sách điện tử',
+            ];
+
+            if (!isset($typeMap[$typeSlug])) {
+                return $this->jsonResponse([], 'Loại sách không hợp lệ', 400);
+            }
+
+            $typeName = $typeMap[$typeSlug];
+
+            $products = Product::whereHas('detail', function ($query) use ($typeName) {
+                $query->where('product_type', $typeName);
+            })
+            ->with(['detail', 'images', 'categories'])
+            ->where('status', 1)
+            ->get();
+
+            return $this->jsonResponse([
+                'count' => $products->count(),
+                'items' => $products
+            ], "Lấy danh sách {$typeName} thành công");
+
+        } catch (\Exception $e) {
+            // Xử lý lỗi server và trả về thông báo lỗi
+            return $this->jsonResponse([], 'Lỗi server khi lọc sản phẩm', 500, $e->getMessage());
         }
     }
 }

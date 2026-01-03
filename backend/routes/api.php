@@ -10,6 +10,7 @@ use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ShoppingCartController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,14 +26,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('roles')->group(function () {
     // Danh sách + tìm kiếm
     Route::get('/', [RoleController::class, 'index']);
-    
+
     // Tạo mới
     Route::post('/', [RoleController::class, 'store']);
-    
+
     // Lấy theo slug - ĐẶT SAU các route cụ thể như 'create'
     Route::get('/{slug}', [RoleController::class, 'showBySlug'])
         ->where('slug', '^[a-zA-Z0-9_-]+$'); // Thêm regex để tránh conflict
-    
+
     // Update / Delete theo ID
     Route::put('/{id}', [RoleController::class, 'update'])
         ->where('id', '[0-9]+');
@@ -46,20 +47,20 @@ Route::prefix('roles')->group(function () {
 Route::prefix('permissions')->group(function () {
     // Danh sách + tìm kiếm
     Route::get('/', [PermissionController::class, 'index']);
-    
+
     // Tạo permission mới
     Route::post('/', [PermissionController::class, 'store']);
-    
+
     // Lấy permission theo slug
     Route::get('/{slug}', [PermissionController::class, 'showBySlug'])
         ->where('slug', '^[a-zA-Z0-9_-]+$');
-    
+
     // Cập nhật permission theo ID
     Route::put('/{id}', [PermissionController::class, 'update'])
         ->where('id', '[0-9]+');
     Route::patch('/{id}', [PermissionController::class, 'update'])
         ->where('id', '[0-9]+');
-    
+
     // Xóa permission theo ID
     Route::delete('/{id}', [PermissionController::class, 'destroy'])
         ->where('id', '[0-9]+');
@@ -69,20 +70,20 @@ Route::prefix('permissions')->group(function () {
 Route::prefix('role-permissions')->group(function () {
     // Danh sách + tìm kiếm
     Route::get('/', [RolePerController::class, 'index']);
-    
+
     // Gán permission cho role
     Route::post('/', [RolePerController::class, 'store']);
-    
+
     // Update permission của role
     Route::put('/', [RolePerController::class, 'update']);
-    
+
     // Xóa permission khỏi role
     Route::delete('/', [RolePerController::class, 'destroy']);
-    
+
     // Lấy theo role_id
     Route::get('/role/{roleId}', [RolePerController::class, 'getByRole'])
         ->where('roleId', '[0-9]+');
-    
+
     // Lấy theo per_id
     Route::get('/permission/{perId}', [RolePerController::class, 'getByPermission'])
         ->where('perId', '[0-9]+');
@@ -95,7 +96,7 @@ Route::prefix('users')->group(function () {
     Route::get('/statistics', [UserController::class, 'statistics']);
     Route::get('/role/{roleId}', [UserController::class, 'getByRole'])
         ->where('roleId', '[0-9]+');
-    
+
     Route::prefix('{id}')->group(function () {
         Route::get('/', [UserController::class, 'show'])
             ->where('id', '[0-9]+');
@@ -105,7 +106,7 @@ Route::prefix('users')->group(function () {
         Route::put('/password', [UserController::class, 'changePassword']);
         Route::put('/toggle-status', [UserController::class, 'toggleStatus']);
         Route::delete('/', [UserController::class, 'destroy']);
-        
+
         Route::prefix('notifications')->group(function () {
             Route::get('/', [UserNotificationController::class, 'myNotifications']);
             Route::get('/count-unread', [UserNotificationController::class, 'countUnread']);
@@ -119,7 +120,7 @@ Route::prefix('notifications')->group(function () {
     Route::get('/my', [UserNotificationController::class, 'myNotifications']);
     Route::get('/count-unread', [UserNotificationController::class, 'countUnread']);
     Route::put('/mark-all-read', [UserNotificationController::class, 'markAllAsRead']);
-    
+
     Route::prefix('{id}')->group(function () {
         Route::put('/mark-read', [UserNotificationController::class, 'markAsRead'])
             ->where('id', '[0-9]+');
@@ -153,20 +154,21 @@ Route::prefix('products')->group(function () {
         ->where('id', '[0-9]+');
     Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
         ->where('id', '[0-9]+');
+    Route::get('/filter-by-type', [ProductController::class, 'filterByType']);
 });
 
 // ==================== ADDRESS ROUTES ====================
 Route::prefix('addresses')->group(function () {
     // Tìm địa chỉ theo user_id
     Route::get('/user/{userId}', [AddressController::class, 'getByUser']);
-    
+
     // Cập nhật địa chỉ của user - ĐỔI THÀNH 'update' (đúng với controller)
     Route::put('/user/{userId}', [AddressController::class, 'update']);
-    
+
     // Cập nhật địa chỉ theo address id - THÊM ROUTE MỚI
     Route::put('/{id}', [AddressController::class, 'updateById'])
         ->where('id', '[0-9]+');
-    
+
     // Các route CRUD theo address id
     Route::get('/', [AddressController::class, 'index']);
     Route::post('/', [AddressController::class, 'store']);
@@ -174,4 +176,10 @@ Route::prefix('addresses')->group(function () {
         ->where('id', '[0-9]+');
     Route::delete('/{id}', [AddressController::class, 'destroy'])
         ->where('id', '[0-9]+');
+});
+
+// ==================== SHOPPING CART ROUTES ====================
+Route::prefix('shopping-carts')->group(function () {
+    // Thêm sản phẩm vào giỏ hàng
+    Route::post('/add', [ShoppingCartController::class, 'addToCart']);
 });
