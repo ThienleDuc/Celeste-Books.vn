@@ -19,7 +19,7 @@ CREATE TABLE roles (
 CREATE TABLE permissions (
     id INT PRIMARY KEY,
     name VARCHAR(100) UNIQUE,
-    `describe` VARCHAR(255)
+    description VARCHAR(255)
 );
 
 -- =============================================
@@ -41,8 +41,8 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    per_id VARCHAR(10),
-    FOREIGN KEY (per_id) REFERENCES roles(id) ON DELETE SET NULL
+    role_id VARCHAR(10),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL
 );
 
 -- =============================================
@@ -84,7 +84,7 @@ CREATE TABLE addresses (
     receiver_name VARCHAR(50),
     phone CHAR(10),
     street_address VARCHAR(255),
-    commune_id INT,
+    commune_id INT NULL,
     is_default BOOLEAN,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -98,16 +98,6 @@ CREATE TABLE categories (
     name VARCHAR(100),
     slug VARCHAR(255) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- =============================================
--- 10. Bảng product_categories 
-CREATE TABLE product_categories (
-    product_id BIGINT,
-    category_id INT,
-    PRIMARY KEY (product_id, category_id),
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, 
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
 -- =============================================
@@ -126,6 +116,16 @@ CREATE TABLE products (
     status BOOLEAN,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     -- Đã xóa dấu phẩy thừa ở đây
+);
+
+-- =============================================
+-- 10. Bảng product_categories 
+CREATE TABLE product_categories (
+    product_id BIGINT,
+    category_id INT,
+    PRIMARY KEY (product_id, category_id),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, 
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
 -- =============================================
@@ -164,11 +164,14 @@ CREATE TABLE cart_items (
     id BIGINT PRIMARY KEY,
     cart_id BIGINT,
     product_id BIGINT,
+	product_details_id BIGINT,
+    quantity INT UNSIGNED NOT NULL DEFAULT 1,
     price_at_time DECIMAL(12,2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (cart_id) REFERENCES shopping_carts(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_details_id) REFERENCES product_details(id) ON DELETE CASCADE
 );
 
 -- =============================================
@@ -178,9 +181,9 @@ CREATE TABLE orders (
     user_id VARCHAR(10),
     order_code VARCHAR(30),
     status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled'),
-    subtotal DECIMAL(12,2),
-    shipping_fee DECIMAL(12,2),
-    discount DECIMAL(12,2),
+    subtotal DECIMAL(12,2) DEFAULT 0,
+    shipping_fee DECIMAL(12,2) DEFAULT 0,
+    discount DECIMAL(12,2) DEFAULT 0,
     total_amount DECIMAL(12,2),
     shipping_address_id BIGINT,
     payment_method ENUM('cod', 'momo', 'bank_transfer', 'credit_card'),
@@ -197,13 +200,92 @@ CREATE TABLE order_items (
     id BIGINT PRIMARY KEY,
     order_id BIGINT,
     product_id BIGINT,
+	product_details_id BIGINT,
     product_type ENUM('Sách giấy', 'Sách điện tử'),
     quantity INT,
     price DECIMAL(12,2),
     total_price DECIMAL(12,2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+	FOREIGN KEY (product_details_id) REFERENCES product_details(id) ON DELETE CASCADE
+);
+
+-- =============================================
+-- Bảng: weight_fees (Phí theo cân nặng)
+CREATE TABLE weight_fees (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    min_weight DECIMAL(10,2) NOT NULL, -- kg
+    max_weight DECIMAL(10,2) NOT NULL,
+    multiplier DECIMAL(5,2) NOT NULL,  -- hệ số nhân theo cân nặng
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+--
+-- Bảng: distance_fees (Phí theo khoảng cách)
+CREATE TABLE distance_fees (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    min_distance DECIMAL(10,2) NOT NULL, -- km
+    max_distance DECIMAL(10,2) NOT NULL,
+    multiplier DECIMAL(5,2) NOT NULL,   -- hệ số nhân theo khoảng cách
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng: shipping_type_fees (Phí theo loại hình)
+CREATE TABLE shipping_type_fees (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    shipping_type ENUM('standard', 'express', 'cod') NOT NULL,
+    multiplier DECIMAL(5,2) NOT NULL,   -- hệ số nhân theo loại hình
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng: order_shipping_fee_details (các loại phí của order)
+CREATE TABLE order_shipping_fee_details (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    
+    order_id BIGINT NOT NULL,
+    weight_fee_id BIGINT NOT NULL,
+    distance_fee_id BIGINT NOT NULL,
+    shipping_type_fee_id BIGINT NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,   -- số tiền thực tế áp dụng
+        
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (weight_fee_id) REFERENCES weight_fees(id),
+    FOREIGN KEY (distance_fee_id) REFERENCES distance_fees(id),
+    FOREIGN KEY (shipping_type_fee_id) REFERENCES shipping_type_fees(id)
+);
+
+-- Bảng: order_product_discounts (giảm giá sản phẩm)
+CREATE TABLE order_product_discounts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('promo_code', 'member_discount', 'voucher') DEFAULT 'promo_code',
+    amount DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng: order_shipping_discounts (giảm giá phí ship)
+CREATE TABLE order_shipping_discounts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('promo_code', 'member_discount', 'voucher') DEFAULT 'promo_code',
+    amount DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_discount_details (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+    order_id BIGINT NOT NULL,
+
+    product_discount_id BIGINT NULL,  -- liên kết giảm giá sản phẩm
+    shipping_discount_id BIGINT NULL, -- liên kết giảm giá vận chuyển
+    amount DECIMAL(12,2) NOT NULL,   -- số tiền thực tế áp dụng
+
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_discount_id) REFERENCES order_product_discounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (shipping_discount_id) REFERENCES order_shipping_discounts(id) ON DELETE CASCADE,
+
+    UNIQUE KEY unique_product_discount (order_id, product_discount_id),
+    UNIQUE KEY unique_shipping_discount (order_id, shipping_discount_id)
 );
 
 -- =============================================
@@ -231,7 +313,7 @@ CREATE TABLE order_notifications (
     type ENUM('status_change', 'payment', 'other'),
     title VARCHAR(255),
     content TEXT,
-    is_read BOOLEAN,
+    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -262,7 +344,7 @@ CREATE TABLE user_notifications (
     type ENUM('system', 'promotion', 'account'),
     title VARCHAR(255),
     content TEXT,
-    is_read BOOLEAN,
+    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -285,7 +367,7 @@ CREATE TABLE product_images (
 CREATE TABLE messages (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     sender_id VARCHAR(10) NOT NULL,
-    receiver_id VARCHAR(10) NOT NULL,
+    receiver_id VARCHAR(10) NOT NULL, 
     product_id BIGINT,   
     order_item_id BIGINT,  
     message TEXT,
@@ -306,7 +388,7 @@ CREATE TABLE message_notifications (
     type ENUM('new_message', 'reply', 'system_alert') DEFAULT 'new_message', 
     title VARCHAR(255),
     content TEXT,
-    is_read BOOLEAN DEFAULT FALSE,
+    is_read BOOLEAN DEFAULT FALSE DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -341,7 +423,7 @@ INSERT INTO roles (id, name, description) VALUES
 ('R05', 'Shipper', 'Nhân viên giao hàng');
 
 -- 2. Permissions
-INSERT INTO permissions (id, name, `describe`) VALUES
+INSERT INTO permissions (id, name, description) VALUES
 (1, 'view_users', 'Xem danh sách người dùng'),
 (2, 'create_users', 'Tạo người dùng mới'),
 (3, 'edit_users', 'Sửa thông tin người dùng'),
@@ -362,7 +444,7 @@ INSERT INTO role_per (role_id, per_id) VALUES
 ('R04', 5), ('R05', 9);
 
 -- 4. Users
-INSERT INTO users (id, username, password_hash, email, is_active, per_id) VALUES
+INSERT INTO users (id, username, password_hash, email, is_active, role_id) VALUES
 ('U01', 'admin', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'admin@store.com', 1, 'R01'),
 ('U02', 'manager', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'manager@store.com', 1, 'R02'),
 ('U03', 'staff', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'staff@store.com', 1, 'R03'),
@@ -493,16 +575,18 @@ INSERT INTO shopping_carts (id, user_id, status) VALUES
 (10, 'U07', 'active');
 
 -- 14. Cart Items
-INSERT INTO cart_items (id, cart_id, product_id, price_at_time) VALUES
-(1, 1, 1, 60000), (2, 1, 5, 20000),
-(3, 2, 3, 350000), 
-(4, 3, 4, 90000), 
-(5, 4, 10, 22000),
-(6, 5, 2, 75000),
-(7, 9, 6, 200000),
-(8, 1, 9, 70000),
-(9, 2, 7, 280000),
-(10, 10, 8, 40000);
+INSERT INTO cart_items (id, cart_id, product_id, product_details_id, price_at_time) VALUES
+(1, 1, 1, 1, 60000), 
+(2, 1, 5, 5, 20000),
+(3, 2, 3, 3, 350000),
+(4, 3, 4, 4, 90000),
+(5, 4, 10, 10, 22000),
+(6, 5, 2, 2, 75000),
+(7, 9, 6, 6, 200000),
+(8, 1, 9, 9, 70000),
+(9, 2, 7, 7, 280000),
+(10, 10, 8, 8, 40000);
+
 
 -- 15. Orders
 INSERT INTO orders (id, user_id, order_code, status, total_amount, payment_method, payment_status) VALUES
@@ -518,17 +602,18 @@ INSERT INTO orders (id, user_id, order_code, status, total_amount, payment_metho
 (10, 'U02', 'ORD010', 'pending', 40000, 'momo', 'unpaid');
 
 -- 16. Order Items
-INSERT INTO order_items (id, order_id, product_id, product_type, quantity, price, total_price) VALUES
-(1, 1, 1, 'Sách giấy', 1, 60000, 60000), 
-(2, 1, 5, 'Sách giấy', 1, 20000, 20000), 
-(3, 2, 3, 'Sách giấy', 1, 350000, 350000),
-(4, 3, 1, 'Sách giấy', 1, 60000, 60000),
-(5, 4, 4, 'Sách giấy', 1, 90000, 90000),
-(6, 5, 6, 'Sách giấy', 1, 200000, 200000),
-(7, 6, 2, 'Sách giấy', 2, 75000, 150000),
-(8, 7, 10, 'Sách giấy', 1, 22000, 22000),
-(9, 8, 7, 'Sách giấy', 1, 280000, 280000), 
-(10, 9, 7, 'Sách giấy', 1, 280000, 280000);
+INSERT INTO order_items (id, order_id, product_id, product_details_id, product_type, quantity, price, total_price) VALUES
+(1, 1, 1, 1, 'Sách giấy', 1, 60000, 60000), 
+(2, 1, 5, 5, 'Sách giấy', 1, 20000, 20000), 
+(3, 2, 3, 3, 'Sách giấy', 1, 350000, 350000),
+(4, 3, 1, 1, 'Sách giấy', 1, 60000, 60000),
+(5, 4, 4, 4, 'Sách giấy', 1, 90000, 90000),
+(6, 5, 6, 6, 'Sách giấy', 1, 200000, 200000),
+(7, 6, 2, 2, 'Sách giấy', 2, 75000, 150000),
+(8, 7, 10, 10, 'Sách giấy', 1, 22000, 22000),
+(9, 8, 7, 7, 'Sách giấy', 1, 280000, 280000), 
+(10, 9, 7, 7, 'Sách giấy', 1, 280000, 280000);
+
 
 -- 17. Reviews
 INSERT INTO reviews (id, order_item_id, user_id, rating, title, content) VALUES
@@ -635,5 +720,49 @@ INSERT INTO review_images (review_id, image_url) VALUES
 (8, 'https://down-vn.img.susercontent.com/file/f7cd087f1f0a79c77853cb025c048a54'),
 (10, 'https://th.bing.com/th/id/OIP.Bmcp5gwPZME9NyVOy_Ml7gHaHa?w=177&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'),
 (4, 'https://phuongthengoc.com/wp-content/uploads/2022/10/Tuoi-Tre-Dang-Gia-Bao-Nhieu-1-Rosie-Nguyen_Phuongthengoc-.jpg');
+
+-- ===========================================
+-- 1. Weight Fees
+INSERT INTO weight_fees (min_weight, max_weight, multiplier) VALUES
+(0, 1, 1.00),
+(1.01, 5, 1.50),
+(5.01, 10, 2.00),
+(10.01, 20, 2.50);
+
+-- 2. Distance Fees
+INSERT INTO distance_fees (min_distance, max_distance, multiplier) VALUES
+(0, 5, 1.00),
+(5.01, 20, 1.20),
+(20.01, 50, 1.50),
+(50.01, 100, 2.00);
+
+-- 3. Shipping Type Fees
+INSERT INTO shipping_type_fees (shipping_type, multiplier) VALUES
+('standard', 1.00),
+('express', 1.50),
+('cod', 1.10);
+
+-- 4. Order Product Discounts
+INSERT INTO order_product_discounts (type, amount) VALUES
+('promo_code', 10000),
+('member_discount', 5000),
+('voucher', 20000);
+
+-- 5. Order Shipping Discounts
+INSERT INTO order_shipping_discounts (type, amount) VALUES
+('promo_code', 5000),
+('member_discount', 3000),
+('voucher', 10000);
+
+-- 6. Order Shipping Fee Details (giả sử order_id 1, 2)
+INSERT INTO order_shipping_fee_details (order_id, weight_fee_id, distance_fee_id, shipping_type_fee_id, amount) VALUES
+(1, 1, 1, 1, 5000),
+(2, 2, 2, 2, 12000);
+
+-- 7. Order Discount Details
+INSERT INTO order_discount_details (order_id, product_discount_id, shipping_discount_id, amount) VALUES
+(1, 1, 1, 15000),
+(2, 2, NULL, 5000),
+(3, NULL, 2, 3000);
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -26,7 +26,8 @@ Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'getCon
 Route::get('message/{id}', [\App\Http\Controllers\MessageController::class, 'getMessage']);
 //send message
 Route::post('message/{id}', [\App\Http\Controllers\MessageController::class, 'sendMessage']);
-
+//xóa message
+Route::delete('message/{id}', [\App\Http\Controllers\MessageController::class, 'deleteMessage']);
 
 
 //notification

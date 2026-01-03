@@ -74,13 +74,19 @@ class MessageController extends Controller
                 'is_read' => false,
                 
             ]);
+            //lấy message id vừa tạo
+            $messageId = DB::getPdo()->lastInsertId();
+
             //tạo thông báo cho người nhận
+
             
             $notificationId = DB::table('message_notifications')->insert([
                 'user_id' => $receiverId,
-                'content' => 'You have a new message from user ' . $myId,
+                'message_id' => $messageId,
+                'content' => 'You have a new message from ' . $myId,
                 'is_read' => false,
                 'created_at' => now(),
+
                 'updated_at' => now()
             ]);
 
@@ -119,6 +125,24 @@ class MessageController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to retrieve contact list.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function deleteMessage($id)
+    {
+        try {
+            $message = Message::findOrFail($id);
+            $message->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Message deleted successfully.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to delete message.',
                 'error' => $e->getMessage()
             ], 500);
         }
