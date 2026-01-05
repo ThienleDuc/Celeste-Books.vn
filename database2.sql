@@ -6,6 +6,10 @@ USE book_store_db_2;
 -- Tắt kiểm tra khóa ngoại để tránh lỗi thứ tự tạo bảng
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Đặt timezone cho Việt Nam
+SET GLOBAL time_zone = '+07:00';
+SET time_zone = '+07:00';
+
 -- =============================================
 -- 1. Bảng roles (Vai trò)
 CREATE TABLE roles (
@@ -141,7 +145,7 @@ CREATE TABLE product_categories (
 -- =============================================
 -- 12. Bảng product_details (Chi tiết sản phẩm)
 CREATE TABLE product_details (
-    id BIGINT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT,
     product_type ENUM('Sách giấy', 'Sách điện tử'),
     sku VARCHAR(100) UNIQUE,
@@ -694,6 +698,12 @@ INSERT INTO product_details (id, product_id, product_type, sku, original_price, 
 (8, 8, 'Sách điện tử', 'SKU008-E', 50000, 40000, 9999, 'link_pdf', 0, 0, 0, 0),
 (9, 9, 'Sách giấy', 'SKU009', 85000, 70000, 200, NULL, 300, 20, 13, 2),
 (10, 10, 'Sách giấy', 'SKU010', 25000, 22000, 100, NULL, 150, 18, 11, 1);
+
+INSERT INTO product_details (id, product_id, product_type, sku, original_price, sale_price, stock, file_url, weight, length, width, height) VALUES
+(11, 1, 'Sách điện tử', 'SKU011', 80000, 60000, 100, NULL, 300, 20, 13, 2),
+(12, 2, 'Sách điện tử', 'SKU012', 90000, 75000, 150, NULL, 350, 20, 14, 2),
+(13, 3, 'Sách điện tử', 'SKU013', 400000, 350000, 20, NULL, 800, 24, 18, 4),
+(14, 4, 'Sách điện tử', 'SKU014', 110000, 90000, 80, NULL, 250, 19, 13, 2);
 
 -- 13. Shopping Carts
 INSERT INTO shopping_carts (id, user_id, status) VALUES
