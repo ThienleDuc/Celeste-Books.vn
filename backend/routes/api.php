@@ -10,6 +10,7 @@ use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -99,6 +100,7 @@ Route::prefix('users')->group(function () {
     Route::prefix('{id}')->group(function () {
         Route::get('/', [UserController::class, 'show'])
             ->where('id', '[0-9]+');
+        Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
         Route::put('/', [UserController::class, 'updateBasicInfo']);
         Route::put('/update', [UserController::class, 'update']);
         Route::post('/avatar', [UserController::class, 'uploadAvatar']);
@@ -153,6 +155,8 @@ Route::prefix('products')->group(function () {
         ->where('id', '[0-9]+');
     Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
         ->where('id', '[0-9]+');
+    Route::get('/best-sellers', [ProductController::class, 'getBestSellers']);
+        
 });
 
 // ==================== ADDRESS ROUTES ====================
@@ -175,3 +179,5 @@ Route::prefix('addresses')->group(function () {
     Route::delete('/{id}', [AddressController::class, 'destroy'])
         ->where('id', '[0-9]+');
 });
+
+Route::get('/oder/all-purchases', [OrderController::class, 'getAllPurchasedProducts']);
