@@ -6,10 +6,6 @@ USE book_store_db_2;
 -- Tắt kiểm tra khóa ngoại để tránh lỗi thứ tự tạo bảng
 SET FOREIGN_KEY_CHECKS = 0;
 
--- Đặt timezone cho Việt Nam
-SET GLOBAL time_zone = '+07:00';
-SET time_zone = '+07:00';
-
 -- =============================================
 -- 1. Bảng roles (Vai trò)
 CREATE TABLE roles (
@@ -398,8 +394,8 @@ CREATE TABLE product_notifications (
     is_read BOOLEAN,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
 );
 
 -- =============================================
@@ -413,7 +409,7 @@ CREATE TABLE user_notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- =============================================
@@ -483,7 +479,7 @@ CREATE TABLE conversation_notifications (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (last_message_id) REFERENCES messages(id) ON DELETE SET NULL,
 
     UNIQUE KEY uq_user_conversation (user_id, conversation_id),
@@ -549,6 +545,10 @@ BEGIN
 END//
 
 DELIMITER ;
+
+-- Đặt timezone cho Việt Nam
+SET GLOBAL time_zone = '+07:00';
+SET time_zone = '+07:00';
 
 -- 1. Roles
 INSERT INTO roles (id, name, description, slug) VALUES
