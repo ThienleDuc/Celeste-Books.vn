@@ -392,7 +392,7 @@ CREATE TABLE product_notifications (
     id BIGINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     user_id VARCHAR(10),
     product_id BIGINT,
-    type ENUM('restock', 'price_drop', 'promotion', 'other'), 
+    type ENUM('restock', 'price_drop', 'promotion', 'create', 'update', 'delete', 'other'), 
     title VARCHAR(255),
     content TEXT,
     is_read BOOLEAN,
