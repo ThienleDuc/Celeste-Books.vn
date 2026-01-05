@@ -297,7 +297,7 @@ class UserController extends Controller
             }
             
             // Tạo thông báo hệ thống
-            $this->createUserNotification($user->id, 'system', 'Thông tin'+user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
+            $this->createUserNotification($user->id, 'system', 'Thông tin'+$user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
             
             DB::commit();
             

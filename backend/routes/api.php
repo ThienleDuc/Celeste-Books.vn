@@ -97,8 +97,7 @@ Route::prefix('users')->group(function () {
         ->where('roleId', '[0-9]+');
     
     Route::prefix('{id}')->group(function () {
-        Route::get('/', [UserController::class, 'show'])
-            ->where('id', '[0-9]+');
+        Route::get('/', [UserController::class, 'show']); 
         Route::put('/', [UserController::class, 'updateBasicInfo']);
         Route::put('/update', [UserController::class, 'update']);
         Route::post('/avatar', [UserController::class, 'uploadAvatar']);
