@@ -219,3 +219,29 @@ Route::prefix('addresses')->group(function () {
     Route::delete('/{id}', [AddressController::class, 'destroy'])
         ->where('id', '[0-9]+');
 });
+//==================REVIEW ROUTES ===================
+Route::prefix('review')->group(function () {
+    //show contact list of messages
+    Route::get('/', [\App\Http\Controllers\ReviewController::class, 'getReviews']);
+    //show detail messages
+    Route::get('/{id}', [\App\Http\Controllers\ReviewController::class, 'getDetailReview']);
+    //create message
+    Route::post('/', [\App\Http\Controllers\ReviewController::class, 'createReview']);
+    //update message
+    Route::put('/{id}', [\App\Http\Controllers\ReviewController::class, 'updateReview']);
+    //delete message
+    Route::delete('/{id}', [\App\Http\Controllers\ReviewController::class, 'deleteReview']);
+});
+//==================REVIEW ROUTES ===================
+Route::prefix( 'review-image')->group(function () {
+    //show contact list of messages
+    Route::get('/', [\App\Http\Controllers\ReviewImageController::class, 'getReviewImages']);
+    //show detail messages
+    Route::get('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'getDetailReviewImage']);
+    //create message
+    Route::post('/', [\App\Http\Controllers\ReviewImageController::class, 'createReviewImage']);
+    //update message
+    Route::put('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'updateReviewImage']);
+    //delete message
+    Route::delete('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'deleteReviewImage']);
+});
