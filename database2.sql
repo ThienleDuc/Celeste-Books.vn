@@ -38,7 +38,7 @@ CREATE TABLE role_per (
 -- 4. Bảng users (Người dùng)
 CREATE TABLE users (
     id VARCHAR(10) PRIMARY KEY,
-    username VARCHAR(16)  NOT NULL UNIQUE,
+    username VARCHAR(16)  UNIQUE,
     password_hash VARCHAR(255),
     email VARCHAR(255) UNIQUE,
     is_active BOOLEAN DEFAULT TRUE,
