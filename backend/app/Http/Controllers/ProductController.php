@@ -100,7 +100,7 @@ class ProductController extends Controller
                 ->where('language', $product->language)
                 ->inRandomOrder()
                 ->limit(4)
-                ->get(['id', 'name', 'cover_image', 'slug']);
+                ->get(['id', 'name', 'slug']);
 
             return $this->jsonResponse($suggests, 'Lấy sản phẩm gợi ý thành công');
         } catch (\Exception $e) {
