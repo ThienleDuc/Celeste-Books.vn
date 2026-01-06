@@ -941,5 +941,7 @@ INSERT INTO order_discount_details (order_id, product_discount_id, shipping_disc
 (1, 1, 1, 15000),
 (2, 2, NULL, 5000),
 (3, NULL, 2, 3000);
-
+ALTER TABLE conversations
+ADD COLUMN visible_to_p1 BOOLEAN DEFAULT TRUE, 
+ADD COLUMN visible_to_p2 BOOLEAN DEFAULT TRUE;
 SET FOREIGN_KEY_CHECKS = 1;
