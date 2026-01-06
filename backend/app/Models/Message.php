@@ -11,22 +11,13 @@ class Message extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
     protected $keyType = 'int';
+    public $timestamps = false;
 
     protected $fillable = [
         'sender_id',
-        'receiver_id',
-        'product_id',
-        'order_item_id',
-        'message',
-        'is_read',
+        'conversation_id',
+        'message',  
         'created_at',
     ];
-    public function sender()
-    {
-        return $this->belongsTo(User::class, 'sender_id');
-    }
-    public function receiver()
-    {
-        return $this->belongsTo(User::class, 'receiver_id');
-    }
+    
 }

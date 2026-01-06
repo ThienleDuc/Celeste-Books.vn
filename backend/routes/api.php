@@ -21,22 +21,49 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 
 });
-// Message Routes
-//all contacts 
-Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'getContactList']);
-//show detail messages
-Route::get('message/{id}', [\App\Http\Controllers\MessageController::class, 'getMessage']);
-//send message
-Route::post('message/{id}', [\App\Http\Controllers\MessageController::class, 'sendMessage']);
-//xóa message
-Route::delete('message/{id}', [\App\Http\Controllers\MessageController::class, 'deleteMessage']);
+// ==================== MESSAGE ROUTES ====================
+Route::prefix('messages')->group(function () {
+    //show contact list of messages
+    Route::get('/', [\App\Http\Controllers\MessageController::class, 'getMessage']);
+    //show detail messages
+    Route::get('/{id}', [\App\Http\Controllers\MessageController::class, 'getDetailMessage']);
+    //create message
+    Route::post('/', [\App\Http\Controllers\MessageController::class, 'createMessage']);
+    //update message
+    Route::put('/{id}', [\App\Http\Controllers\MessageController::class, 'updateMessage']);
+    //delete message
+    Route::delete('/{id}', [\App\Http\Controllers\MessageController::class, 'deleteMessage']);
+});
+
+// ==================== CONVERSATION NOTIFICATION ====================
+Route::prefix('conversationNotifications')->group(function () {
+    //show all notifications
+    Route::get('/', [\App\Http\Controllers\ConversationNotificationController::class, 'getConversationNotifications']);
+    //show detail notification
+    Route::get('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'getConversationNotificationDetail']);
+    //create new notification 
+    Route::post('/', [\App\Http\Controllers\ConversationNotificationController::class, 'createConversationNotification']);
+    //update notification
+    Route::put('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'updateConversationNotification']);
+    //delete notification
+    Route::delete('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'deleteConversationNotification']);
+});
 
 
-//notification
-//show all notifications
-Route::get('/notifications', [\App\Http\Controllers\MessageNotificationController::class, 'getNotifications']);
-//xem chi tiết thông báo
-Route::get('/notification/{id}', [\App\Http\Controllers\MessageNotificationController::class, 'getNotificationDetail']);
+// ==================== CONVERSATION ====================
+Route::prefix('conversations')->group(function () {
+    //show all conversations
+    Route::get('/', [\App\Http\Controllers\ConversationController::class, 'getConversations']);
+    //show detail conversation
+    Route::get('/{id}', [\App\Http\Controllers\ConversationController::class, 'getConversationDetail']);
+    //update conversation
+    Route::put('/{id}', [\App\Http\Controllers\ConversationController::class, 'updateConversation']);
+    //delete conversation
+    Route::delete('/{id}', [\App\Http\Controllers\ConversationController::class, 'deleteConversation']);    
+    //create conversation
+    Route::post('/', [\App\Http\Controllers\ConversationController::class, 'createConversation']);
+   
+});
 
 // ==================== ROLE ROUTES ====================
 Route::prefix('roles')->group(function () {
