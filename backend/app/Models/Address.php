@@ -26,5 +26,20 @@ class Address extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+        public function commune()
+    {
+        return $this->belongsTo(Commune::class, 'commune_id', 'id');
+    }
+     public function province()
+    {
+        return $this->hasOneThrough(
+            Province::class,
+            Commune::class,
+            'id', // Foreign key on communes table
+            'id', // Foreign key on provinces table
+            'commune_id', // Local key on addresses table
+            'province_id' // Local key on communes table
+        );
+    }
      public $timestamps = false;
 }

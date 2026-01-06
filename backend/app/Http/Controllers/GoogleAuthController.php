@@ -68,7 +68,7 @@ class GoogleAuthController extends Controller
                         'email'         => $email,
                         'password_hash' => null,
                         'is_active'     => true,
-                        'role_id'       => "U",
+                        'role_id'       => "C",
                     ]);
 
                     // Tạo Profile
@@ -121,7 +121,7 @@ class GoogleAuthController extends Controller
     // Luôn pad đủ 3 chữ số
     $paddedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
-    return 'U' . $paddedNumber;
+    return 'C' . $paddedNumber;
 }
 
 }
