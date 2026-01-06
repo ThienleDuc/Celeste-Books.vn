@@ -38,7 +38,7 @@ CREATE TABLE role_per (
 -- 4. Bảng users (Người dùng)
 CREATE TABLE users (
     id VARCHAR(10) PRIMARY KEY,
-    username VARCHAR(16)  NOT NULL,
+    username VARCHAR(16)  NOT NULL UNIQUE,
     password_hash VARCHAR(255),
     email VARCHAR(255) UNIQUE,
     is_active BOOLEAN DEFAULT TRUE,
@@ -463,7 +463,7 @@ CREATE TABLE messages (
 CREATE TABLE conversation_notifications (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
-    user_id VARCHAR(10) NOT NULL,
+    user_id VARCHAR(10),
 
     type ENUM('new', 'update', 'recall', 'system') DEFAULT 'new',
 
@@ -941,7 +941,5 @@ INSERT INTO order_discount_details (order_id, product_discount_id, shipping_disc
 (1, 1, 1, 15000),
 (2, 2, NULL, 5000),
 (3, NULL, 2, 3000);
-ALTER TABLE conversations
-ADD COLUMN visible_to_p1 BOOLEAN DEFAULT TRUE, 
-ADD COLUMN visible_to_p2 BOOLEAN DEFAULT TRUE;
+
 SET FOREIGN_KEY_CHECKS = 1;
