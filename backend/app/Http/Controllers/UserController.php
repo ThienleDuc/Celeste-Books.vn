@@ -72,8 +72,12 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with(['role', 'profile', 'addresses', 'notifications'])
-                    ->find($id);
+        $user = User::with([
+            'role', 
+            'profile',
+            'addresses.commune.province', // Load commune và province
+            'notifications'
+        ])->find($id);
         
         if (!$user) {
             return response()->json([
@@ -82,11 +86,29 @@ class UserController extends Controller
             ], 404);
         }
         
+        // Format lại dữ liệu địa chỉ để hiển thị rõ tỉnh và xã phường
+        $formattedUser = $user->toArray();
+        
+        if (isset($formattedUser['addresses'])) {
+            foreach ($formattedUser['addresses'] as &$address) {
+                if (isset($address['commune'])) {
+                    $address['province_name'] = $address['commune']['province']['name'] ?? null;
+                    $address['province_code'] = $address['commune']['province']['code'] ?? null;
+                    $address['commune_name'] = $address['commune']['name'] ?? null;
+                    $address['commune_code'] = $address['commune']['code'] ?? null;
+                    
+                    // Xóa dữ liệu commune để tránh trùng lặp
+                    unset($address['commune']);
+                }
+            }
+        }
+        
         return response()->json([
             'success' => true,
-            'data' => $user
+            'data' => $formattedUser
         ]);
     }
+    
     
     /**
      * Tạo ID mới dựa trên role
@@ -299,7 +321,7 @@ class UserController extends Controller
             }
             
             // Tạo thông báo hệ thống
-            $this->createUserNotification($user->id, 'system', 'Thông tin'+user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
+            $this->createUserNotification($user->id, 'system', 'Thông tin'+$user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
             
             DB::commit();
             

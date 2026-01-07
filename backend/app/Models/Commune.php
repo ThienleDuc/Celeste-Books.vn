@@ -18,4 +18,13 @@ class Commune extends Model
         'name',
         'code',
     ];
+     public function addresses()
+    {
+        return $this->hasMany(Address::class, 'commune_id', 'id');
+    }
+      public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id', 'id');
+    }
+
 }
