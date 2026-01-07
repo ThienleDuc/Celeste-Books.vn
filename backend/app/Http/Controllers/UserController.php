@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Address;
-use App\Models\Role;
 use App\Models\UserNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use App\Models\OrderItem;
 
 class UserController extends Controller
 {
@@ -70,8 +69,12 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with(['role', 'profile', 'addresses', 'notifications'])
-                    ->find($id);
+        $user = User::with([
+            'role', 
+            'profile',
+            'addresses.commune.province', // Load commune và province
+            'notifications'
+        ])->find($id);
         
         if (!$user) {
             return response()->json([
@@ -80,11 +83,29 @@ class UserController extends Controller
             ], 404);
         }
         
+        // Format lại dữ liệu địa chỉ để hiển thị rõ tỉnh và xã phường
+        $formattedUser = $user->toArray();
+        
+        if (isset($formattedUser['addresses'])) {
+            foreach ($formattedUser['addresses'] as &$address) {
+                if (isset($address['commune'])) {
+                    $address['province_name'] = $address['commune']['province']['name'] ?? null;
+                    $address['province_code'] = $address['commune']['province']['code'] ?? null;
+                    $address['commune_name'] = $address['commune']['name'] ?? null;
+                    $address['commune_code'] = $address['commune']['code'] ?? null;
+                    
+                    // Xóa dữ liệu commune để tránh trùng lặp
+                    unset($address['commune']);
+                }
+            }
+        }
+        
         return response()->json([
             'success' => true,
-            'data' => $user
+            'data' => $formattedUser
         ]);
     }
+    
     
     /**
      * Tạo ID mới dựa trên role
@@ -297,8 +318,8 @@ class UserController extends Controller
             }
             
             // Tạo thông báo hệ thống
-            $this->createUserNotification($user->id, 'system', 'Thông tin'+user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
-            
+            $this->createUserNotification($user->id, 'system', 'Thông tin'+$user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
+
             DB::commit();
             
             return response()->json([
@@ -536,5 +557,72 @@ class UserController extends Controller
             'created_at'=> now(),
             'updated_at'=> now(),
         ]);
+    }
+    
+        public function getPurchasedProducts(Request $request, $id)
+    {
+        try {
+            $user = User::find($id);
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Người dùng không tồn tại'
+                ], 404);
+            }
+            
+            $products = OrderItem::select([
+                    'products.id',
+                    'products.name',
+                    'products.slug',
+                    'products.cover_image',
+                    'products.author',
+                    'product_details.sale_price as price',
+                    'product_details.original_price',
+                    DB::raw('MAX(order_items.created_at) as last_purchased'),
+                    DB::raw('SUM(order_items.quantity) as total_purchased')
+                ])
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->leftJoin('product_details', 'order_items.product_details_id', '=', 'product_details.id')
+                ->where('orders.user_id', $id)
+                ->where('orders.status', '!=', 'cancelled')
+                ->groupBy('products.id', 'products.name', 'products.slug', 'products.cover_image', 
+                        'products.author', 'product_details.sale_price', 'product_details.original_price')
+                ->orderBy('last_purchased', 'desc')
+                ->get()
+                ->map(function ($item) {
+                    // Tính giảm giá
+                    $discount = 0;
+                    if ($item->original_price > 0 && $item->price > 0) {
+                        $discount = round((($item->original_price - $item->price) / $item->original_price) * 100);
+                    }
+                    
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'slug' => $item->slug,
+                        'image' => $item->cover_image,
+                        'author' => $item->author,
+                        'price' => (float) $item->price,
+                        'original_price' => (float) $item->original_price,
+                        'discount_percent' => $discount,
+                        'last_purchased' => $item->last_purchased,
+                        'total_purchased' => (int) $item->total_purchased
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $products
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi server',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -10,7 +10,10 @@ use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ShoppingCartController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductDetailController;
+use App\Http\Controllers\ProductNotificationController;
+use App\Http\Controllers\StatisticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +23,50 @@ use App\Http\Controllers\ShoppingCartController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+
+});
+// ==================== MESSAGE ROUTES ====================
+Route::prefix('messages')->group(function () {
+    //show contact list of messages
+    Route::get('/', [\App\Http\Controllers\MessageController::class, 'getMessage']);
+    //show detail messages
+    Route::get('/{id}', [\App\Http\Controllers\MessageController::class, 'getDetailMessage']);
+    //create message
+    Route::post('/', [\App\Http\Controllers\MessageController::class, 'createMessage']);
+    //update message
+    Route::put('/{id}', [\App\Http\Controllers\MessageController::class, 'updateMessage']);
+    //delete message
+    Route::delete('/{id}', [\App\Http\Controllers\MessageController::class, 'deleteMessage']);
+});
+
+// ==================== CONVERSATION NOTIFICATION ====================
+Route::prefix('conversationNotifications')->group(function () {
+    //show all notifications
+    Route::get('/', [\App\Http\Controllers\ConversationNotificationController::class, 'getConversationNotifications']);
+    //show detail notification
+    Route::get('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'getConversationNotificationDetail']);
+    //create new notification
+    Route::post('/', [\App\Http\Controllers\ConversationNotificationController::class, 'createConversationNotification']);
+    //update notification
+    Route::put('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'updateConversationNotification']);
+    //delete notification
+    Route::delete('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'deleteConversationNotification']);
+});
+
+
+// ==================== CONVERSATION ====================
+Route::prefix('conversations')->group(function () {
+    //show all conversations
+    Route::get('/', [\App\Http\Controllers\ConversationController::class, 'getConversations']);
+    //show detail conversation
+    Route::get('/{id}', [\App\Http\Controllers\ConversationController::class, 'getConversationDetail']);
+    //update conversation
+    Route::put('/{id}', [\App\Http\Controllers\ConversationController::class, 'updateConversation']);
+    //delete conversation
+    Route::delete('/{id}', [\App\Http\Controllers\ConversationController::class, 'deleteConversation']);
+    //create conversation
+    Route::post('/', [\App\Http\Controllers\ConversationController::class, 'createConversation']);
+
 });
 
 // ==================== ROLE ROUTES ====================
@@ -100,6 +147,8 @@ Route::prefix('users')->group(function () {
     Route::prefix('{id}')->group(function () {
         Route::get('/', [UserController::class, 'show'])
             ->where('id', '[0-9]+');
+        Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
+        Route::get('/', [UserController::class, 'show']);
         Route::put('/', [UserController::class, 'updateBasicInfo']);
         Route::put('/update', [UserController::class, 'update']);
         Route::post('/avatar', [UserController::class, 'uploadAvatar']);
@@ -127,6 +176,16 @@ Route::prefix('notifications')->group(function () {
         Route::delete('/', [UserNotificationController::class, 'destroy'])
             ->where('id', '[0-9]+');
     });
+
+    Route::prefix('products')->group(function () {
+        Route::get('/', [ProductNotificationController::class, 'index']);
+        route::post('/', [ProductNotificationController::class, 'store']);
+        Route::delete('/{id}', [ProductNotificationController::class, 'destroy'])
+            ->where('id', '[0-9]+');
+        Route::delete('/', [ProductNotificationController::class, 'destroyMultiple']);
+        Route::delete('/all/clear', [ProductNotificationController::class, 'destroyAll']);
+    });
+
 });
 
 // ==================== CATEGORY ROUTES ====================
@@ -144,17 +203,44 @@ Route::prefix('categories')->group(function () {
 
 // ==================== PRODUCT ROUTES ====================
 Route::prefix('products')->group(function () {
+    // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
     Route::get('/', [ProductController::class, 'index']);
+
+    // Thêm sản phẩm mới
     Route::post('/', [ProductController::class, 'store']);
-    Route::get('/{id}', [ProductController::class, 'show'])
-        ->where('id', '[0-9]+');
+
+    // Cập nhật sản phẩm bằng ID
     Route::put('/{id}', [ProductController::class, 'update'])
         ->where('id', '[0-9]+');
+
+    // Xóa sản phẩm bằng ID
     Route::delete('/{id}', [ProductController::class, 'destroy'])
         ->where('id', '[0-9]+');
-    Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
+
+    // Tìm kiếm sản phẩm (endpoint riêng cho search)
+    Route::get('/search', [ProductController::class, 'searchByName']);
+
+    // Sắp xếp sản phẩm theo các tiêu chí
+    Route::get('/sort', [ProductController::class, 'sort']);
+});
+
+// ================= PRODUCT DETAILS ROUTES =================
+Route::prefix('product-details')->group(function () {
+    // Lấy danh sách chi tiết sản phẩm (có thể lọc theo product_id, product_type)
+    Route::get('/', [ProductDetailController::class, 'index']);
+
+    // Thêm chi tiết sản phẩm mới
+    Route::post('/', [ProductDetailController::class, 'store']);
+
+    // Cập nhật chi tiết sản phẩm theo ID
+    Route::put('/{id}', [ProductDetailController::class, 'update'])
         ->where('id', '[0-9]+');
-    Route::get('/filter-by-type', [ProductController::class, 'filterByType']);
+
+    // Xóa chi tiết sản phẩm theo ID
+    Route::delete('/{id}', [ProductDetailController::class, 'destroy'])
+        ->where('id', '[0-9]+');
+    Route::get('/best-sellers', [ProductController::class, 'getBestSellers']);
+
 });
 
 // ==================== ADDRESS ROUTES ====================
@@ -178,8 +264,41 @@ Route::prefix('addresses')->group(function () {
         ->where('id', '[0-9]+');
 });
 
-// ==================== SHOPPING CART ROUTES ====================
-Route::prefix('shopping-carts')->group(function () {
-    // Thêm sản phẩm vào giỏ hàng
-    Route::post('/add', [ShoppingCartController::class, 'addToCart']);
+//==================REVIEW ROUTES ===================
+Route::prefix('review')->group(function () {
+    //show contact list of messages
+    Route::get('/', [\App\Http\Controllers\ReviewController::class, 'getReviews']);
+    //show detail messages
+    Route::get('/{id}', [\App\Http\Controllers\ReviewController::class, 'getDetailReview']);
+    //create message
+    Route::post('/', [\App\Http\Controllers\ReviewController::class, 'createReview']);
+    //update message
+    Route::put('/{id}', [\App\Http\Controllers\ReviewController::class, 'updateReview']);
+    //delete message
+    Route::delete('/{id}', [\App\Http\Controllers\ReviewController::class, 'deleteReview']);
+});
+//==================REVIEW ROUTES ===================
+Route::prefix('review-image')->group(function () {
+    //show contact list of messages
+    Route::get('/', [\App\Http\Controllers\ReviewImageController::class, 'getReviewImages']);
+    //show detail messages
+    Route::get('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'getDetailReviewImage']);
+    //create message
+    Route::post('/', [\App\Http\Controllers\ReviewImageController::class, 'createReviewImage']);
+    //update message
+    Route::put('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'updateReviewImage']);
+    //delete message
+    Route::delete('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'deleteReviewImage']);
+});
+
+
+Route::prefix('oders')->group(function() {
+    Route::get('/all-purchases', [OrderController::class, 'getAllPurchasedProducts']);
+});
+// ==================== STATISTICS ROUTES ====================
+Route::prefix('statistics')->group(function () {
+    // Route xử lý cả tổng quan và chi tiết
+    Route::get('/', [StatisticsController::class, 'index']);
+    // Route xuất báo cáo
+    Route::get('/export', [StatisticsController::class, 'export']);
 });

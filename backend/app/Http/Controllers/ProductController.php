@@ -3,85 +3,102 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\ProductDetail;
 use App\Models\ProductImage;
-use App\Models\ProductNotification;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
+use App\Models\OrderItem;
+use Illuminate\Support\Facades\Log;
+
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    // Helper method để trả về JSON response
-    private function jsonResponse($data = [], $message = '', $status = 200, $errors = null)
+    protected $notificationController;
+
+    public function __construct()
     {
-        $response = [
-            'success' => $status >= 200 && $status < 300,
-            'message' => $message,
-            'data' => $data
-        ];
-
-        if ($errors) {
-            $response['errors'] = $errors;
-        }
-
-        return response()->json($response, $status);
+        $this->notificationController = new \App\Http\Controllers\ProductNotificationController();
     }
 
     // 1. LẤY DANH SÁCH SẢN PHẨM
     public function index(Request $request)
     {
         try {
-            $query = Product::with(['detail', 'categories', 'images']);
+            $query = DB::table('products as p')
+                // JOIN ảnh chính
+                ->leftJoin('product_images as pi', function ($join) {
+                    $join->on('pi.product_id', '=', 'p.id')
+                        ->where('pi.is_primary', 1);
+                })
+                // JOIN product_details lấy giá thấp nhất
+                ->leftJoin('product_details as pd', function ($join) {
+                    $join->on('pd.product_id', '=', 'p.id')
+                        ->whereRaw(
+                            'pd.sale_price = (
+                                SELECT pd2.sale_price
+                                FROM product_details pd2
+                                WHERE pd2.product_id = p.id
+                                ORDER BY pd2.sale_price ASC
+                                LIMIT 1
+                            )'
+                        );
+                })
+                ->where('p.status', 1);
 
-            // Lọc theo trạng thái
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
+            /* ===== SORT (WHITELIST) ===== */
+            $sortable = [
+                'id'               => 'p.id',
+                'name'             => 'p.name',
+                'rating'           => 'p.rating',
+                'views'            => 'p.views',
+                'purchase_count'   => 'p.purchase_count',
+                'sale_price'       => 'pd.sale_price',
+                'created_at'       => 'p.created_at',
+            ];
+
+            $sortBy    = $request->get('sort_by', 'p.id');
+            $sortOrder = strtolower($request->get('sort_order')) === 'asc'
+                ? 'asc'
+                : 'desc';
+
+            if (isset($sortable[$sortBy])) {
+                $query->orderBy($sortable[$sortBy], $sortOrder);
+            } else {
+                $query->orderBy('p.id', 'desc');
             }
 
-            // Lọc theo ngôn ngữ
-            if ($request->has('language')) {
-                $query->where('language', $request->language);
-            }
+            /* ===== SELECT ===== */
+            $query->select([
+                'p.id',
+                'p.name',
+                'p.slug',
+                DB::raw('COALESCE(pi.image_url, "") as image'),
+                'pd.original_price',
+                'pd.sale_price',
+                'p.rating',
+                'p.views',
+                'p.purchase_count',
+                'p.created_at',
+            ]);
 
-            // Tìm kiếm theo tên
-            if ($request->has('search')) {
-                $query->where('name', 'like', '%' . $request->search . '%');
-            }
-
-            // Sắp xếp
-            $sortBy = $request->get('sort_by', 'created_at');
-            $sortOrder = $request->get('sort_order', 'desc');
-            $query->orderBy($sortBy, $sortOrder);
-
-            // Phân trang (nếu cần)
-            $perPage = $request->get('per_page', 20);
+            /* ===== PAGINATION ===== */
+            $perPage  = (int) $request->get('per_page', 20);
             $products = $query->paginate($perPage);
 
-            return $this->jsonResponse($products, 'Lấy danh sách sản phẩm thành công');
-        } catch (\Exception $e) {
-            return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
-        }
-    }
+            return response()->json([
+                'status'  => true,
+                'message' => 'Lấy danh sách sản phẩm thành công',
+                'data'    => $products
+            ], 200);
 
-    // 2. LẤY CHI TIẾT SẢN PHẨM
-    public function show($id)
-    {
-        try {
-            $product = Product::with(['detail', 'categories', 'images'])->find($id);
-
-            if (!$product) {
-                return $this->jsonResponse([], 'Không tìm thấy sản phẩm', 404);
-            }
-
-            // Tăng lượt xem
-            $product->increment('Views');
-
-            return $this->jsonResponse($product, 'Lấy chi tiết sản phẩm thành công');
-        } catch (\Exception $e) {
-            return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -100,7 +117,7 @@ class ProductController extends Controller
                 ->where('language', $product->language)
                 ->inRandomOrder()
                 ->limit(4)
-                ->get(['id', 'name', 'cover_image', 'slug']);
+                ->get(['id', 'name', 'slug']);
 
             return $this->jsonResponse($suggests, 'Lấy sản phẩm gợi ý thành công');
         } catch (\Exception $e) {
@@ -109,348 +126,714 @@ class ProductController extends Controller
     }
 
     // 4. TẠO SẢN PHẨM MỚI
+    // Thêm mới sản phẩm
+    // ý tưởng: thêm 1 danh sách images, categories vào sản phẩm,
+    // mô trả sản phẩm là 1 file được load từ thiết bị
     public function store(Request $request)
     {
-        // Validate dữ liệu
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'author' => 'nullable|string|max:100',
-            'publisher' => 'nullable|string|max:100',
-            'publication_year' => 'nullable|integer|min:1900|max:' . date('Y'),
-            'cover_image' => 'nullable|url',
-            'language' => 'nullable|string|max:50',
-            'status' => 'nullable|integer|in:0,1',
-
-            // Product detail validation
-            'product_type' => 'required|string',
-            'original_price' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0|lte:original_price',
-            'stock' => 'nullable|integer|min:0',
-            'file_url' => 'nullable|url',
-            'weight' => 'nullable|numeric|min:0',
-            'length' => 'nullable|numeric|min:0',
-            'width' => 'nullable|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|exists:categories,id',
-
-            'images' => 'nullable|array',
-            'images.*.url' => 'required|url',
-            'images.*.is_primary' => 'boolean',
-            'images.*.sort_order' => 'integer'
+        $request->validate([
+            'name'              => 'required|string|max:255',
+            'description_file'  => 'nullable|file|mimes:pdf,doc,docx,txt|max:5120',
+            'author'            => 'nullable|string|max:255',
+            'publisher'         => 'nullable|string|max:255',
+            'publication_year'  => 'nullable|integer',
+            'language'          => 'nullable|string|max:50',
+            'status'            => 'required|boolean',
+            'images'            => 'nullable|array',
+            'images.*'          => 'required|url|max:500',
+            'categories'        => 'nullable|array',
+            'categories.*'      => 'integer|exists:categories,id',
         ]);
 
-        if ($validator->fails()) {
-            return $this->jsonResponse([], 'Dữ liệu không hợp lệ', 422, $validator->errors());
-        }
-
+        // ===== CHECK TÊN SÁCH TRÙNG =====
         $slug = Str::slug($request->name);
 
-        // Kiểm tra trùng lặp
-        if (Product::where('name', $request->name)->orWhere('slug', $slug)->exists()) {
-            return $this->jsonResponse([], 'Sản phẩm đã tồn tại', 409);
+        if (Product::where('slug', $slug)->exists()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Sách có tên tương tự đã tồn tại'
+            ], 409);
         }
 
         DB::beginTransaction();
+        $descriptionPath = null;
+
         try {
-            $productId = (Product::max('id') ?? 0) + 1;
+            if ($request->hasFile('description_file')) {
+                $file = $request->file('description_file');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $descriptionPath = $file->storeAs('store', $fileName, 'public');
+            }
 
-            // Tạo sản phẩm chính
             $product = Product::create([
-                'id' => $productId,
-                'name' => $request->name,
-                'slug' => $slug,
-                'description' => $request->description,
-                'author' => $request->author,
-                'publisher' => $request->publisher,
-                'publication_year' => $request->publication_year,
-                'cover_image' => $request->cover_image,
-                'language' => $request->language ?? 'Tiếng Việt',
-                'status' => $request->status ?? 1,
-                'Views' => 0
+                'name'              => $request->name,
+                'slug'              => $slug,
+                'description'       => $descriptionPath,
+                'author'            => $request->author,
+                'publisher'         => $request->publisher,
+                'publication_year'  => $request->publication_year,
+                'language'          => $request->language,
+                'status'            => $request->status,
+                'views'             => 0,
+                'purchase_count'    => 0,
+                'rating'            => 5.0,
             ]);
 
-            // Tạo chi tiết sản phẩm
-            ProductDetail::create([
-                'id' => (ProductDetail::max('id') ?? 0) + 1,
-                'product_id' => $productId,
-                'product_type' => $request->product_type,
-                'sku' => $request->sku ?? 'SKU-' . time() . '-' . $productId,
-                'original_price' => $request->original_price,
-                'sale_price' => $request->sale_price,
-                'stock' => $request->stock ?? 0,
-                'file_url' => $request->file_url,
-                'weight' => $request->weight,
-                'length' => $request->length,
-                'width' => $request->width,
-                'height' => $request->height,
-            ]);
-
-            // Thêm danh mục
-            if ($request->category_ids && is_array($request->category_ids)) {
-                foreach ($request->category_ids as $catId) {
-                    ProductCategory::create([
-                        'product_id' => $productId,
-                        'category_id' => $catId
-                    ]);
-                }
+            if ($request->filled('images')) {
+                ProductImage::syncImages($product->id, $request->images);
             }
 
-            // Thêm hình ảnh phụ
-            if ($request->images && is_array($request->images)) {
-                foreach ($request->images as $img) {
-                    ProductImage::create([
-                        'product_id' => $productId,
-                        'image_url' => $img['url'],
-                        'is_primary' => $img['is_primary'] ?? false,
-                        'sort_order' => $img['sort_order'] ?? 0
-                    ]);
-                }
+            if ($request->filled('categories')) {
+                ProductCategory::syncCategories($product->id, $request->categories);
             }
-
-            // Thêm thông báo cho sản phẩm mới
-            $notificationId = (ProductNotification::max('id') ?? 0) + 1;
-            ProductNotification::create([
-                'id' => $notificationId,
-                'user_id' => $request->admin_id ?? 'U01',
-                'product_id' => $productId,
-                'type' => 'promotion',
-                'title' => 'Sản phẩm mới ra mắt',
-                'content' => "Sản phẩm '{$product->name}' vừa được thêm vào cửa hàng.",
-                'is_read' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
 
             DB::commit();
 
-            // Load lại relationships để trả về đầy đủ
-            $product->load(['detail', 'categories', 'images']);
+            $this->notificationController->store(new Request([
+                'user_id'    => 'A01', // TODO: Thay đổi sau khi có thông tin đăng nhập
+                'product_id' => $product->id,
+                'type'       => 'create',
+                'title'      => 'Thêm sản phẩm mới',
+                'content'    => sprintf(
+                    'Đã thêm sản phẩm mới: "%s" (ID: %d)',
+                    $product->name,
+                    $product->id
+                ),
+            ]));
 
-            return $this->jsonResponse($product, 'Thêm sản phẩm thành công', 201);
-        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => true,
+                'message' => 'Thêm sản phẩm thành công',
+                'data'    => $product->load(['categories', 'images'])
+            ], 201);
+
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return $this->jsonResponse([], 'Thêm sản phẩm thất bại', 500, $e->getMessage());
+
+            if ($descriptionPath) {
+                Storage::disk('public')->delete($descriptionPath);
+            }
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 
-    // 5. CẬP NHẬT SẢN PHẨM
+    // Cập nhật sản phẩm
     public function update(Request $request, $id)
     {
+        // 1. Kiểm tra tồn tại sản phẩm
         $product = Product::find($id);
-
         if (!$product) {
-            return $this->jsonResponse([], 'Không tìm thấy sản phẩm', 404);
+            return response()->json([
+                'status' => false,
+                'message' => 'Không tìm thấy sản phẩm'
+            ], 404);
         }
 
-        // Validate dữ liệu
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'author' => 'nullable|string|max:100',
-            'publisher' => 'nullable|string|max:100',
-            'publication_year' => 'nullable|integer|min:1900|max:' . date('Y'),
-            'cover_image' => 'nullable|url',
-            'language' => 'nullable|string|max:50',
-            'status' => 'nullable|integer|in:0,1',
-
-            'product_type' => 'nullable|string',
-            'original_price' => 'nullable|numeric|min:0',
-            'sale_price' => 'nullable|numeric|min:0',
-            'stock' => 'nullable|integer|min:0',
-
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|exists:categories,id',
-
-            'images' => 'nullable|array',
-            'images.*.url' => 'required|url',
-            'images.*.is_primary' => 'boolean',
-            'images.*.sort_order' => 'integer'
+        // 2. Validate dữ liệu
+        $request->validate([
+            'name'              => 'sometimes|string|max:255',
+            'description_file'  => 'nullable|file|mimes:pdf,doc,docx,txt|max:5120',
+            'author'            => 'nullable|string|max:255',
+            'publisher'         => 'nullable|string|max:255',
+            'publication_year'  => 'nullable|integer',
+            'language'          => 'nullable|string|max:50',
+            'status'            => 'sometimes|boolean',
+            'images'            => 'nullable|array',
+            'images.*'          => 'required|url|max:500',
+            'categories'        => 'nullable|array',
+            'categories.*'      => 'integer|exists:categories,id',
         ]);
 
-        if ($validator->fails()) {
-            return $this->jsonResponse([], 'Dữ liệu không hợp lệ', 422, $validator->errors());
-        }
-
-        $slug = Str::slug($request->name);
-
-        // Kiểm tra trùng tên/slug với sản phẩm khác
-        $exists = Product::where('id', '!=', $id)
-            ->where(function ($q) use ($request, $slug) {
-                $q->where('name', $request->name)
-                  ->orWhere('slug', $slug);
-            })
-            ->exists();
-
-        if ($exists) {
-            return $this->jsonResponse([], 'Tên sản phẩm đã tồn tại', 409);
-        }
-
         DB::beginTransaction();
+        $descriptionPath = $product->description; // giữ mặc định file cũ
+
         try {
-            // Lưu giá cũ để so sánh
-            $oldPrice = $product->detail->sale_price ?? 0;
-            $oldStock = $detail->stock ?? 0;
-            $oldStatus = $product->status;
+            // 3. Check trùng tên sách (trừ chính sản phẩm này)
+            if ($request->filled('name')) {
+                $slug = Str::slug($request->name);
+                $exists = Product::where('slug', $slug)
+                                ->where('id', '!=', $id)
+                                ->exists();
 
-            // Cập nhật sản phẩm chính
-            $product->update([
-                'name' => $request->name,
-                'slug' => $slug,
-                'description' => $request->description,
-                'author' => $request->author,
-                'publisher' => $request->publisher,
-                'publication_year' => $request->publication_year,
-                'cover_image' => $request->cover_image,
-                'language' => $request->language ?? $product->language,
-                'status' => $request->status ?? $product->status,
-            ]);
-
-            // Cập nhật chi tiết sản phẩm
-            $detail = ProductDetail::where('product_id', $id)->first();
-            if ($detail) {
-                $detail->update([
-                    'product_type' => $request->product_type ?? $detail->product_type,
-                    'sku' => $request->sku ?? $detail->sku,
-                    'original_price' => $request->original_price ?? $detail->original_price,
-                    'sale_price' => $request->sale_price ?? $detail->sale_price,
-                    'stock' => $request->stock ?? $detail->stock,
-                    'file_url' => $request->file_url ?? $detail->file_url,
-                    'weight' => $request->weight ?? $detail->weight,
-                    'length' => $request->length ?? $detail->length,
-                    'width' => $request->width ?? $detail->width,
-                    'height' => $request->height ?? $detail->height,
-                ]);
-
-                // Tạo thông báo nếu giá giảm (price_drop)
-                $newPrice = $detail->sale_price;
-                if ($newPrice < $oldPrice) {
-                    ProductNotification::create([
-                        'id' => (ProductNotification::max('id') ?? 0) + 1,
-                        'user_id' => auth()->id() ?? 'U01', // Nếu có authentication
-                        'product_id' => $id,
-                        'type' => 'price_drop',
-                        'title' => 'Giảm giá cực sốc',
-                        'content' => "Sản phẩm {$product->name} vừa giảm giá từ " . number_format($oldPrice) . " xuống " . number_format($newPrice),
-                        'is_read' => false
-                    ]);
+                if ($exists) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Sách có tên tương tự đã tồn tại'
+                    ], 409);
                 }
 
-                // Tạo thông báo Nhập hàng/Mở bán lại (restock)
-                // Kích hoạt khi stock từ 0 lên > 0 HOẶC status từ ẩn (0) sang hiện (1)
-                if (($oldStock == 0 && $detail->stock > 0) || ($oldStatus == 0 && $product->status == 1)) {
-                    ProductNotification::create([
-                        'id' => (ProductNotification::max('id') ?? 0) + 1,
-                        'user_id' => 'U01',
-                        'product_id' => $id,
-                        'type' => 'restock',
-                        'title' => 'Sản phẩm có hàng lại',
-                        'content' => "Sản phẩm '{$product->name}' đã sẵn sàng để phục vụ khách hàng.",
-                        'is_read' => false
-                    ]);
+                $product->slug = $slug;
+                $product->name = $request->name;
+            }
+
+            // 4. Upload file mới nếu có
+            if ($request->hasFile('description_file')) {
+                $file = $request->file('description_file');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $descriptionPath = $file->storeAs('store', $fileName, 'public');
+
+                // Xóa file cũ nếu có
+                if ($product->description) {
+                    Storage::disk('public')->delete($product->description);
+                }
+
+                $product->description = $descriptionPath;
+            }
+
+            // 5. Update các trường khác
+            $fields = ['author','publisher','publication_year','language','status'];
+            foreach ($fields as $field) {
+                if ($request->filled($field)) {
+                    $product->$field = $request->$field;
                 }
             }
 
-            // Cập nhật danh mục
-            if ($request->has('category_ids')) {
-                ProductCategory::where('product_id', $id)->delete();
-                foreach ($request->category_ids as $catId) {
-                    ProductCategory::create([
-                        'product_id' => $id,
-                        'category_id' => $catId
-                    ]);
-                }
+            $product->save();
+
+            // 6. Update images nếu có
+            if ($request->filled('images')) {
+                ProductImage::syncImages($product->id, $request->images);
             }
 
-            // Cập nhật hình ảnh
-            if ($request->has('images')) {
-                ProductImage::where('product_id', $id)->delete();
-                foreach ($request->images as $img) {
-                    ProductImage::create([
-                        'product_id' => $id,
-                        'image_url' => $img['url'],
-                        'is_primary' => $img['is_primary'] ?? false,
-                        'sort_order' => $img['sort_order'] ?? 0
-                    ]);
-                }
+            // 7. Update categories nếu có
+            if ($request->filled('categories')) {
+                ProductCategory::syncCategories($product->id, $request->categories);
             }
 
             DB::commit();
 
-            // Load lại dữ liệu
-            $product->refresh()->load(['detail', 'categories', 'images']);
+            $this->notificationController->store(new Request([
+                'user_id'    => 'A01', // TODO: Thay đổi sau khi có thông tin đăng nhập
+                'product_id' => $product->id,
+                'type'       => 'update',
+                'title'      => 'Cập nhật sản phẩm',
+                'content'    => sprintf(
+                    'Đã cập nhật sản phẩm: "%s" (ID: %d)',
+                    $product->name,
+                    $product->id
+                ),
+            ]));
 
-            return $this->jsonResponse($product, 'Cập nhật sản phẩm thành công');
-        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => true,
+                'message' => 'Cập nhật sản phẩm thành công',
+                'data'    => $product->load(['categories','images'])
+            ], 200);
+
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return $this->jsonResponse([], 'Cập nhật sản phẩm thất bại', 500, $e->getMessage());
+
+            // Xóa file mới upload nếu có lỗi
+            if ($request->hasFile('description_file') && $descriptionPath) {
+                Storage::disk('public')->delete($descriptionPath);
+            }
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 
     // 6. XÓA SẢN PHẨM
     public function destroy($id)
     {
-        try {
-            $product = Product::find($id);
+        // 1. Kiểm tra tồn tại sản phẩm
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy sản phẩm'
+            ], 404);
+        }
 
-            if (!$product) {
-                return $this->jsonResponse([], 'Không tìm thấy sản phẩm', 404);
+        DB::beginTransaction();
+
+        try {
+            // Thêm notification trước khi xóa (sau bước 1, trước DB::beginTransaction())
+            $this->notificationController->store(new Request([
+                'user_id'    => 'A01', // TODO: Thay đổi sau khi có thông tin đăng nhập
+                'product_id' => $product->id,
+                'type'       => 'delete',
+                'title'      => 'Xóa sản phẩm',
+                'content'    => sprintf(
+                    'Đã xóa sản phẩm: "%s" (ID: %d)',
+                    $product->name,
+                    $product->id
+                ),
+            ]));
+
+            // 2. Xóa file mô tả nếu có
+            if ($product->description) {
+                Storage::disk('public')->delete($product->description);
             }
 
-            // Kiểm tra xem sản phẩm có đơn hàng liên quan không (nếu cần)
-            // $hasOrders = OrderItem::where('product_id', $id)->exists();
-            // if ($hasOrders) {
-            //     return $this->jsonResponse([], 'Không thể xóa sản phẩm đã có đơn hàng', 400);
-            // }
+            // 3. Xóa images liên quan
+            ProductImage::where('product_id', $id)->delete();
 
+            // 4. Xóa categories liên quan
+            ProductCategory::where('product_id', $id)->delete();
+
+            // 5. Xóa sản phẩm
             $product->delete();
 
-            return $this->jsonResponse([], 'Xóa sản phẩm thành công');
-        } catch (\Exception $e) {
-            return $this->jsonResponse([], 'Xóa sản phẩm thất bại', 500, $e->getMessage());
+            DB::commit();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Xóa sản phẩm thành công'
+            ], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 
-    // 7. LỌC SẢN PHẨM THEO LOẠI SÁCH
-    public function filterByType(Request $request)
+     /**
+     * Tìm kiếm sản phẩm theo tên (chỉ tìm theo tên)
+     */
+    public function searchByName(Request $request)
     {
         try {
-            // Lấy giá trị lọc từ query string (ví dụ: ?type=sach-giay)
-            $typeSlug = $request->query('type');
+            $keyword = trim($request->name);
 
-            if (!$typeSlug) {
-                return $this->jsonResponse([], 'Vui lòng cung cấp loại sách cần lọc', 400);
+            $query = DB::table('products as p')
+                ->distinct('p.id')
+                ->leftJoin('product_images as pi', function ($join) {
+                    $join->on('pi.product_id', '=', 'p.id')
+                        ->where('pi.is_primary', 1);
+                })
+                ->leftJoin('product_details as pd', function ($join) {
+                    $join->on('pd.product_id', '=', 'p.id')
+                        ->whereRaw(
+                            'pd.sale_price = (
+                                SELECT pd2.sale_price
+                                FROM product_details pd2
+                                WHERE pd2.product_id = p.id
+                                ORDER BY pd2.sale_price ASC
+                                LIMIT 1
+                            )'
+                        );
+                })
+                ->where('p.status', 1)
+                ->whereRaw('p.name COLLATE utf8mb4_unicode_ci LIKE ?', ['%' . $keyword . '%']);
+
+            /* ===== SELECT ===== */
+            $query->select([
+                'p.id',
+                'p.name',
+                'p.slug',
+                DB::raw('COALESCE(pi.image_url,"") as image'),
+                'pd.original_price',
+                'pd.sale_price',
+                'p.rating',
+                'p.views',
+                'p.purchase_count',
+                'p.created_at',
+            ]);
+
+            /* ===== PAGINATION ===== */
+            $perPage  = (int) $request->get('per_page', 20);
+            $products = $query->paginate($perPage);
+
+            /* ===== LẤY product_types ===== */
+            if ($products->isNotEmpty()) {
+                $productIds = collect($products->items())->pluck('id')->toArray();
+
+                $productTypes = DB::table('product_details')
+                    ->whereIn('product_id', $productIds)
+                    ->select('product_id', 'product_type')
+                    ->get()
+                    ->groupBy('product_id');
+
+                foreach ($products->items() as $product) {
+                    $types = $productTypes->get($product->id, collect())
+                                        ->pluck('product_type')
+                                        ->unique()
+                                        ->values()
+                                        ->toArray();
+                    $product->product_types = $types;
+                }
             }
 
-            // Ánh xạ slug từ URL sang giá trị ENUM trong database (bảng product_details)
-            $typeMap = [
-                'sach-giay' => 'Sách giấy',
-                'sach-dien-tu' => 'Sách điện tử',
+            return response()->json([
+                'status'       => true,
+                'message'      => 'Tìm kiếm theo tên thành công',
+                'data'         => $products->items(),
+                'current_page' => $products->currentPage(),
+                'per_page'     => $products->perPage(),
+                'total'        => $products->total(),
+                'last_page'    => $products->lastPage(),
+                'filters'      => ['search_by_name' => true, 'keyword' => $keyword]
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    protected function filterProductType($query, string $type)
+    {
+        if ($type === 'all') {
+            return $query;
+        }
+
+        if ($type === 'paper') {
+            // Chỉ sản phẩm có ĐÚNG 1 product_detail và là Sách giấy
+            return $query->whereExists(function ($subQuery) {
+                $subQuery->select(DB::raw(1))
+                    ->from('product_details as pd')
+                    ->whereRaw('pd.product_id = p.id')
+                    ->groupBy('pd.product_id')
+                    ->havingRaw('COUNT(*) = 1') // Chỉ có 1 product_detail
+                    ->havingRaw('MAX(pd.product_type) = ?', ['Sách giấy']);
+            });
+
+        } elseif ($type === 'e-book') {
+            // Chỉ sản phẩm có ĐÚNG 1 product_detail và là Sách điện tử
+            return $query->whereExists(function ($subQuery) {
+                $subQuery->select(DB::raw(1))
+                    ->from('product_details as pd')
+                    ->whereRaw('pd.product_id = p.id')
+                    ->groupBy('pd.product_id')
+                    ->havingRaw('COUNT(*) = 1') // Chỉ có 1 product_detail
+                    ->havingRaw('MAX(pd.product_type) = ?', ['Sách điện tử']);
+            });
+
+        } elseif ($type === 'both') {
+            // Chỉ sản phẩm có ĐÚNG 2 product_detail và có cả Sách giấy + Sách điện tử
+            return $query->whereExists(function ($subQuery) {
+                $subQuery->select(DB::raw(1))
+                    ->from('product_details as pd')
+                    ->whereRaw('pd.product_id = p.id')
+                    ->groupBy('pd.product_id')
+                    ->havingRaw('COUNT(*) = 2') // Có đúng 2 product_detail
+                    ->havingRaw('COUNT(DISTINCT pd.product_type) = 2'); // Có cả 2 loại
+            });
+        }
+
+        return $query;
+    }
+
+    protected function filterCategory($query, $categorySlug)
+    {
+        if (!$categorySlug) {
+            return $query;
+        }
+
+        return $query->whereExists(function ($subQuery) use ($categorySlug) {
+            $subQuery->select(DB::raw(1))
+                ->from('product_categories as pc')
+                ->join('categories as c', 'c.id', '=', 'pc.category_id')
+                ->whereRaw('pc.product_id = p.id')
+                ->where('c.slug', $categorySlug);
+        });
+    }
+
+    protected function applyRankingFilter($query, string $ranking)
+    {
+        if ($ranking !== 'all') {
+            // Xác định khoảng thời gian
+            $dateRange = match($ranking) {
+                'day' => [now()->startOfDay(), now()->endOfDay()],
+                'week' => [now()->startOfWeek(), now()->endOfWeek()],
+                'month' => [now()->startOfMonth(), now()->endOfMonth()],
+                'year' => [now()->startOfYear(), now()->endOfYear()],
+                default => null
+            };
+
+            // Subquery cho order_items - chỉ lấy đơn hàng đã giao (delivered)
+            $orderItemsSubquery = DB::table('order_items as oi')
+                ->join('orders as o', 'o.id', '=', 'oi.order_id')
+                ->where('o.status', 'delivered')
+                ->when($dateRange, function ($q) use ($dateRange) {
+                    return $q->whereBetween('o.created_at', $dateRange);
+                })
+                ->select('oi.product_id', DB::raw('COALESCE(SUM(oi.quantity), 0) as total_sold'))
+                ->groupBy('oi.product_id');
+
+            // Subquery cho reviews - chỉ lấy review từ đơn hàng đã giao
+            $reviewSubquery = DB::table('reviews as r')
+                ->join('order_items as oi_rev', 'oi_rev.id', '=', 'r.order_item_id')
+                ->join('orders as o_rev', 'o_rev.id', '=', 'oi_rev.order_id')
+                ->where('o_rev.status', 'delivered')
+                ->when($dateRange, function ($q) use ($dateRange) {
+                    return $q->whereBetween('r.created_at', $dateRange);
+                })
+                ->whereNotNull('r.rating') // Chỉ lấy review có rating
+                ->select('oi_rev.product_id', DB::raw('COALESCE(AVG(r.rating), 0) as avg_rating'))
+                ->groupBy('oi_rev.product_id');
+
+            // Thực hiện join
+            $query->leftJoinSub($orderItemsSubquery, 'oi_stats', function ($join) {
+                $join->on('oi_stats.product_id', '=', 'p.id');
+            })->leftJoinSub($reviewSubquery, 'r_stats', function ($join) {
+                $join->on('r_stats.product_id', '=', 'p.id');
+            });
+
+            // Thêm select - đảm bảo luôn có giá trị mặc định
+            $query->addSelect([
+                DB::raw('COALESCE(oi_stats.total_sold, 0) as total_sold'),
+                DB::raw('COALESCE(r_stats.avg_rating, 0) as avg_rating')
+            ]);
+        }
+
+        return $query;
+    }
+
+    public function sort(Request $request)
+    {
+        try {
+            $query = DB::table('products as p')
+                ->distinct('p.id')
+                ->leftJoin('product_images as pi', function ($join) {
+                    $join->on('pi.product_id', '=', 'p.id')
+                        ->where('pi.is_primary', 1);
+                })
+                ->leftJoin('product_details as pd', function ($join) {
+                    $join->on('pd.product_id', '=', 'p.id')
+                        ->whereRaw(
+                            'pd.sale_price = (
+                                SELECT pd2.sale_price
+                                FROM product_details pd2
+                                WHERE pd2.product_id = p.id
+                                ORDER BY pd2.sale_price ASC
+                                LIMIT 1
+                            )'
+                        );
+                })
+                ->leftJoin('product_categories as pc', 'pc.product_id', '=', 'p.id')
+                ->leftJoin('categories as cat', 'cat.id', '=', 'pc.category_id')
+                ->where('p.status', 1);
+
+            /* ===== FILTER THEO PRODUCT_TYPE ===== */
+            $productType = $request->get('product_type', 'all');
+            $query = $this->filterProductType($query, $productType);
+
+            /* ===== FILTER THEO CATEGORY ===== */
+            $categorySlug = $request->get('category_slug');
+            $query = $this->filterCategory($query, $categorySlug);
+
+            /* ===== ÁP DỤNG RANKING FILTER ===== */
+            $ranking = $request->get('ranking', 'all');
+            $query = $this->applyRankingFilter($query, $ranking);
+
+            /* ===== SORT ===== */
+            $sortable = [
+                'id'               => 'p.id',
+                'name'             => 'p.name',
+                'rating'           => 'p.rating',
+                'views'            => 'p.views',
+                'purchase_count'   => 'p.purchase_count',
+                'sale_price'       => 'pd.sale_price',
+                'created_at'       => 'p.created_at',
             ];
 
-            if (!isset($typeMap[$typeSlug])) {
-                return $this->jsonResponse([], 'Loại sách không hợp lệ', 400);
+            $sortBy    = $request->get('sort_by', 'p.id');
+            $sortOrder = strtolower($request->get('sort_order')) === 'asc' ? 'asc' : 'desc';
+
+            // Nếu có ranking, sort theo total_sold và avg_rating
+            if ($ranking !== 'all') {
+                $query->orderByDesc('total_sold')
+                    ->orderByDesc('avg_rating')
+                    ->orderByDesc('p.created_at');
+            } else {
+                // Sort thông thường
+                if (isset($sortable[$sortBy])) {
+                    $query->orderBy($sortable[$sortBy], $sortOrder);
+                } else {
+                    $query->orderBy('p.id', 'desc');
+                }
             }
 
-            $typeName = $typeMap[$typeSlug];
+            /* ===== SELECT ===== */
+            $selectFields = [
+                'p.id',
+                'p.name',
+                'p.slug',
+                DB::raw('COALESCE(pi.image_url,"") as image'),
+                'pd.original_price',
+                'pd.sale_price',
+                'p.rating',
+                'p.views',
+                'p.purchase_count',
+                'p.created_at',
+            ];
 
-            $products = Product::whereHas('detail', function ($query) use ($typeName) {
-                $query->where('product_type', $typeName);
-            })
-            ->with(['detail', 'images', 'categories'])
-            ->where('status', 1)
-            ->get();
+            // Nếu có ranking, thêm các trường ranking
+            if ($ranking !== 'all') {
+                $selectFields[] = DB::raw('COALESCE(oi_stats.total_sold, 0) as total_sold');
+                $selectFields[] = DB::raw('COALESCE(r_stats.avg_rating, 0) as avg_rating');
+            }
 
-            return $this->jsonResponse([
-                'count' => $products->count(),
-                'items' => $products
-            ], "Lấy danh sách {$typeName} thành công");
+            $query->select($selectFields);
+
+            /* ===== PAGINATION ===== */
+            $perPage  = (int) $request->get('per_page', 20);
+            $products = $query->paginate($perPage);
+
+            /* ===== LẤY product_types ===== */
+            if ($products->isNotEmpty()) {
+                $productIds = collect($products->items())->pluck('id')->toArray();
+
+                $productTypes = DB::table('product_details')
+                    ->whereIn('product_id', $productIds)
+                    ->select('product_id', 'product_type')
+                    ->get()
+                    ->groupBy('product_id');
+
+                foreach ($products->items() as $product) {
+                    $types = $productTypes->get($product->id, collect())
+                                        ->pluck('product_type')
+                                        ->unique()
+                                        ->values()
+                                        ->toArray();
+                    $product->product_types = $types;
+                }
+            }
+
+            return response()->json([
+                'status'       => true,
+                'message'      => 'Sắp xếp sản phẩm thành công',
+                'data'         => $products->items(),
+                'current_page' => $products->currentPage(),
+                'per_page'     => $products->perPage(),
+                'total'        => $products->total(),
+                'last_page'    => $products->lastPage(),
+                'filters'      => ($productType !== 'all' || $ranking !== 'all') ? [
+                    'product_type' => $productType,
+                    'ranking' => $ranking
+                ] : null
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Lấy sản phẩm bán chạy nhất dựa vào purchase_count
+     */
+    public function getBestSellers(Request $request)
+    {
+        try {
+            $query = Product::with(['detail', 'categories', 'images']);
+
+            // Lọc theo trạng thái
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            } else {
+                // Mặc định chỉ lấy sản phẩm active
+                $query->where('status', 1);
+            }
+
+            // Lọc theo ngôn ngữ
+            if ($request->has('language')) {
+                $query->where('language', $request->language);
+            }
+
+            // Tìm kiếm theo tên
+            if ($request->has('search')) {
+                $query->where('name', 'like', '%' . $request->search . '%');
+            }
+
+            // Lọc theo danh mục
+            if ($request->has('category_id')) {
+                $query->whereHas('categories', function ($q) use ($request) {
+                    $q->where('categories.id', $request->category_id);
+                });
+            }
+
+            // Sắp xếp theo purchase_count (giảm dần) và Views (giảm dần)
+            $query->orderByDesc('purchase_count')
+                ->orderByDesc('Views');
+
+            // Lấy số lượng sản phẩm
+            $limit = $request->get('limit', 10);
+
+            // Phân trang nếu có yêu cầu
+            if ($request->has('paginate') && $request->paginate) {
+                $perPage = $request->get('per_page', 20);
+                $bestSellers = $query->paginate($perPage);
+            } else {
+                // Không phân trang, chỉ lấy top
+                $bestSellers = $query->limit($limit)->get();
+            }
+
+            // Format dữ liệu thêm thông tin
+            $bestSellers->transform(function ($product) {
+                // Tính tỷ lệ giảm giá nếu có
+                if ($product->detail && $product->detail->original_price > 0 && $product->detail->sale_price > 0) {
+                    $product->discount_percent = round(
+                        (($product->detail->original_price - $product->detail->sale_price) / $product->detail->original_price) * 100
+                    );
+                } else {
+                    $product->discount_percent = 0;
+                }
+
+                // Format số lượng bán
+                $product->total_sold_formatted = number_format($product->purchase_count ?? 0);
+
+                // Lấy ảnh chính
+                $product->primary_image = $product->images->firstWhere('is_primary', 1)
+                    ? $product->images->firstWhere('is_primary', 1)->image_url
+                    : ($product->images->first() ? $product->images->first()->image_url : null);
+
+                return $product;
+            });
+
+            return $this->jsonResponse($bestSellers, 'Lấy sản phẩm bán chạy thành công');
 
         } catch (\Exception $e) {
-            // Xử lý lỗi server và trả về thông báo lỗi
-            return $this->jsonResponse([], 'Lỗi server khi lọc sản phẩm', 500, $e->getMessage());
+            return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Cập nhật purchase_count cho sản phẩm (có thể gọi sau mỗi đơn hàng thành công)
+     */
+    public function updatePurchaseCount($productId)
+    {
+        try {
+            $product = Product::find($productId);
+
+            if (!$product) {
+                return false;
+            }
+
+            // Tính tổng số lượng đã mua từ bảng order_items
+            $totalQuantity = OrderItem::where('product_id', $productId)
+                ->sum('quantity');
+
+            // Cập nhật purchase_count
+            $product->purchase_count = (int) $totalQuantity;
+            $product->save();
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Lỗi cập nhật purchase_count: ' . $e->getMessage());
+            return false;
         }
     }
 }

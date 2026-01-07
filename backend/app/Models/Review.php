@@ -9,11 +9,14 @@ class Review extends Model
 {
     protected $table = 'reviews';
     protected $primaryKey = 'id';
-    public $incrementing = false;
+    public $incrementing = true;
     protected $keyType = 'int';
+    public $timestamps = false;
+
+    
 
     protected $fillable = [
-        'id',
+       
         'order_item_id',
         'user_id',
         'rating',
