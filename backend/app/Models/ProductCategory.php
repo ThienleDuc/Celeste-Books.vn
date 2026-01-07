@@ -5,6 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @property int $product_id
+ * @property int $category_id
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductCategory newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductCategory newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductCategory query()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductCategory whereCategoryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductCategory whereProductId($value)
+ * @mixin \Eloquent
+ */
 class ProductCategory extends Model
 {
     protected $table = 'product_categories';

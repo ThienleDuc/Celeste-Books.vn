@@ -13,7 +13,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductNotificationController;
-
+use App\Http\Controllers\AuthController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 
 });
+
 // ==================== MESSAGE ROUTES ====================
 Route::prefix('messages')->group(function () {
     //show contact list of messages
@@ -293,4 +294,17 @@ Route::prefix('review-image')->group(function () {
 
 Route::prefix('oders')->group(function() {
     Route::get('/all-purchases', [OrderController::class, 'getAllPurchasedProducts']);
+});
+
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/check-exists', [AuthController::class, 'checkExists']);
+    Route::post('/suggest-role', [AuthController::class, 'suggestRole']);
+
+    // Protected routes với middleware auth:sanctum
+    Route::middleware('auth.sanctum')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
 });

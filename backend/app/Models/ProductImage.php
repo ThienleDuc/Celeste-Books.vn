@@ -5,6 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property string|null $image_url
+ * @property int|null $is_primary
+ * @property int|null $sort_order
+ * @property string|null $created_at
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage query()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereImageUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereIsPrimary($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereProductId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereSortOrder($value)
+ * @mixin \Eloquent
+ */
 class ProductImage extends Model
 {
     protected $table = 'product_images';
