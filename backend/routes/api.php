@@ -12,7 +12,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductNotificationController;
-
+use App\Http\Controllers\AuthController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -212,4 +212,18 @@ Route::prefix('addresses')->group(function () {
         ->where('id', '[0-9]+');
     Route::delete('/{id}', [AddressController::class, 'destroy'])
         ->where('id', '[0-9]+');
+});
+
+
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/check-exists', [AuthController::class, 'checkExists']);
+    Route::post('/suggest-role', [AuthController::class, 'suggestRole']);
+
+    // Protected routes với middleware auth:sanctum
+    Route::middleware('auth.sanctum')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
 });

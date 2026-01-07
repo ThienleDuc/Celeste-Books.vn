@@ -24,6 +24,39 @@ php artisan view:clear
 php artisan migrate
 php artisan serve
 
+# Kiểm tra package Sanctum đã cài đặt chưa
+composer show laravel/sanctum
+
+# Hoặc xem tất cả migrations
+php artisan migrate:status
+
+
+# XÓA VÀ CÀI LẠI SANCTUM ĐƠN GIẢN:
+# 1. Xóa bảng token cũ
+php artisan tinker --execute="Schema::dropIfExists('personal_access_tokens');"
+
+# 2. Xóa migration file cũ
+rm database/migrations/*personal_access_tokens*
+
+# 3. Xóa cache
+php artisan config:clear
+
+# 4. Cài lại Sanctum
+composer require laravel/sanctum
+
+# 5. Publish migration mới
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+# 6. Chạy migration
+php artisan migrate
+
+
+# XÓA CACHE VÀ DUMP:
+php artisan config:clear
+php artisan cache:clear  
+php artisan route:clear
+php artisan view:clear
+composer dump-autoload
 
 Thiện -------------------------
 CRUD roles / permissions / role_per

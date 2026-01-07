@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\UserNotification;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+
 
 class UserNotificationController extends Controller
 {
@@ -92,7 +92,7 @@ class UserNotificationController extends Controller
             
             return $notification;
         } catch (\Exception $e) {
-            \Log::error('Lỗi khi tạo thông báo hệ thống: ' . $e->getMessage());
+            Log::error('Lỗi khi tạo thông báo hệ thống: ' . $e->getMessage());
             return null;
         }
     }
@@ -243,7 +243,7 @@ class UserNotificationController extends Controller
     public static function notifyUserInfoDeleted($userData, $deletedBy = null)
     {
         try {
-            \Log::info('Bắt đầu tạo thông báo xóa user info', $userData);
+            Log::info('Bắt đầu tạo thông báo xóa user info', $userData);
             
             $title = "Thông tin người dùng đã bị xóa";
             
@@ -264,31 +264,31 @@ class UserNotificationController extends Controller
                 $content .= "\n\nThao tác bởi: {$deletedBy}";
             }
             
-            \Log::info('Nội dung thông báo đã tạo', ['content' => $content]);
+            Log::info('Nội dung thông báo đã tạo', ['content' => $content]);
             
             // Tạo thông báo cho admin/manager
             $adminUsers = User::whereIn('role_id', ['R01', 'R02'])->get();
             
-            \Log::info('Tìm admin/manager', ['count' => $adminUsers->count()]);
+            Log::info('Tìm admin/manager', ['count' => $adminUsers->count()]);
             
             foreach ($adminUsers as $adminUser) {
-                \Log::info('Tạo thông báo cho admin', [
+                Log::info('Tạo thông báo cho admin', [
                     'admin_id' => $adminUser->id,
                     'admin_username' => $adminUser->username
                 ]);
                 
                 $result = self::createSystemNotification($adminUser->id, $title, $content, 'system');
                 
-                \Log::info('Kết quả tạo thông báo', [
+                Log::info('Kết quả tạo thông báo', [
                     'admin_id' => $adminUser->id,
                     'result' => $result ? 'thành công' : 'thất bại'
                 ]);
             }
             
-            \Log::info('Hoàn tất tạo thông báo');
+            Log::info('Hoàn tất tạo thông báo');
             
         } catch (\Exception $e) {
-            \Log::error('Lỗi khi tạo thông báo xóa user info: ' . $e->getMessage());
+            Log::error('Lỗi khi tạo thông báo xóa user info: ' . $e->getMessage());
         }
     }
     

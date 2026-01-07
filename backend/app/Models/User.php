@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+Use App\Models\UserNotification;
+use App\Models\UserNotification as ModelsUserNotification;
 
 class User extends Authenticatable
 {
@@ -70,6 +72,6 @@ class User extends Authenticatable
     // 🔗 1 - N Notification
     public function notifications()
     {
-        return $this->hasMany(UserNotification::class, 'user_id', 'id');
+        return $this->hasMany(ModelsUserNotification::class, 'user_id', 'id');
     }
 }
