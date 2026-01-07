@@ -10,6 +10,7 @@ use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\OrderItem;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
@@ -380,6 +381,112 @@ class ProductController extends Controller
             return $this->jsonResponse([], 'Xóa sản phẩm thành công');
         } catch (\Exception $e) {
             return $this->jsonResponse([], 'Xóa sản phẩm thất bại', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Lấy sản phẩm bán chạy nhất dựa vào purchase_count
+     */
+    public function getBestSellers(Request $request)
+    {
+        try {
+            $query = Product::with(['detail', 'categories', 'images']);
+            
+            // Lọc theo trạng thái
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            } else {
+                // Mặc định chỉ lấy sản phẩm active
+                $query->where('status', 1);
+            }
+            
+            // Lọc theo ngôn ngữ
+            if ($request->has('language')) {
+                $query->where('language', $request->language);
+            }
+            
+            // Tìm kiếm theo tên
+            if ($request->has('search')) {
+                $query->where('name', 'like', '%' . $request->search . '%');
+            }
+            
+            // Lọc theo danh mục
+            if ($request->has('category_id')) {
+                $query->whereHas('categories', function ($q) use ($request) {
+                    $q->where('categories.id', $request->category_id);
+                });
+            }
+            
+            // Sắp xếp theo purchase_count (giảm dần) và Views (giảm dần)
+            $query->orderByDesc('purchase_count')
+                ->orderByDesc('Views');
+            
+            // Lấy số lượng sản phẩm
+            $limit = $request->get('limit', 10);
+            
+            // Phân trang nếu có yêu cầu
+            if ($request->has('paginate') && $request->paginate) {
+                $perPage = $request->get('per_page', 20);
+                $bestSellers = $query->paginate($perPage);
+            } else {
+                // Không phân trang, chỉ lấy top
+                $bestSellers = $query->limit($limit)->get();
+            }
+            
+            // Format dữ liệu thêm thông tin
+            $bestSellers->transform(function ($product) {
+                // Tính tỷ lệ giảm giá nếu có
+                if ($product->detail && $product->detail->original_price > 0 && $product->detail->sale_price > 0) {
+                    $product->discount_percent = round(
+                        (($product->detail->original_price - $product->detail->sale_price) / $product->detail->original_price) * 100
+                    );
+                } else {
+                    $product->discount_percent = 0;
+                }
+                
+                // Format số lượng bán
+                $product->total_sold_formatted = number_format($product->purchase_count ?? 0);
+                
+                // Lấy ảnh chính
+                $product->primary_image = $product->images->firstWhere('is_primary', 1) 
+                    ? $product->images->firstWhere('is_primary', 1)->image_url 
+                    : ($product->images->first() ? $product->images->first()->image_url : null);
+                
+                return $product;
+            });
+            
+            return $this->jsonResponse($bestSellers, 'Lấy sản phẩm bán chạy thành công');
+            
+        } catch (\Exception $e) {
+            return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
+        }
+    }
+
+    /**
+     * Cập nhật purchase_count cho sản phẩm (có thể gọi sau mỗi đơn hàng thành công)
+     */
+    public function updatePurchaseCount($productId)
+    {
+        try {
+            $product = Product::find($productId);
+            
+            if (!$product) {
+                return false;
+            }
+            
+            // Tính tổng số lượng đã mua từ bảng order_items
+            $totalQuantity = OrderItem::where('product_id', $productId)
+                ->sum('quantity');
+            
+            // Cập nhật purchase_count
+            $product->purchase_count = (int) $totalQuantity;
+            $product->save();
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            \Log::error('Lỗi cập nhật purchase_count: ' . $e->getMessage());
+            return false;
         }
     }
 }

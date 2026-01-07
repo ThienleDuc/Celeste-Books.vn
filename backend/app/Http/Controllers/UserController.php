@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Order;        
+use App\Models\OrderItem;
 
 class UserController extends Controller
 {
@@ -536,5 +538,72 @@ class UserController extends Controller
             'created_at'=> now(),
             'updated_at'=> now(),
         ]);
+    }
+    
+        public function getPurchasedProducts(Request $request, $id)
+    {
+        try {
+            $user = User::find($id);
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Người dùng không tồn tại'
+                ], 404);
+            }
+            
+            $products = OrderItem::select([
+                    'products.id',
+                    'products.name',
+                    'products.slug',
+                    'products.cover_image',
+                    'products.author',
+                    'product_details.sale_price as price',
+                    'product_details.original_price',
+                    DB::raw('MAX(order_items.created_at) as last_purchased'),
+                    DB::raw('SUM(order_items.quantity) as total_purchased')
+                ])
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->leftJoin('product_details', 'order_items.product_details_id', '=', 'product_details.id')
+                ->where('orders.user_id', $id)
+                ->where('orders.status', '!=', 'cancelled')
+                ->groupBy('products.id', 'products.name', 'products.slug', 'products.cover_image', 
+                        'products.author', 'product_details.sale_price', 'product_details.original_price')
+                ->orderBy('last_purchased', 'desc')
+                ->get()
+                ->map(function ($item) {
+                    // Tính giảm giá
+                    $discount = 0;
+                    if ($item->original_price > 0 && $item->price > 0) {
+                        $discount = round((($item->original_price - $item->price) / $item->original_price) * 100);
+                    }
+                    
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'slug' => $item->slug,
+                        'image' => $item->cover_image,
+                        'author' => $item->author,
+                        'price' => (float) $item->price,
+                        'original_price' => (float) $item->original_price,
+                        'discount_percent' => $discount,
+                        'last_purchased' => $item->last_purchased,
+                        'total_purchased' => (int) $item->total_purchased
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $products
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi server',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

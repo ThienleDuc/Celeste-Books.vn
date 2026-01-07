@@ -10,6 +10,7 @@ use App\Http\Controllers\UserNotificationController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -143,6 +144,7 @@ Route::prefix('users')->group(function () {
     Route::prefix('{id}')->group(function () {
         Route::get('/', [UserController::class, 'show'])
             ->where('id', '[0-9]+');
+        Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
         Route::put('/', [UserController::class, 'updateBasicInfo']);
         Route::put('/update', [UserController::class, 'update']);
         Route::post('/avatar', [UserController::class, 'uploadAvatar']);
@@ -197,6 +199,8 @@ Route::prefix('products')->group(function () {
         ->where('id', '[0-9]+');
     Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
         ->where('id', '[0-9]+');
+    Route::get('/best-sellers', [ProductController::class, 'getBestSellers']);
+        
 });
 
 // ==================== ADDRESS ROUTES ====================
@@ -219,6 +223,7 @@ Route::prefix('addresses')->group(function () {
     Route::delete('/{id}', [AddressController::class, 'destroy'])
         ->where('id', '[0-9]+');
 });
+
 //==================REVIEW ROUTES ===================
 Route::prefix('review')->group(function () {
     //show contact list of messages
@@ -233,7 +238,7 @@ Route::prefix('review')->group(function () {
     Route::delete('/{id}', [\App\Http\Controllers\ReviewController::class, 'deleteReview']);
 });
 //==================REVIEW ROUTES ===================
-Route::prefix( 'review-image')->group(function () {
+Route::prefix('review-image')->group(function () {
     //show contact list of messages
     Route::get('/', [\App\Http\Controllers\ReviewImageController::class, 'getReviewImages']);
     //show detail messages
@@ -244,4 +249,9 @@ Route::prefix( 'review-image')->group(function () {
     Route::put('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'updateReviewImage']);
     //delete message
     Route::delete('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'deleteReviewImage']);
+});
+
+
+Route::prefix('oders')->group(function() {
+    Route::get('/all-purchases', [OrderController::class, 'getAllPurchasedProducts']);
 });
