@@ -3,14 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Address;
-use App\Models\Role;
 use App\Models\UserNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Order;        
 use App\Models\OrderItem;
 
 class UserController extends Controller
@@ -322,7 +319,7 @@ class UserController extends Controller
             
             // Tạo thông báo hệ thống
             $this->createUserNotification($user->id, 'system', 'Thông tin'+$user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
-            
+
             DB::commit();
             
             return response()->json([

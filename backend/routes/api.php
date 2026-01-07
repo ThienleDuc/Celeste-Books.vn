@@ -11,6 +11,8 @@ use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductDetailController;
+use App\Http\Controllers\ProductNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -173,6 +175,16 @@ Route::prefix('notifications')->group(function () {
         Route::delete('/', [UserNotificationController::class, 'destroy'])
             ->where('id', '[0-9]+');
     });
+
+    Route::prefix('products')->group(function () {
+        Route::get('/', [ProductNotificationController::class, 'index']);
+        route::post('/', [ProductNotificationController::class, 'store']);
+        Route::delete('/{id}', [ProductNotificationController::class, 'destroy'])
+            ->where('id', '[0-9]+');
+        Route::delete('/', [ProductNotificationController::class, 'destroyMultiple']);
+        Route::delete('/all/clear', [ProductNotificationController::class, 'destroyAll']);
+    });
+
 });
 
 // ==================== CATEGORY ROUTES ====================
@@ -190,15 +202,41 @@ Route::prefix('categories')->group(function () {
 
 // ==================== PRODUCT ROUTES ====================
 Route::prefix('products')->group(function () {
+    // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
     Route::get('/', [ProductController::class, 'index']);
+    
+    // Thêm sản phẩm mới
     Route::post('/', [ProductController::class, 'store']);
-    Route::get('/{id}', [ProductController::class, 'show'])
-        ->where('id', '[0-9]+');
+    
+    // Cập nhật sản phẩm bằng ID
     Route::put('/{id}', [ProductController::class, 'update'])
         ->where('id', '[0-9]+');
+    
+    // Xóa sản phẩm bằng ID
     Route::delete('/{id}', [ProductController::class, 'destroy'])
         ->where('id', '[0-9]+');
-    Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
+    
+    // Tìm kiếm sản phẩm (endpoint riêng cho search)
+    Route::get('/search', [ProductController::class, 'searchByName']);
+
+    // Sắp xếp sản phẩm theo các tiêu chí
+    Route::get('/sort', [ProductController::class, 'sort']);
+});
+
+// ================= PRODUCT DETAILS ROUTES =================
+Route::prefix('product-details')->group(function () {
+    // Lấy danh sách chi tiết sản phẩm (có thể lọc theo product_id, product_type)
+    Route::get('/', [ProductDetailController::class, 'index']);
+    
+    // Thêm chi tiết sản phẩm mới
+    Route::post('/', [ProductDetailController::class, 'store']);
+    
+    // Cập nhật chi tiết sản phẩm theo ID
+    Route::put('/{id}', [ProductDetailController::class, 'update'])
+        ->where('id', '[0-9]+');
+    
+    // Xóa chi tiết sản phẩm theo ID
+    Route::delete('/{id}', [ProductDetailController::class, 'destroy'])
         ->where('id', '[0-9]+');
     Route::get('/best-sellers', [ProductController::class, 'getBestSellers']);
         
