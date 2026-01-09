@@ -25,20 +25,6 @@ class AuthController extends Controller
     }
     
     /**
-     * Lấy đường dẫn theo role
-     */
-    private function getRedirectPath($type, $roleId = null)
-    {
-        $config = config("redirects.{$type}");
-        
-        if ($roleId && isset($config[$roleId])) {
-            return $config[$roleId];
-        }
-        
-        return $config['default'] ?? '/';
-    }
-    
-    /**
      * Đăng ký (WEB & API) - Tạo user và profile với gender = 'Khác' và full_name
      */
     public function register(Request $request)
@@ -64,9 +50,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'errors' => $validator->errors()], 422)
-                : back()->withErrors($validator)->withInput();
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         DB::beginTransaction();
@@ -88,62 +72,44 @@ class AuthController extends Controller
             ]);
 
             // Tạo token (7 ngày)
-            try {
-                $expiresAt = now()->addDays(7);
-                $tokenObj = $user->createToken('auth_token', ['*'], $expiresAt);
-                $plainToken = $tokenObj->plainTextToken;
-                // Truy xuất model token (fallback nếu accessToken null)
-                $tokenModel = $tokenObj->accessToken ?? $user->tokens()->latest('id')->first();
-                $tokenId = $tokenModel?->id ?? null;
-                $tokenExpiresAt = $tokenModel?->expires_at ?? $expiresAt;
-            } catch (\Exception $e) {
-                Log::critical('Token creation failed during registration', [
-                    'username' => $request->username,
-                    'error' => $e->getMessage()
-                ]);
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đăng ký thất bại: Không thể tạo token xác thực',
-                    'error_code' => 'TOKEN_CREATION_FAILED'
-                ], 503);
-            }
+            $expiresAt = now()->addDays(7);
+            $tokenObj = $user->createToken('auth_token', ['*'], $expiresAt);
+            $plainToken = $tokenObj->plainTextToken;
+
+            // Truy xuất model token (fallback)
+            $tokenModel = $tokenObj->accessToken ?? $user->tokens()->latest('id')->first();
+            $tokenId = $tokenModel?->id ?? null;
+            $tokenExpiresAt = $tokenModel?->expires_at ?? $expiresAt;
 
             DB::commit();
 
             UserNotification::add($user->id, 'Đăng ký', "Người dùng {$user->username} vừa tạo tài khoản", 'account');
-            
-            // Response API
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Đăng ký thành công',
-                    'data' => [
-                        'user_id' => $user->id,
-                        'username' => $user->username,
-                        'role_id' => $user->role_id,
-                        'full_name' => $request->full_name,
-                        'gender' => 'Khác',
-                        'access_token' => $plainToken,
-                        'token_type' => 'Bearer',
-                        'token_id' => $tokenId,
-                        'expires_at' => $tokenExpiresAt ? $tokenExpiresAt->toDateTimeString() : null,
-                        'expires_in_days' => $tokenExpiresAt ? now()->diffInDays($tokenExpiresAt) : null,
-                    ]
-                ], 201);
-            }
 
-            // Web: đăng nhập và redirect
-            Auth::login($user);
-            $redirectTo = $this->getRedirectPath('after_register', $user->role_id);
-            return redirect($redirectTo)->with('success', 'Đăng ký thành công!');
+            // Chỉ trả về JSON
+            return response()->json([
+                'success' => true,
+                'message' => 'Đăng ký thành công',
+                'data' => [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'role_id' => $user->role_id,
+                    'full_name' => $request->full_name,
+                    'gender' => 'Khác',
+                    'access_token' => $plainToken,
+                    'token_type' => 'Bearer',
+                    'token_id' => $tokenId,
+                    'expires_at' => $tokenExpiresAt ? $tokenExpiresAt->toDateTimeString() : null,
+                    'expires_in_days' => $tokenExpiresAt ? now()->diffInDays($tokenExpiresAt) : null,
+                ]
+            ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Registration failed', ['error' => $e->getMessage()]);
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => 'Đăng ký thất bại: ' . $e->getMessage()], 500)
-                : back()->withErrors(['register' => 'Đăng ký thất bại: ' . $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Đăng ký thất bại: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -152,109 +118,103 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        // 1. Validate request
+        // 1. Validate
         $validator = Validator::make($request->all(), [
             'username' => 'nullable|string|min:8|max:16',
-            'email' => 'nullable|email|max:255',
+            'email'    => 'nullable|email|max:255',
             'password' => 'required|string|min:6|max:12',
-            'role_id' => 'required|string|max:10|exists:roles,id'
         ]);
 
         if ($validator->fails()) {
-            return $request->wantsJson()
-                ? response()->json([
-                    'success' => false,
-                    'message' => 'Dữ liệu không hợp lệ',
-                    'errors' => $validator->errors()
-                ], 422)
-                : back()->withErrors($validator)->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
-        // 2. Bắt buộc nhập username hoặc email
-        if (empty($request->username) && empty($request->email)) {
-            $errorMessage = 'Phải nhập username hoặc email';
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => $errorMessage], 422)
-                : back()->withErrors(['login' => $errorMessage]);
+        // 2. Phải có username hoặc email
+        if (!$request->filled('username') && !$request->filled('email')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Phải nhập username hoặc email',
+            ], 422);
         }
 
+        // 3. Xác định field login
         $loginField = $request->filled('username') ? 'username' : 'email';
         $loginValue = $request->input($loginField);
 
-        // 3. Lấy user theo username/email + role
-        $user = User::with('profile')->where($loginField, $loginValue)
-                    ->where('role_id', $request->role_id)
-                    ->first();
+        // 4. Tìm user
+        $user = User::with('profile')
+            ->where($loginField, $loginValue)
+            ->first();
 
         if (!$user) {
-            $errorMessage = 'Tài khoản không tồn tại';
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => $errorMessage], 404)
-                : back()->withErrors(['login' => $errorMessage]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản không tồn tại',
+            ], 404);
         }
 
-        // 4. Kiểm tra mật khẩu
+        // 5. Kiểm tra mật khẩu
         if (!Hash::check($request->password, $user->password_hash)) {
-            $errorMessage = 'Mật khẩu không chính xác';
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => $errorMessage], 401)
-                : back()->withErrors(['login' => $errorMessage]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Mật khẩu không chính xác',
+            ], 401);
         }
 
-        // 5. Kiểm tra trạng thái tài khoản
+        // 6. Kiểm tra trạng thái
         if (!$user->is_active) {
-            $errorMessage = 'Tài khoản đã bị khóa';
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => $errorMessage], 403)
-                : back()->withErrors(['login' => $errorMessage]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản đã bị khóa',
+            ], 403);
         }
 
-        // 6. Xử lý login cho API (Sanctum token)
-        if ($request->wantsJson()) {
-            try {
-                $expiresAt = now()->addDays(7);
-                $tokenObj = $user->createToken('auth_token', ['*'], $expiresAt);
-                $plainToken = $tokenObj->plainTextToken;
-                $tokenModel = $tokenObj->accessToken ?? $user->tokens()->latest('id')->first();
-                $tokenId = $tokenModel?->id ?? null;
-                $tokenExpiresAt = $tokenModel?->expires_at ?? $expiresAt;
-            } catch (\Exception $e) {
-                Log::error('Sanctum token creation failed', ['error' => $e->getMessage()]);
-                // Vẫn trả success nhưng không có token (optional) — ở đây trả lỗi
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Đăng nhập thất bại: không thể tạo token',
-                ], 500);
-            }
+        // 7. Tạo token Sanctum
+        try {
+            $expiresAt = now()->addDays(7);
+            $tokenObj  = $user->createToken('auth_token', ['*'], $expiresAt);
 
-            UserNotification::add($user->id, 'Đăng nhập', "Người dùng {$user->username} vừa đăng nhập tài khoản", 'account');
+            $accessToken = $tokenObj->plainTextToken;
+            $tokenModel  = $tokenObj->accessToken
+                ?? $user->tokens()->latest('id')->first();
+
+        } catch (\Throwable $e) {
+            Log::error('Login error', ['error' => $e->getMessage()]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Đăng nhập thành công',
-                'data' => [
-                    'user_id' => $user->id,
-                    'username' => $user->username,
-                    'email' => $user->email,
-                    'role_id' => $user->role_id,
-                    'has_profile' => !empty($user->profile),
-                    'gender' => $user->profile?->gender,
-                    'full_name' => $user->profile?->full_name,
-                    'access_token' => $plainToken,
-                    'token_type' => 'Bearer',
-                    'token_id' => $tokenId,
-                    'expires_at' => $tokenExpiresAt ? $tokenExpiresAt->toDateTimeString() : null,
-                    'expires_in_days' => $tokenExpiresAt ? now()->diffInDays($tokenExpiresAt) : null,
-                ]
-            ]);
+                'success' => false,
+                'message' => 'Không thể tạo token',
+            ], 500);
         }
 
-        // 7. Xử lý login cho Web (session)
-        Auth::login($user, $request->has('remember'));
-        $request->session()->regenerate();
-        $redirectTo = $this->getRedirectPath('after_login', $user->role_id);
+        // 8. Ghi log / notification
+        UserNotification::add(
+            $user->id,
+            'Đăng nhập',
+            "Người dùng {$user->username} vừa đăng nhập",
+            'account'
+        );
 
-        return redirect($redirectTo)->with('success', 'Đăng nhập thành công!');
+        // 9. TRẢ KẾT QUẢ (QUAN TRỌNG)
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng nhập thành công',
+            'data' => [
+                'user_id'      => $user->id,
+                'username'     => $user->username,
+                'email'        => $user->email,
+                'role_id'      => $user->role_id, // 👈 CÁI BẠN CẦN
+                'has_profile'  => !empty($user->profile),
+                'full_name'    => $user->profile?->full_name,
+                'access_token' => $accessToken,
+                'token_type'   => 'Bearer',
+                'expires_at'   => $tokenModel?->expires_at?->toDateTimeString(),
+            ]
+        ]);
     }
     
     /**
@@ -347,35 +307,61 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
-        
+
+        // 1. Chưa đăng nhập / token không hợp lệ
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy người dùng'
+                'message' => 'Người dùng chưa đăng nhập hoặc token không hợp lệ'
             ], 401);
         }
-        
-        $currentToken = $request->user()->currentAccessToken();
-        if ($currentToken) {
-            $currentToken->delete();
-        }
 
-        Log::info('User logged out', [
-            'user_id' => $user->id,
-            'username' => $user->username
-        ]);
-        
-        UserNotification::add($user->id, 'Đăng nhập', "Người dùng {$user->username} vừa đăng xuất tài khoản", 'account');
+        try {
+            // 2. Xóa token hiện tại (Sanctum)
+            $currentToken = $user->currentAccessToken();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Đăng xuất thành công',
-            'data' => [
+            if ($currentToken) {
+                $currentToken->delete();
+            }
+
+            // 3. Log hệ thống
+            Log::info('User logged out', [
+                'user_id'  => $user->id,
+                'username' => $user->username,
+                'token_id' => $currentToken?->id,
+            ]);
+
+            // 4. Notification (đúng tên hành động)
+            UserNotification::add(
+                $user->id,
+                'Đăng xuất',
+                "Người dùng {$user->username} vừa đăng xuất tài khoản",
+                'account'
+            );
+
+            // 5. Response
+            return response()->json([
+                'success' => true,
+                'message' => 'Đăng xuất thành công',
+                'data' => [
+                    'user_id'     => $user->id,
+                    'logout_time' => now()->toDateTimeString(),
+                ]
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('Logout failed', [
                 'user_id' => $user->id,
-                'logout_time' => now()->toDateTimeString()
-            ]
-        ]);
+                'error'   => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Đăng xuất thất bại'
+            ], 500);
+        }
     }
+
 
     /**
      * Đăng xuất từ tất cả thiết bị (sử dụng middleware auth:sanctum)
