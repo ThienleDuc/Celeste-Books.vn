@@ -9,12 +9,12 @@ use Illuminate\Support\Str;
 class ProductDetailController extends Controller
 {
     protected $notificationController;
-    
+
     public function __construct()
     {
         $this->notificationController = new \App\Http\Controllers\ProductNotificationController();
     }
-    
+
 
     // Danh sách chi tiết sản phẩm
     public function index(Request $request)
@@ -218,7 +218,7 @@ class ProductDetailController extends Controller
                     $current->product_type
                 ),
             ]));
-            
+
             return response()->json([
                 'status'  => true,
                 'message' => 'Cập nhật chi tiết sản phẩm thành công',

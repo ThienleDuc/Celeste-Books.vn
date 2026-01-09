@@ -16,10 +16,41 @@ use Illuminate\Support\Facades\Storage;
 class ProductController extends Controller
 {
     protected $notificationController;
-    
+
     public function __construct()
     {
         $this->notificationController = new \App\Http\Controllers\ProductNotificationController();
+    }
+
+    // Helper function để xử lý upload ảnh (Thêm vào trong Class ProductController)
+    private function processImageUploads(Request $request)
+    {
+        $finalImages = [];
+
+        // 1. Lấy các URL ảnh cũ/online (dạng string)
+        if ($request->filled('images')) {
+            $finalImages = $request->input('images'); // Đã là mảng URL
+        }
+
+        // 2. Xử lý file ảnh upload mới (dạng binary)
+        if ($request->hasFile('image_uploads')) {
+            foreach ($request->file('image_uploads') as $file) {
+                // Tạo tên file duy nhất
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                // Di chuyển file vào thư mục public/uploads/products
+                $file->move(public_path('uploads/products'), $fileName);
+
+                // Tạo URL đầy đủ để client truy cập
+                // Lưu ý: Đảm bảo APP_URL trong .env đúng (ví dụ: http://127.0.0.1:8000)
+                $url = asset('uploads/products/' . $fileName);
+
+                // Thêm vào danh sách ảnh cuối cùng
+                $finalImages[] = $url;
+            }
+        }
+
+        return $finalImages;
     }
 
     // 1. LẤY DANH SÁCH SẢN PHẨM
@@ -102,6 +133,33 @@ class ProductController extends Controller
         }
     }
 
+    public function show($id)
+{
+    try {
+        $product = Product::with(['detail', 'categories', 'images'])->find($id);
+
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy sản phẩm'
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Lấy thông tin sản phẩm thành công',
+            'data'    => $product
+        ], 200);
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Lỗi server',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+}
+
     // 3. GỢI Ý SẢN PHẨM LIÊN QUAN
     public function suggest($id)
     {
@@ -143,6 +201,8 @@ class ProductController extends Controller
             'images.*'          => 'required|url|max:500',
             'categories'        => 'nullable|array',
             'categories.*'      => 'integer|exists:categories,id',
+            'image_uploads'   => 'nullable|array',
+            'image_uploads.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         // ===== CHECK TÊN SÁCH TRÙNG =====
@@ -159,16 +219,25 @@ class ProductController extends Controller
         $descriptionPath = null;
 
         try {
+            // 1. Ưu tiên lấy nội dung text từ frontend gửi lên
+            $descriptionContent = $request->description;
+
+            // 2. Xử lý file nếu có (Logic dự phòng nếu sau này bạn muốn upload file)
             if ($request->hasFile('description_file')) {
                 $file = $request->file('description_file');
                 $fileName = time() . '_' . $file->getClientOriginalName();
                 $descriptionPath = $file->storeAs('store', $fileName, 'public');
+
+                // Nếu frontend không gửi text, mới dùng đường dẫn file
+                if (empty($descriptionContent)) {
+                    $descriptionContent = $descriptionPath;
+                }
             }
 
             $product = Product::create([
                 'name'              => $request->name,
                 'slug'              => $slug,
-                'description'       => $descriptionPath,
+                'description'       => $descriptionContent,
                 'author'            => $request->author,
                 'publisher'         => $request->publisher,
                 'publication_year'  => $request->publication_year,
@@ -179,8 +248,11 @@ class ProductController extends Controller
                 'rating'            => 5.0,
             ]);
 
-            if ($request->filled('images')) {
-                ProductImage::syncImages($product->id, $request->images);
+            // [THAY ĐỔI] Xử lý ảnh (Gộp cả URL cũ và File mới)
+            $allImages = $this->processImageUploads($request);
+
+            if (!empty($allImages)) {
+                ProductImage::syncImages($product->id, $allImages);
             }
 
             if ($request->filled('categories')) {
@@ -247,6 +319,8 @@ class ProductController extends Controller
             'images.*'          => 'required|url|max:500',
             'categories'        => 'nullable|array',
             'categories.*'      => 'integer|exists:categories,id',
+            'image_uploads'   => 'nullable|array',
+            'image_uploads.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -286,7 +360,7 @@ class ProductController extends Controller
             }
 
             // 5. Update các trường khác
-            $fields = ['author','publisher','publication_year','language','status'];
+            $fields = ['author','publisher','publication_year','language','status', 'description'];
             foreach ($fields as $field) {
                 if ($request->filled($field)) {
                     $product->$field = $request->$field;
@@ -296,8 +370,9 @@ class ProductController extends Controller
             $product->save();
 
             // 6. Update images nếu có
-            if ($request->filled('images')) {
-                ProductImage::syncImages($product->id, $request->images);
+            if ($request->filled('images') || $request->hasFile('image_uploads')) {
+                $allImages = $this->processImageUploads($request);
+                ProductImage::syncImages($product->id, $allImages);
             }
 
             // 7. Update categories nếu có
@@ -408,9 +483,9 @@ class ProductController extends Controller
     {
         try {
             $keyword = trim($request->name);
-            
+
             $query = DB::table('products as p')
-                ->distinct('p.id') 
+                ->distinct('p.id')
                 ->leftJoin('product_images as pi', function ($join) {
                     $join->on('pi.product_id', '=', 'p.id')
                         ->where('pi.is_primary', 1);
@@ -536,7 +611,7 @@ class ProductController extends Controller
         if (!$categorySlug) {
             return $query;
         }
-        
+
         return $query->whereExists(function ($subQuery) use ($categorySlug) {
             $subQuery->select(DB::raw(1))
                 ->from('product_categories as pc')
@@ -593,7 +668,7 @@ class ProductController extends Controller
                 DB::raw('COALESCE(r_stats.avg_rating, 0) as avg_rating')
             ]);
         }
-        
+
         return $query;
     }
 
@@ -601,7 +676,7 @@ class ProductController extends Controller
     {
         try {
             $query = DB::table('products as p')
-                ->distinct('p.id') 
+                ->distinct('p.id')
                 ->leftJoin('product_images as pi', function ($join) {
                     $join->on('pi.product_id', '=', 'p.id')
                         ->where('pi.is_primary', 1);
@@ -738,7 +813,7 @@ class ProductController extends Controller
     {
         try {
             $query = Product::with(['detail', 'categories', 'images']);
-            
+
             // Lọc theo trạng thái
             if ($request->has('status')) {
                 $query->where('status', $request->status);
@@ -746,31 +821,31 @@ class ProductController extends Controller
                 // Mặc định chỉ lấy sản phẩm active
                 $query->where('status', 1);
             }
-            
+
             // Lọc theo ngôn ngữ
             if ($request->has('language')) {
                 $query->where('language', $request->language);
             }
-            
+
             // Tìm kiếm theo tên
             if ($request->has('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
-            
+
             // Lọc theo danh mục
             if ($request->has('category_id')) {
                 $query->whereHas('categories', function ($q) use ($request) {
                     $q->where('categories.id', $request->category_id);
                 });
             }
-            
+
             // Sắp xếp theo purchase_count (giảm dần) và Views (giảm dần)
             $query->orderByDesc('purchase_count')
                 ->orderByDesc('Views');
-            
+
             // Lấy số lượng sản phẩm
             $limit = $request->get('limit', 10);
-            
+
             // Phân trang nếu có yêu cầu
             if ($request->has('paginate') && $request->paginate) {
                 $perPage = $request->get('per_page', 20);
@@ -779,7 +854,7 @@ class ProductController extends Controller
                 // Không phân trang, chỉ lấy top
                 $bestSellers = $query->limit($limit)->get();
             }
-            
+
             // Format dữ liệu thêm thông tin
             $bestSellers->transform(function ($product) {
                 // Tính tỷ lệ giảm giá nếu có
@@ -790,20 +865,20 @@ class ProductController extends Controller
                 } else {
                     $product->discount_percent = 0;
                 }
-                
+
                 // Format số lượng bán
                 $product->total_sold_formatted = number_format($product->purchase_count ?? 0);
-                
+
                 // Lấy ảnh chính
-                $product->primary_image = $product->images->firstWhere('is_primary', 1) 
-                    ? $product->images->firstWhere('is_primary', 1)->image_url 
+                $product->primary_image = $product->images->firstWhere('is_primary', 1)
+                    ? $product->images->firstWhere('is_primary', 1)->image_url
                     : ($product->images->first() ? $product->images->first()->image_url : null);
-                
+
                 return $product;
             });
-            
+
             return $this->jsonResponse($bestSellers, 'Lấy sản phẩm bán chạy thành công');
-            
+
         } catch (\Exception $e) {
             return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
         }
@@ -816,21 +891,21 @@ class ProductController extends Controller
     {
         try {
             $product = Product::find($productId);
-            
+
             if (!$product) {
                 return false;
             }
-            
+
             // Tính tổng số lượng đã mua từ bảng order_items
             $totalQuantity = OrderItem::where('product_id', $productId)
                 ->sum('quantity');
-            
+
             // Cập nhật purchase_count
             $product->purchase_count = (int) $totalQuantity;
             $product->save();
-            
+
             return true;
-            
+
         } catch (\Exception $e) {
             Log::error('Lỗi cập nhật purchase_count: ' . $e->getMessage());
             return false;

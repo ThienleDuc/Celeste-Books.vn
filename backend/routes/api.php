@@ -208,6 +208,10 @@ Route::prefix('products')->group(function () {
     // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
     Route::get('/', [ProductController::class, 'index']);
 
+    // Lấy chi tiết sản phẩm theo ID
+    Route::get('/{id}', [ProductController::class, 'show'])
+        ->where('id', '[0-9]+');
+
     // Thêm sản phẩm mới
     Route::post('/', [ProductController::class, 'store']);
 
@@ -321,4 +325,10 @@ Route::prefix('statistics')->group(function () {
 Route::prefix('shopping-carts')->group(function () {
     // Thêm sản phẩm vào giỏ hàng
     Route::post('/add', [ShoppingCartController::class, 'addToCart']);
+    // Lấy giỏ hàng của người dùng
+    Route::get('/{userId}', [ShoppingCartController::class, 'getCart']);
+    // Cập nhật số lượng sản phẩm trong giỏ hàng
+    Route::put('/item/{itemId}', [ShoppingCartController::class, 'updateCartItem']);
+    // Xóa sản phẩm khỏi giỏ hàng
+    Route::delete('/item/{itemId}', [ShoppingCartController::class, 'removeCartItem']);
 });
