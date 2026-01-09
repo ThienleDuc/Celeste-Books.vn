@@ -1,0 +1,122 @@
+/* src/pages/Admin/PageThongKe.module.css */
+
+/* --- Container Chính --- */
+.container {
+  padding: 1.5rem;       /* p-6 */
+  min-height: 100vh;
+  background-color: #f8fafc; /* bg-slate-50 */
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+/* --- Header --- */
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 2rem;   /* mb-8 */
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+  }
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* --- Các Card chứa nội dung (Card trắng) --- */
+.card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 1rem;       /* rounded-2xl */
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); /* shadow */
+  border: 1px solid #e2e8f0; /* border-slate-200 */
+  height: 100%;              /* Để các card cao bằng nhau */
+}
+input[type="date"] {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+/* --- Grid Layout cho 3 ô tổng quan --- */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .summaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* --- Grid Layout cho 2 biểu đồ tròn (QUAN TRỌNG: Sửa lỗi layout) --- */
+.chartHalfGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .chartHalfGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* --- Section Margin --- */
+.section {
+  margin-bottom: 2rem;
+}
+
+/* --- Table Styles --- */
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  font-size: 0.875rem; /* text-sm */
+  border-collapse: collapse;
+}
+
+.tableHeader th {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+}
+
+.tableRow {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s;
+}
+
+.tableRow:hover {
+  background-color: #f8fafc;
+}
+
+.tableCell {
+  padding: 1rem;
+}
+
+/* --- Utility Helper --- */
+.filterInput {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    outline: none;
+}
+.filterInput:focus {
+    border-color: #6366f1;
+    ring: 2px solid #e0e7ff;
+}
