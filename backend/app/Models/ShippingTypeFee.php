@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|ShippingTypeFee whereMultiplier($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ShippingTypeFee whereShippingType($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperShippingTypeFee
  */
 class ShippingTypeFee extends Model
 {

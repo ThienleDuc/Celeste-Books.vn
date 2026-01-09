@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderItem whereTotalPrice($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperOrderItem
  */
 class OrderItem extends Model
 {

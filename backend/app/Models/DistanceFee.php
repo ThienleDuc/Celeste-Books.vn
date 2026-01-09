@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|DistanceFee whereMinDistance($value)
  * @method static \Illuminate\Database\Eloquent\Builder|DistanceFee whereMultiplier($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperDistanceFee
  */
 class DistanceFee extends Model
 {

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|RolePer wherePerId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|RolePer whereRoleId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperRolePer
  */
 class RolePer extends Model
 {

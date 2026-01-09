@@ -1,11 +1,9 @@
 import { useState } from "react";
 import Pagination from "../Utils/Pagination";
 import { formatNumber } from "../../utils/formatNumber";
-import type { ProductFull } from "../../models/Product/product.model";
-import { productSoldMap } from "../../models/Order/order.model";
 
 interface ProductGridSectionProps {
-  products: ProductFull[];
+  products: any[];
   itemsPerPage?: number;
   colMd?: number;
   hiddenPagination?: boolean;
@@ -31,26 +29,46 @@ const ProductGridSection = ({
   return (
     <>
       <div className="row g-3 mb-4">
-        {currentProducts.map(({ product, details, images }, index) => {
-          const detail =
-            details.find(d => d.productType === "Sách giấy") || details[0];
+        {currentProducts.map((item, index) => {
+          const product = item.product ?? {
+            id: item.id,
+            name: item.name,
+          };
 
-          const price = detail.salePrice;
-          const originalPrice = detail.originalPrice;
+          const details = item.details
+            ? item.details
+            : item.detail
+            ? [
+                {
+                  productType: item.detail.product_type,
+                  originalPrice: item.detail.original_price,
+                  salePrice: item.detail.sale_price,
+                },
+              ]
+            : [];
+
+          const detail =
+            details.find((d: any) => d.productType === "Sách giấy") ||
+            details[0] ||
+            {};
+
+          const price = Number(detail.salePrice ?? 0);
+          const originalPrice = Number(detail.originalPrice ?? price);
 
           const hasDiscount = originalPrice > price;
           const discountPercent = hasDiscount
             ? Math.round(((originalPrice - price) / originalPrice) * 100)
             : 0;
 
+          const images = item.images ?? [];
           const mainImage =
-            images.find(img => img.isPrimary)?.imageUrl ||
+            images.find((i: any) => i.isPrimary || i.is_primary)?.imageUrl ||
+            images.find((i: any) => i.isPrimary || i.is_primary)?.image_url ||
             images[0]?.imageUrl ||
-            "";
+            images[0]?.image_url ||
+            "/img/no-image.png";
 
-          const sold = productSoldMap[product.id] || 0;
-
-          // Tính rank: vị trí trong trang hiện tại + 1
+          const sold = item.sold ?? item.total_sold ?? 0;
           const rank = startIndex + index + 1;
 
           return (

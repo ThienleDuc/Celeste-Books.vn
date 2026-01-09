@@ -10,6 +10,9 @@ use Laravel\Sanctum\HasApiTokens;
 Use App\Models\UserNotification;
 use App\Models\UserNotification as ModelsUserNotification;
 
+/**
+ * @mixin IdeHelperUser
+ */
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;

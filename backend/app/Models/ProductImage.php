@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
  * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereProductId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ProductImage whereSortOrder($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperProductImage
  */
 class ProductImage extends Model
 {

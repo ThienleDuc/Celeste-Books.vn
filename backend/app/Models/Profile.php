@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Profile wherePhone($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Profile whereUserId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperProfile
  */
 class Profile extends Model
 {

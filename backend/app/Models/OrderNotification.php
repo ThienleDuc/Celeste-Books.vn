@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|OrderNotification whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderNotification whereUserId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperOrderNotification
  */
 class OrderNotification extends Model
 {

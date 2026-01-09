@@ -145,8 +145,8 @@ Route::prefix('users')->group(function () {
         ->where('roleId', '[0-9]+');
     
     Route::prefix('{id}')->group(function () {
-        Route::get('/', [UserController::class, 'show'])
-            ->where('id', '[0-9]+');
+        Route::get('/', [UserController::class, 'show']);
+          
         Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
         Route::get('/', [UserController::class, 'show']); 
         Route::put('/', [UserController::class, 'updateBasicInfo']);
@@ -205,6 +205,10 @@ Route::prefix('categories')->group(function () {
 Route::prefix('products')->group(function () {
     // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
     Route::get('/', [ProductController::class, 'index']);
+// Lấy chi tiết sản phẩm theo ID
+    Route::get('/{id}', [ProductController::class, 'show']);
+//lấy sản phẩm gợi ý
+    Route::get('/{id}/suggest', [ProductController::class, 'suggest']);
     
     // Thêm sản phẩm mới
     Route::post('/', [ProductController::class, 'store']);

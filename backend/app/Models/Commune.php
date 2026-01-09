@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Commune whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Commune whereProvinceId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperCommune
  */
 class Commune extends Model
 {

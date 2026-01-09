@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|ReviewImage whereImageUrl($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ReviewImage whereReviewId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperReviewImage
  */
 class ReviewImage extends Model
 {

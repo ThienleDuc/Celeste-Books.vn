@@ -110,12 +110,11 @@ class GoogleAuthController extends Controller
 
    private function generateNextUserId()
 {
-    // Lấy max số từ ID hiện tại
-    $maxNumber = User::selectRaw(
-        "MAX(CAST(SUBSTRING(id, 2) AS UNSIGNED)) as max_id"
-    )->value('max_id');
+    // Lấy max số từ ID hiện tại chỉ với các ID bắt đầu bằng 'C'
+    $maxNumber = User::where('id', 'like', 'C%')
+        ->selectRaw("MAX(CAST(SUBSTRING(id, 2) AS UNSIGNED)) as max_id")
+        ->value('max_id');
 
-    // Chuyển sang integer để chắc chắn
     $nextNumber = intval($maxNumber) + 1;
 
     // Luôn pad đủ 3 chữ số
@@ -123,5 +122,4 @@ class GoogleAuthController extends Controller
 
     return 'C' . $paddedNumber;
 }
-
 }

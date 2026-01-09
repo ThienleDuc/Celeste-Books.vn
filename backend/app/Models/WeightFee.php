@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|WeightFee whereMaxWeight($value)
  * @method static \Illuminate\Database\Eloquent\Builder|WeightFee whereMinWeight($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperWeightFee
  */
 class WeightFee extends Model
 {

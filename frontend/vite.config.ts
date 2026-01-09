@@ -10,4 +10,14 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    port: 5173, // giữ port hiện tại
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000', // địa chỉ backend Laravel của bạn
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })

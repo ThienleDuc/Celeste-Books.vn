@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Message whereMessage($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Message whereSenderId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperMessage
  */
 class Message extends Model
 {

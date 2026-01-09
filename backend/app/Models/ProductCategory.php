@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
  * @method static \Illuminate\Database\Eloquent\Builder|ProductCategory whereCategoryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ProductCategory whereProductId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperProductCategory
  */
 class ProductCategory extends Model
 {

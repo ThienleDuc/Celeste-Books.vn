@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|OrderDiscountDetail whereProductDiscountId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderDiscountDetail whereShippingDiscountId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperOrderDiscountDetail
  */
 class OrderDiscountDetail extends Model
 {

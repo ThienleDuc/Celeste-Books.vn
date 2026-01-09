@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|ProductNotification whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ProductNotification whereUserId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperProductNotification
  */
 class ProductNotification extends Model
 {

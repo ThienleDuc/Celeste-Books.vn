@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|ProductDetail whereWeight($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ProductDetail whereWidth($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperProductDetail
  */
 class ProductDetail extends Model
 {

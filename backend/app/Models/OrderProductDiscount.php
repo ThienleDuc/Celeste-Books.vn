@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|OrderProductDiscount whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderProductDiscount whereUsedQuantity($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperOrderProductDiscount
  */
 class OrderProductDiscount extends Model
 {

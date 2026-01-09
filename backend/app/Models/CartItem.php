@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|CartItem whereQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder|CartItem whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperCartItem
  */
 class CartItem extends Model
 {

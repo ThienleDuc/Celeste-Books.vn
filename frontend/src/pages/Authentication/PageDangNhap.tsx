@@ -61,6 +61,10 @@ const Login = () => {
       </Helmet>
 
       <div className="auth-title-container position-relative text-center mb-4">
+<<<<<<< HEAD
+=======
+        {/* Home button */}
+>>>>>>> e4c2a1c (gần x)
         <a
           href="/"
           className="home-btn position-absolute start-0 top-50 translate-middle-y"
@@ -69,6 +73,10 @@ const Login = () => {
           <i className="bi bi-house-door-fill"></i>
         </a>
 
+<<<<<<< HEAD
+=======
+        {/* Login icon + title */}
+>>>>>>> e4c2a1c (gần x)
         <h3 className="fw-bold auth-title d-inline-flex align-items-center gap-2 mb-0">
           <i className="bi bi-box-arrow-in-right"></i>
           Đăng nhập
@@ -123,17 +131,27 @@ const Login = () => {
           </a>
         </div>
 
+<<<<<<< HEAD
         <button
           className="btn btn-success w-100 mb-3"
           disabled={loading}
         >
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+=======
+        <button className="btn btn-success w-100 mb-3" type="submit">
+          Đăng nhập
+>>>>>>> e4c2a1c (gần x)
         </button>
 
-        <button type="button" className="btn btn-google w-100">
-          <i className="bi bi-google google-icon"></i>
-          <span className="google-text">Đăng nhập với Google</span>
-        </button>
+        {/* 🔹 Google Login Button */}
+      <a
+        href="http://127.0.0.1:8000/auth/google"
+        className="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2"
+      >
+        <i className="bi bi-google google-icon"></i>
+        <span className="google-text">Đăng nhập với Google</span>
+      </a>
+
       </form>
 
       <div className="text-center mt-3">

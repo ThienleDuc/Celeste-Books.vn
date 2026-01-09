@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Address whereStreetAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Address whereUserId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperAddress
  */
 class Address extends Model
 {

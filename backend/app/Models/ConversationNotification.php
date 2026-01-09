@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|MessageNotification newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|MessageNotification query()
  * @mixin \Eloquent
+ * @mixin IdeHelperConversationNotification
  */
 class ConversationNotification extends Model
 {

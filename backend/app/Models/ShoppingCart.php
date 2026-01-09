@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|ShoppingCart whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ShoppingCart whereUserId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperShoppingCart
  */
 class ShoppingCart extends Model
 {

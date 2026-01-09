@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Province whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Province whereName($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperProvince
  */
 class Province extends Model
 {

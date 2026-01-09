@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Permission whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Permission whereSlug($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperPermission
  */
 class Permission extends Model
 {

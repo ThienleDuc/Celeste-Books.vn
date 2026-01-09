@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|OrderShippingFeeDetail whereShippingTypeFeeId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|OrderShippingFeeDetail whereWeightFeeId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperOrderShippingFeeDetail
  */
 class OrderShippingFeeDetail extends Model
 {
