@@ -70,3 +70,5 @@
 [2026-01-09 11:23:20] local.INFO: User logged out {"user_id":"C004","username":"leducthien123","token_id":null} 
 [2026-01-09 11:52:10] local.DEBUG: Sanctum token received {"raw_token":"46|tUP7Uxe37DuSwY34D3Keswnmf3pmqmOAhS2iNE4i","id":"46","plain_token_length":40} 
 [2026-01-09 11:52:10] local.DEBUG: Sanctum token received {"raw_token":"46|tUP7Uxe37DuSwY34D3Keswnmf3pmqmOAhS2iNE4i","id":"46","plain_token_length":40} 
+[2026-01-09 11:54:56] local.DEBUG: Sanctum token received {"raw_token":"46|tUP7Uxe37DuSwY34D3Keswnmf3pmqmOAhS2iNE4i","id":"46","plain_token_length":40} 
+[2026-01-09 11:54:56] local.DEBUG: Sanctum token received {"raw_token":"46|tUP7Uxe37DuSwY34D3Keswnmf3pmqmOAhS2iNE4i","id":"46","plain_token_length":40} 
