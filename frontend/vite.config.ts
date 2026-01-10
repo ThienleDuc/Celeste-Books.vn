@@ -1,15 +1,13 @@
+// SỬA THÀNH (Dành cho React 18)
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
+    react() // <--- Chỉ để đơn giản thế này thôi
   ],
+
   server: {
     port: 5173, // giữ port hiện tại
     proxy: {

@@ -880,3 +880,4 @@
 #38 D:/CNM123/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://CNM123//Celes...')
 #39 {main}
 "} 
+[2026-01-09 19:51:11] local.INFO: Google User Data: {"id":"103164868865234204305","email":"phanquoc870@gmail.com","name":"Phan Quoc","avatar":"https://lh3.googleusercontent.com/a/ACg8ocLDPHu9_Ov04yoG73EAAJnXwUwpqp2hcpi3-hK444qBg6LcCg=s96-c","raw":{"sub":"103164868865234204305","name":"Phan Quoc","given_name":"Phan","family_name":"Quoc","picture":"https://lh3.googleusercontent.com/a/ACg8ocLDPHu9_Ov04yoG73EAAJnXwUwpqp2hcpi3-hK444qBg6LcCg=s96-c","email":"phanquoc870@gmail.com","email_verified":true,"id":"103164868865234204305","verified_email":true,"link":null}} 
