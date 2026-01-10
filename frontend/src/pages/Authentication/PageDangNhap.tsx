@@ -68,7 +68,7 @@ const Login = () => {
         className="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2"
       >
         <i className="bi bi-google google-icon"></i>
-        <span className="google-text">Đăng nhập với Google</span>//sử dụng usenavigate lưu userid vào tonken
+        <span className="google-text">Đăng nhập với Google</span>//sử dụng usenavigate lưu userid vào
       </a>
 
       </form>
