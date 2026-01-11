@@ -82,12 +82,9 @@ Route::prefix('roles')->group(function () {
         ->where('slug', '^[a-zA-Z0-9_-]+$'); // Thêm regex để tránh conflict
     
     // Update / Delete theo ID
-    Route::put('/{id}', [RoleController::class, 'update'])
-        ->where('id', '[0-9]+');
-    Route::patch('/{id}', [RoleController::class, 'update'])
-        ->where('id', '[0-9]+');
-    Route::delete('/{id}', [RoleController::class, 'destroy'])
-        ->where('id', '[0-9]+');
+    Route::put('/{id}', [RoleController::class, 'update']);
+    Route::patch('/{id}', [RoleController::class, 'update']);
+    Route::delete('/{id}', [RoleController::class, 'destroy']);
 });
 
 // ==================== PERMISSION ROUTES ====================
@@ -128,8 +125,7 @@ Route::prefix('role-permissions')->group(function () {
     Route::delete('/', [RolePerController::class, 'destroy']);
     
     // Lấy theo role_id
-    Route::get('/role/{roleId}', [RolePerController::class, 'getByRole'])
-        ->where('roleId', '[0-9]+');
+    Route::get('/role/{roleId}', [RolePerController::class, 'getByRole']);
     
     // Lấy theo per_id
     Route::get('/permission/{perId}', [RolePerController::class, 'getByPermission'])
