@@ -82,9 +82,12 @@ Route::prefix('roles')->group(function () {
         ->where('slug', '^[a-zA-Z0-9_-]+$'); // Thêm regex để tránh conflict
     
     // Update / Delete theo ID
-    Route::put('/{id}', [RoleController::class, 'update']);
-    Route::patch('/{id}', [RoleController::class, 'update']);
-    Route::delete('/{id}', [RoleController::class, 'destroy']);
+    Route::put('/{id}', [RoleController::class, 'update'])
+        ->where('id', '[0-9]+');
+    Route::patch('/{id}', [RoleController::class, 'update'])
+        ->where('id', '[0-9]+');
+    Route::delete('/{id}', [RoleController::class, 'destroy'])
+        ->where('id', '[0-9]+');
 });
 
 // ==================== PERMISSION ROUTES ====================
@@ -125,7 +128,8 @@ Route::prefix('role-permissions')->group(function () {
     Route::delete('/', [RolePerController::class, 'destroy']);
     
     // Lấy theo role_id
-    Route::get('/role/{roleId}', [RolePerController::class, 'getByRole']);
+    Route::get('/role/{roleId}', [RolePerController::class, 'getByRole'])
+        ->where('roleId', '[0-9]+');
     
     // Lấy theo per_id
     Route::get('/permission/{perId}', [RolePerController::class, 'getByPermission'])
@@ -141,8 +145,8 @@ Route::prefix('users')->group(function () {
         ->where('roleId', '[0-9]+');
     
     Route::prefix('{id}')->group(function () {
-        Route::get('/', [UserController::class, 'show'])
-            ->where('id', '[0-9]+');
+        Route::get('/', [UserController::class, 'show']);
+          
         Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
         Route::get('/', [UserController::class, 'show']); 
         Route::put('/', [UserController::class, 'updateBasicInfo']);
@@ -201,6 +205,10 @@ Route::prefix('categories')->group(function () {
 Route::prefix('products')->group(function () {
     // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
     Route::get('/', [ProductController::class, 'index']);
+// Lấy chi tiết sản phẩm theo ID
+    Route::get('/{id}', [ProductController::class, 'show']);
+//lấy sản phẩm gợi ý
+    Route::get('/{id}/suggest', [ProductController::class, 'suggest']);
     
     // Thêm sản phẩm mới
     Route::post('/', [ProductController::class, 'store']);
@@ -302,7 +310,5 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth.sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/devices', [AuthController::class, 'devices']);
-        Route::get('/auth/tokens/${tokenId}', [AuthController::class, 'revokeToken']);
     });
 });
