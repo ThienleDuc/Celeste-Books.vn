@@ -44,6 +44,7 @@ class AddressController extends Controller
         }
     }
     
+
     // 2. Thêm method getByUser()
     public function getByUser($userId)
     {
@@ -316,6 +317,184 @@ class AddressController extends Controller
                 'success' => false,
                 'message' => 'Cập nhật địa chỉ thất bại',
                 'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+     public function setDefaultAddress($id)
+    {
+        DB::beginTransaction();
+        try {
+            $address = Address::find($id);
+            
+            if (!$address) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy địa chỉ'
+                ], 404);
+            }
+            
+            // Hủy tất cả địa chỉ mặc định cũ của user
+            Address::where('user_id', $address->user_id)
+                ->where('is_default', true)
+                ->update(['is_default' => false]);
+            
+            // Set địa chỉ này thành mặc định
+            $address->is_default = true;
+            $address->save();
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã đặt làm địa chỉ mặc định',
+                'data' => $address
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Cập nhật thất bại',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+     public function getDefaultAddress($userId)
+    {
+        try {
+            $address = Address::where('user_id', $userId)
+                ->where('is_default', true)
+                ->first();
+            
+            return response()->json([
+                'success' => true,
+                'message' => $address ? 'Lấy địa chỉ mặc định thành công' : 'Không có địa chỉ mặc định',
+                'data' => $address
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi server',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function validateForCheckout($addressId)
+    {
+        try {
+            $address = Address::with('commune.province')->find($addressId);
+            
+            if (!$address) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Địa chỉ không tồn tại'
+                ]);
+            }
+            
+            // Kiểm tra các điều kiện cho phép giao hàng
+            $valid = true;
+            $messages = [];
+            
+            if (empty($address->street_address)) {
+                $valid = false;
+                $messages[] = 'Thiếu số nhà/tên đường';
+            }
+            
+            if (empty($address->receiver_name)) {
+                $valid = false;
+                $messages[] = 'Thiếu tên người nhận';
+            }
+            
+            if (empty($address->phone)) {
+                $valid = false;
+                $messages[] = 'Thiếu số điện thoại';
+            }
+            
+            if (!$address->commune) {
+                $valid = false;
+                $messages[] = 'Địa chỉ không hợp lệ (thiếu xã/phường)';
+            }
+            
+            return response()->json([
+                'valid' => $valid,
+                'message' => $valid ? 'Địa chỉ hợp lệ' : implode(', ', $messages),
+                'data' => $address,
+                'issues' => $messages
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Lỗi kiểm tra địa chỉ'
+            ], 500);
+        }
+    }
+
+    public function quickCreateForCheckout(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'receiver_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'street_address' => 'required|string|max:255',
+            'commune_id' => 'required|exists:communes,id',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Tạo địa chỉ mới
+            $address = Address::create([
+                'user_id' => $request->user_id,
+                'receiver_name' => $request->receiver_name,
+                'phone' => $request->phone,
+                'street_address' => $request->street_address,
+                'commune_id' => $request->commune_id,
+                'label' => $request->label ?? 'Nhà riêng',
+                'is_default' => false, // Không set mặc định khi tạo nhanh
+            ]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Tạo địa chỉ thành công',
+                'data' => $address
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Tạo địa chỉ thất bại',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function verifyOwnership($addressId, $userId)
+    {
+        try {
+            $exists = Address::where('id', $addressId)
+                ->where('user_id', $userId)
+                ->exists();
+            
+            return response()->json([
+                'success' => true,
+                'is_owner' => $exists,
+                'message' => $exists ? 'Người dùng sở hữu địa chỉ này' : 'Người dùng không sở hữu địa chỉ này'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi kiểm tra quyền sở hữu'
             ], 500);
         }
     }

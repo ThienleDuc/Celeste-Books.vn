@@ -802,10 +802,19 @@ class ProductController extends Controller
                 return $product;
             });
             
-            return $this->jsonResponse($bestSellers, 'Lấy sản phẩm bán chạy thành công');
+           return response()->json([
+            'status'  => true,
+            'message' => 'Lấy sản phẩm bán chạy thành công',
+            'data'    => $bestSellers
+        ], 200);
             
-        } catch (\Exception $e) {
-            return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
+                } catch (\Exception $e) {
+                return response()->json([
+            'status'  => false,
+            'message' => 'Lỗi server',
+            'error'   => $e->getMessage()
+        ], 500);
+
         }
     }
 

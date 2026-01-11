@@ -35,7 +35,7 @@ class OrderItem extends Model
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'int';
-
+    public $timestamps = false;
     protected $fillable = [
         'id',
         'order_id',

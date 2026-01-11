@@ -14,6 +14,10 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductNotificationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\ShoppingCartController;
+use App\Http\Controllers\CartItemController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -45,7 +49,7 @@ Route::prefix('conversationNotifications')->group(function () {
     Route::get('/', [\App\Http\Controllers\ConversationNotificationController::class, 'getConversationNotifications']);
     //show detail notification
     Route::get('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'getConversationNotificationDetail']);
-    //create new notification 
+    //create new notification
     Route::post('/', [\App\Http\Controllers\ConversationNotificationController::class, 'createConversationNotification']);
     //update notification
     Route::put('/{id}', [\App\Http\Controllers\ConversationNotificationController::class, 'updateConversationNotification']);
@@ -63,24 +67,24 @@ Route::prefix('conversations')->group(function () {
     //update conversation
     Route::put('/{id}', [\App\Http\Controllers\ConversationController::class, 'updateConversation']);
     //delete conversation
-    Route::delete('/{id}', [\App\Http\Controllers\ConversationController::class, 'deleteConversation']);    
+    Route::delete('/{id}', [\App\Http\Controllers\ConversationController::class, 'deleteConversation']);
     //create conversation
     Route::post('/', [\App\Http\Controllers\ConversationController::class, 'createConversation']);
-   
+
 });
 
 // ==================== ROLE ROUTES ====================
 Route::prefix('roles')->group(function () {
     // Danh sách + tìm kiếm
     Route::get('/', [RoleController::class, 'index']);
-    
+
     // Tạo mới
     Route::post('/', [RoleController::class, 'store']);
-    
+
     // Lấy theo slug - ĐẶT SAU các route cụ thể như 'create'
     Route::get('/{slug}', [RoleController::class, 'showBySlug'])
         ->where('slug', '^[a-zA-Z0-9_-]+$'); // Thêm regex để tránh conflict
-    
+
     // Update / Delete theo ID
     Route::put('/{id}', [RoleController::class, 'update'])
         ->where('id', '[0-9]+');
@@ -94,20 +98,20 @@ Route::prefix('roles')->group(function () {
 Route::prefix('permissions')->group(function () {
     // Danh sách + tìm kiếm
     Route::get('/', [PermissionController::class, 'index']);
-    
+
     // Tạo permission mới
     Route::post('/', [PermissionController::class, 'store']);
-    
+
     // Lấy permission theo slug
     Route::get('/{slug}', [PermissionController::class, 'showBySlug'])
         ->where('slug', '^[a-zA-Z0-9_-]+$');
-    
+
     // Cập nhật permission theo ID
     Route::put('/{id}', [PermissionController::class, 'update'])
         ->where('id', '[0-9]+');
     Route::patch('/{id}', [PermissionController::class, 'update'])
         ->where('id', '[0-9]+');
-    
+
     // Xóa permission theo ID
     Route::delete('/{id}', [PermissionController::class, 'destroy'])
         ->where('id', '[0-9]+');
@@ -117,20 +121,20 @@ Route::prefix('permissions')->group(function () {
 Route::prefix('role-permissions')->group(function () {
     // Danh sách + tìm kiếm
     Route::get('/', [RolePerController::class, 'index']);
-    
+
     // Gán permission cho role
     Route::post('/', [RolePerController::class, 'store']);
-    
+
     // Update permission của role
     Route::put('/', [RolePerController::class, 'update']);
-    
+
     // Xóa permission khỏi role
     Route::delete('/', [RolePerController::class, 'destroy']);
-    
+
     // Lấy theo role_id
     Route::get('/role/{roleId}', [RolePerController::class, 'getByRole'])
         ->where('roleId', '[0-9]+');
-    
+
     // Lấy theo per_id
     Route::get('/permission/{perId}', [RolePerController::class, 'getByPermission'])
         ->where('perId', '[0-9]+');
@@ -143,19 +147,19 @@ Route::prefix('users')->group(function () {
     Route::get('/statistics', [UserController::class, 'statistics']);
     Route::get('/role/{roleId}', [UserController::class, 'getByRole'])
         ->where('roleId', '[0-9]+');
-    
+
     Route::prefix('{id}')->group(function () {
         Route::get('/', [UserController::class, 'show'])
             ->where('id', '[0-9]+');
         Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
-        Route::get('/', [UserController::class, 'show']); 
+        Route::get('/', [UserController::class, 'show']);
         Route::put('/', [UserController::class, 'updateBasicInfo']);
         Route::put('/update', [UserController::class, 'update']);
         Route::post('/avatar', [UserController::class, 'uploadAvatar']);
         Route::put('/password', [UserController::class, 'changePassword']);
         Route::put('/toggle-status', [UserController::class, 'toggleStatus']);
         Route::delete('/', [UserController::class, 'destroy']);
-        
+
         Route::prefix('notifications')->group(function () {
             Route::get('/', [UserNotificationController::class, 'myNotifications']);
             Route::get('/count-unread', [UserNotificationController::class, 'countUnread']);
@@ -169,7 +173,7 @@ Route::prefix('notifications')->group(function () {
     Route::get('/my', [UserNotificationController::class, 'myNotifications']);
     Route::get('/count-unread', [UserNotificationController::class, 'countUnread']);
     Route::put('/mark-all-read', [UserNotificationController::class, 'markAllAsRead']);
-    
+
     Route::prefix('{id}')->group(function () {
         Route::put('/mark-read', [UserNotificationController::class, 'markAsRead'])
             ->where('id', '[0-9]+');
@@ -205,18 +209,18 @@ Route::prefix('categories')->group(function () {
 Route::prefix('products')->group(function () {
     // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
     Route::get('/', [ProductController::class, 'index']);
-    
+
     // Thêm sản phẩm mới
     Route::post('/', [ProductController::class, 'store']);
-    
+
     // Cập nhật sản phẩm bằng ID
     Route::put('/{id}', [ProductController::class, 'update'])
         ->where('id', '[0-9]+');
-    
+
     // Xóa sản phẩm bằng ID
     Route::delete('/{id}', [ProductController::class, 'destroy'])
         ->where('id', '[0-9]+');
-    
+
     // Tìm kiếm sản phẩm (endpoint riêng cho search)
     Route::get('/search', [ProductController::class, 'searchByName']);
 
@@ -228,33 +232,33 @@ Route::prefix('products')->group(function () {
 Route::prefix('product-details')->group(function () {
     // Lấy danh sách chi tiết sản phẩm (có thể lọc theo product_id, product_type)
     Route::get('/', [ProductDetailController::class, 'index']);
-    
+
     // Thêm chi tiết sản phẩm mới
     Route::post('/', [ProductDetailController::class, 'store']);
-    
+
     // Cập nhật chi tiết sản phẩm theo ID
     Route::put('/{id}', [ProductDetailController::class, 'update'])
         ->where('id', '[0-9]+');
-    
+
     // Xóa chi tiết sản phẩm theo ID
     Route::delete('/{id}', [ProductDetailController::class, 'destroy'])
         ->where('id', '[0-9]+');
     Route::get('/best-sellers', [ProductController::class, 'getBestSellers']);
-        
+
 });
 
 // ==================== ADDRESS ROUTES ====================
 Route::prefix('addresses')->group(function () {
     // Tìm địa chỉ theo user_id
     Route::get('/user/{userId}', [AddressController::class, 'getByUser']);
-    
+
     // Cập nhật địa chỉ của user - ĐỔI THÀNH 'update' (đúng với controller)
     Route::put('/user/{userId}', [AddressController::class, 'update']);
-    
+
     // Cập nhật địa chỉ theo address id - THÊM ROUTE MỚI
     Route::put('/{id}', [AddressController::class, 'updateById'])
         ->where('id', '[0-9]+');
-    
+
     // Các route CRUD theo address id
     Route::get('/', [AddressController::class, 'index']);
     Route::post('/', [AddressController::class, 'store']);
@@ -310,3 +314,42 @@ Route::prefix('auth')->group(function () {
         Route::get('/auth/tokens/${tokenId}', [AuthController::class, 'revokeToken']);
     });
 });
+// ==================== STATISTICS ROUTES ====================
+Route::prefix('statistics')->group(function () {
+    // Route xử lý cả tổng quan và chi tiết
+    Route::get('/', [StatisticsController::class, 'index']);
+    // Route xuất báo cáo
+    Route::get('/export', [StatisticsController::class, 'export']);
+});
+// ==================== SHOPPING CART ROUTES ====================
+Route::prefix('shopping-carts')->group(function () {
+    // Thêm sản phẩm vào giỏ hàng
+    Route::post('/add', [ShoppingCartController::class, 'addToCart']);
+});
+
+
+Route::get('/addresses/default/{userId}', [AddressController::class, 'getDefaultAddress']);
+Route::put('/addresses/{id}/default', [AddressController::class, 'setDefaultAddress']);
+Route::get('/addresses/{id}/validate', [AddressController::class, 'validateForCheckout']);
+Route::post('/addresses/quick-create', [AddressController::class, 'quickCreateForCheckout']);
+Route::get('/addresses/{addressId}/verify/{userId}', [AddressController::class, 'verifyOwnership']);
+
+Route::get('/cart/user/{userId}', [CartItemController::class, 'getUserCart']);
+Route::get('/cart/item/{cartItemId}', [CartItemController::class, 'getCartItemDetail']);
+Route::get('/cart/{userId}/check-stock', [CartItemController::class, 'checkStockAvailability']);
+Route::get('/cart/{userId}/weight', [CartItemController::class, 'calculateCartWeight']);
+Route::get('/cart/{userId}/summary', [CartItemController::class, 'getCartSummary']);
+Route::get('/cart/{userId}/for-checkout', [CartItemController::class, 'getCartForCheckout']);
+
+// Order routes
+Route::post('/orders/create', [OrderController::class, 'createOrder']);
+Route::get('/orders/user/{userId}', [OrderController::class, 'getUserOrders']);
+Route::get('/orders/{orderCode}', [OrderController::class, 'getOrderDetail']);
+Route::put('/orders/{orderId}/cancel', [OrderController::class, 'cancelOrder']);
+Route::post('/orders/calculate', [OrderController::class, 'calculateOrder']);
+Route::put('/orders/{orderId}/status', [OrderController::class, 'updateOrderStatus']);
+Route::get('/orders/status/{status}', [OrderController::class, 'getOrdersByStatus']);
+Route::get('/orders/search', [OrderController::class, 'searchOrders']);
+
+Route::post('/vnpay/create-payment', [VnPayController::class, 'createPayment']);
+Route::get('/vnpay/return', [VnPayController::class, 'vnpayReturn']);

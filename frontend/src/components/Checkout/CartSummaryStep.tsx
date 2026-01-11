@@ -5,13 +5,14 @@ import type { LocalStorageCartData } from '../../models/Checkout/checkout.model'
 
 // Interface cho sản phẩm từ localStorage
 interface StorageProduct {
-  id: number;
-  productId: number;
+  cart_item_id: number;
+  product_id: number;
   quantity: number;
-  priceAtTime: number;
-  name: string;
-  image: string;
-  productType: string;
+  price_at_time: string | number;
+  product_name: string;
+  primary_image: string;
+  product_type: string;
+  author?: string;
 }
 
 // Interface cho thông tin sản phẩm trả về
@@ -59,62 +60,39 @@ const CartSummaryStep: React.FC<CartSummaryStepProps> = ({
   const leftColumnRef = useRef<HTMLDivElement>(null);
 
   // Lấy danh sách sản phẩm để hiển thị - DI CHUYỂN LÊN TRÊN
-  const getDisplayItems = (): (StorageProduct | CartItem)[] => {
+  const getDisplayItems = (): any[] => {
+    // Ưu tiên dùng cartItems vì nó chứa đầy đủ thông tin tên, ảnh từ API
+    if (cartItems && cartItems.length > 0) {
+      return cartItems;
+    }
+    // Nếu không có cartItems mới dùng tới storage
     if (cartDataFromStorage) {
       return cartDataFromStorage.products;
     }
-    return cartItems;
+    return [];
   };
 
-  // Hàm lấy thông tin sản phẩm với type cụ thể
-  const getProductInfo = (
-    item: StorageProduct | CartItem, 
-    isFromStorage: boolean = false
-  ): ProductInfo | null => {
-    if (isFromStorage && cartDataFromStorage) {
-      // Type guard để kiểm tra item là StorageProduct
-      const storageItem = item as StorageProduct;
-      const priceChange = priceChanges.find(pc => pc.productId === storageItem.productId);
-      const currentPrice = priceChange?.hasChanged ? priceChange.newPrice : storageItem.priceAtTime;
-      
-      return {
-        id: storageItem.id,
-        name: storageItem.name,
-        imageUrl: storageItem.image || '/img/no-image.png',
-        price: currentPrice,
-        originalPrice: priceChange?.hasChanged ? priceChange.oldPrice : storageItem.priceAtTime,
-        productType: storageItem.productType || 'Sách giấy',
-        quantity: storageItem.quantity,
-        hasPriceChange: priceChange?.hasChanged || false,
-        priceChangeInfo: priceChange,
-        productId: storageItem.productId,
-        total: currentPrice * storageItem.quantity
-      };
-    } else {
-      // Type guard để kiểm tra item là CartItem
-      const cartItem = item as CartItem;
-      const productFull = products.find(p => p.product.id === cartItem.productId);
-      
-      if (!productFull) return null;
-      
-      const detail = productFull.details.find(d => d.id === cartItem.productDetailtId);
-      const primaryImage = productFull.images.find(img => img.isPrimary);
-      const currentPrice = detail?.salePrice || 0;
-      
-      return {
-        id: cartItem.id,
-        name: productFull.product.name,
-        imageUrl: primaryImage?.imageUrl || '/img/no-image.png',
-        price: currentPrice,
-        originalPrice: detail?.salePrice || currentPrice,
-        productType: detail?.productType || 'Sách giấy',
-        quantity: cartItem.quantity,
-        hasPriceChange: false,
-        productId: cartItem.productId,
-        total: currentPrice * cartItem.quantity
-      };
-    }
+// Trong CartSummaryStep.tsx
+const getProductInfo = (item: any): ProductInfo | null => {
+  if (!item) return null;
+
+  // Lấy giá thực tế từ API (Postman trả về sale_price hoặc price_at_time)
+  const currentPrice = parseFloat(item.price_at_time || item.sale_price || 0);
+  const oldPrice = parseFloat(item.original_price || currentPrice);
+
+  return {
+    id: item.cart_item_id || item.id,
+    name: item.product_name || "Sách không tên", // Đảm bảo đúng key product_name
+    imageUrl: item.primary_image || '/img/no-image.png', // Đúng key primary_image
+    price: currentPrice,
+    originalPrice: oldPrice,
+    productType: item.product_type || 'Sách giấy',
+    quantity: item.quantity || 1,
+    hasPriceChange: false, // Tắt cảnh báo màu vàng nếu bạn muốn giao diện sạch
+    productId: item.product_id,
+    total: currentPrice * (item.quantity || 1)
   };
+};
 
   // Tính tổng tiền với giá hiện tại
   const calculateTotal = (): number => {
@@ -389,80 +367,48 @@ const CartSummaryStep: React.FC<CartSummaryStepProps> = ({
           {/* Cột bên phải - Danh sách sản phẩm với chiều cao bằng cột trái */}
           <div className="cart-summary-right-column" style={{ height: leftColumnHeight || 'auto' }}>
             <div className="cart-summary-product-list">
-              {displayItems.map((item, index) => {
-                const isFromStorage = cartDataFromStorage !== undefined;
-                const productInfo = getProductInfo(item, isFromStorage);
-                
-                if (!productInfo) return null;
-                
-                return (
-                  <div 
-                    key={productInfo.id || index} 
-                    className={`cart-summary-product-item ${
-                      productInfo.hasPriceChange 
-                        ? 'cart-summary-product-item-price-changed' 
-                        : 'cart-summary-product-item-normal'
-                    }`}
-                  >
-                    <div className="cart-summary-product-image">
-                      <img 
-                        src={productInfo.imageUrl} 
-                        alt={productInfo.name}
-                        className="cart-summary-product-img"
-                        onError={(e) => {
-                          e.currentTarget.src = '/img/no-image.png';
-                        }}
-                      />
-                    </div>
-                    
-                    <div className="cart-summary-product-info">
-                      <h4 className="cart-summary-product-name">
-                        {productInfo.name}
-                      </h4>
-                      <div className="cart-summary-product-details">
-                        <div className="cart-summary-product-tags">
-                          <span className={`cart-summary-product-type ${
-                            productInfo.hasPriceChange 
-                              ? 'cart-summary-product-type-price-changed' 
-                              : 'cart-summary-product-type-normal'
-                          }`}>
-                            {productInfo.productType}
-                          </span>
-                          <span className="cart-summary-product-quantity">
-                            Số lượng: {productInfo.quantity}
-                          </span>
+                {displayItems.map((item: any, index: number) => {
+                // 1. Ép kiểu dữ liệu để tính toán chính xác
+                const itemPrice = Number(item.price_at_time || 0);
+                const itemQuantity = Number(item.quantity || 0);
+                const itemTotal = itemPrice * itemQuantity;
+
+                    return (
+                      <div key={index} className="d-flex align-items-center mb-3 p-2 border-bottom">
+                        {/* 2. Đổ ảnh - dùng đúng key primary_image */}
+                        <div className="product-image" style={{ width: '70px', height: '90px' }}>
+                          <img 
+                            src={item.primary_image || 'https://via.placeholder.com/70x90'} 
+                            alt={item.product_name}
+                            className="img-fluid rounded shadow-sm"
+                            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                          />
                         </div>
-                        <div className="cart-summary-product-prices">
-                          {productInfo.hasPriceChange && (
-                            <span className="cart-summary-product-old-price">
-                              {productInfo.originalPrice.toLocaleString('vi-VN')}₫
-                            </span>
-                          )}
-                          <span className={`cart-summary-product-current-price ${
-                            productInfo.hasPriceChange ? 'cart-summary-product-current-price-changed' : ''
-                          }`}>
-                            {productInfo.price.toLocaleString('vi-VN')}₫/sản phẩm
-                            {productInfo.hasPriceChange && (
-                              <span className="cart-summary-price-change-indicator">
-                                <i className="bi bi-arrow-up-right"></i>
+
+                        <div className="product-details ms-3 flex-grow-1">
+                          {/* 3. Đổ tên sản phẩm và Tác giả */}
+                          <h6 className="mb-0 fw-bold text-dark">{item.product_name}</h6>
+                          <div className="text-muted small mb-1">Tác giả: {item.author}</div>
+                          
+                          <div className="d-flex justify-content-between align-items-end">
+                            <div>
+                              {/* 4. Đổ loại sản phẩm (Sách giấy/Ebook) */}
+                              <span className="badge bg-info-subtle text-info small me-2">
+                                {item.product_type}
                               </span>
-                            )}
-                          </span>
+                              <span className="small text-secondary">x{itemQuantity}</span>
+                            </div>
+                  
+                        {/* 5. Đổ giá tiền */}
+                        <div className="text-end">
+                          <div className="fw-bold text-primary">
+                            {itemTotal.toLocaleString('vi-VN')}₫
+                          </div>
+                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                            {itemPrice.toLocaleString('vi-VN')}₫/sp
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="cart-summary-product-total">
-                      <div className={`cart-summary-product-total-price ${
-                        productInfo.hasPriceChange ? 'cart-summary-product-total-price-changed' : ''
-                      }`}>
-                        {productInfo.total.toLocaleString('vi-VN')}₫
-                      </div>
-                      {productInfo.hasPriceChange && (
-                        <div className="cart-summary-product-original-total">
-                          {(productInfo.originalPrice * productInfo.quantity).toLocaleString('vi-VN')}₫
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
