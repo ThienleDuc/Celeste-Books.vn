@@ -764,15 +764,15 @@ export default function RolePermissionPage() {
             </Helmet>
             <div className="role-permission-page">
                 <div className="container-fluid">
-                    <div className="row g-3">
+                    <div className="row">
                         {/* COL 1: MENU VAI TRÒ */}
-                        <div className="col-md-3">
+                        <div className="col-md-3 col-12">
                             <div className="role-menu-card">
                                 <div className="role-menu-content">
-                                    <div className="d-flex align-items-center mb-3">
+                                    <div className="rp-title-container">
                                         <h5 className="role-menu-title">Menu vai trò</h5>
                                         <button
-                                            className="expand-btn"
+                                            className="rp-expand-btn"
                                             onClick={() => setShowRoleDialog(true)}
                                             title="Thêm vai trò mới"
                                         >
@@ -783,10 +783,10 @@ export default function RolePermissionPage() {
                                     {/* Form tìm kiếm roles */}
                                     <div className="search-container">
                                         <form onSubmit={handleRoleSearch} className="search-form">
-                                            <div className="input-group">
+                                            <div className="rp-input-group">
                                                 <input
                                                     type="text"
-                                                    className="search-input"
+                                                    className="rp-search-input"
                                                     placeholder="Tìm kiếm vai trò..."
                                                     value={roleSearch}
                                                     onChange={(e) => setRoleSearch(e.target.value)}
@@ -794,7 +794,7 @@ export default function RolePermissionPage() {
                                                 />
                                                 <button
                                                     type="submit"
-                                                    className="search-btn"
+                                                    className="rp-search-btn"
                                                     title="Tìm kiếm"
                                                 >
                                                     <i className="bi bi-search"></i>
@@ -802,7 +802,7 @@ export default function RolePermissionPage() {
                                                 {roleSearch && (
                                                     <button
                                                         type="button"
-                                                        className="reset-btn"
+                                                        className="rp-reset-btn"
                                                         onClick={handleResetRoleSearch}
                                                         title="Xóa tìm kiếm"
                                                     >
@@ -818,26 +818,26 @@ export default function RolePermissionPage() {
                                         )}
                                     </div>
 
-                                    <div className="scroll-wrapper">
-                                        <div className="scroll-content">
+                                    <div className="rp-scroll-wrapper">
+                                        <div className="rp-scroll-content">
                                             {filteredRoles.length === 0 ? (
-                                                <p className="no-data-text">
+                                                <p className="rp-no-data-text">
                                                     {roleSearch ? "Không tìm thấy vai trò phù hợp" : "Không có vai trò nào"}
                                                 </p>
                                             ) : (
                                                 filteredRoles.map((role) => (
                                                     <div
                                                         key={role.id}
-                                                        className={`role-item ${selectedRole?.id === role.id ? "role-item-selected" : ""}`}
+                                                        className={`rp-role-item ${selectedRole?.id === role.id ? "rp-role-item-selected" : ""}`}
                                                         onClick={() => setSelectedRole(role)}
                                                         onMouseEnter={() => setHoveredRoleId(role.id)}
                                                         onMouseLeave={() => setHoveredRoleId(null)}
                                                     >
-                                                        <div className="role-item-content">
-                                                            <span className="role-item-name">{role.name}</span>
+                                                        <div className="rp-role-item-content">
+                                                            <span className="rp-role-item-name">{role.name}</span>
                                                             {role.description && (
                                                                 <span 
-                                                                    className="role-item-desc"
+                                                                    className="rp-role-item-desc"
                                                                     title={role.description}
                                                                 >
                                                                     {role.description}
@@ -845,9 +845,9 @@ export default function RolePermissionPage() {
                                                             )}
                                                         </div>
                                                         {hoveredRoleId === role.id && (
-                                                            <div className="role-item-actions">
+                                                            <div className="rp-role-item-actions">
                                                                 <button
-                                                                    className="action-btn edit-btn"
+                                                                    className="rp-action-btn rp-edit-btn"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         handleOpenEditDialog(role, 'role');
@@ -857,7 +857,7 @@ export default function RolePermissionPage() {
                                                                     <i className="bi bi-pencil"></i>
                                                                 </button>
                                                                 <button
-                                                                    className="action-btn delete-btn"
+                                                                    className="rp-action-btn rp-delete-btn"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         setItemToDelete({ type: 'role', id: role.id });
@@ -879,26 +879,26 @@ export default function RolePermissionPage() {
                         </div>
 
                         {/* COL 2: CHI TIẾT VAI TRÒ */}
-                        <div className="col-md-6">
+                        <div className="col-md-6 col-12">
                             <div className="role-detail-card">
                                 <div className="role-detail-content">
                                     <h5 className="role-detail-title">Tên vai trò</h5>
-                                    <div className="scroll-wrapper">
-                                        <div className="scroll-content">
+                                    <div className="rp-scroll-wrapper">
+                                        <div className="rp-scroll-content">
                                             {selectedRole ? (
                                                 <>
-                                                    <div className="role-info">
-                                                        <p className="role-name">{selectedRole.name}</p>
-                                                        <p className="role-description">
+                                                    <div className="rp-role-info">
+                                                        <p className="rp-role-name">{selectedRole.name}</p>
+                                                        <p className="rp-role-description">
                                                             {selectedRole.description || "Không có mô tả"}
                                                         </p>
                                                         {selectedRole.slug && (
-                                                            <p className="role-slug">Slug: {selectedRole.slug}</p>
+                                                            <p className="rp-role-slug">Slug: {selectedRole.slug}</p>
                                                         )}
                                                     </div>
-                                                    <div className="role-divider"></div>
-                                                    <div className="role-permissions-section">
-                                                        <h6 className="permission-list-title">
+                                                    <div className="rp-role-divider"></div>
+                                                    <div className="rp-role-permissions-section">
+                                                        <h6 className="rp-permission-list-title">
                                                             Danh sách quyền hạn của vai trò
                                                             <span className="permission-count">
                                                                 ({filteredAssignedPermissions.length})
@@ -908,10 +908,10 @@ export default function RolePermissionPage() {
                                                         {/* Form tìm kiếm assigned permissions */}
                                                         <div className="search-container px-0">
                                                             <form onSubmit={handleAssignedPermissionSearch} className="search-form">
-                                                                <div className="input-group">
+                                                                <div className="rp-input-group">
                                                                     <input
                                                                         type="text"
-                                                                        className="search-input"
+                                                                        className="rp-search-input"
                                                                         placeholder="Tìm kiếm quyền hạn đã gán..."
                                                                         value={assignedPermissionSearch}
                                                                         onChange={(e) => setAssignedPermissionSearch(e.target.value)}
@@ -920,7 +920,7 @@ export default function RolePermissionPage() {
                                                                     />
                                                                     <button
                                                                         type="submit"
-                                                                        className="search-btn"
+                                                                        className="rp-search-btn"
                                                                         title="Tìm kiếm"
                                                                         disabled={searchingAssigned}
                                                                     >
@@ -933,7 +933,7 @@ export default function RolePermissionPage() {
                                                                     {assignedPermissionSearch && (
                                                                         <button
                                                                             type="button"
-                                                                            className="reset-btn"
+                                                                            className="rp-reset-btn"
                                                                             onClick={handleResetAssignedPermissionSearch}
                                                                             title="Xóa tìm kiếm"
                                                                             disabled={searchingAssigned}
@@ -951,20 +951,20 @@ export default function RolePermissionPage() {
                                                         </div>
 
                                                         {filteredAssignedPermissions.length > 0 ? (
-                                                            <ul className="permission-list">
+                                                            <ul className="rp-permission-list">
                                                                 {filteredAssignedPermissions.map((per) => (
                                                                     <li
                                                                         key={per.id}
-                                                                        className="permission-item"
+                                                                        className="rp-permission-item"
                                                                     >
-                                                                        <div className="permission-info">
-                                                                            <span className="permission-name">{per.name}</span>
+                                                                        <div className="rp-permission-info">
+                                                                            <span className="rp-permission-name">{per.name}</span>
                                                                             {per.description && (
-                                                                                <span className="permission-desc">{per.description}</span>
+                                                                                <span className="rp-permission-desc">{per.description}</span>
                                                                             )}
                                                                         </div>
                                                                         <button
-                                                                            className="remove-permission-btn"
+                                                                            className="rp-remove-permission-btn"
                                                                             title="Xóa quyền"
                                                                             onClick={() => handleRemovePermission(per.id)}
                                                                             type="button"
@@ -975,7 +975,7 @@ export default function RolePermissionPage() {
                                                                 ))}
                                                             </ul>
                                                         ) : (
-                                                            <p className="no-permission-text">
+                                                            <p className="rp-no-permission-text">
                                                                 {assignedPermissionSearch ? 
                                                                     "Không tìm thấy quyền hạn phù hợp" : 
                                                                     "Vai trò này chưa có quyền hạn"}
@@ -984,8 +984,8 @@ export default function RolePermissionPage() {
                                                     </div>
                                                 </>
                                             ) : (
-                                                <div className="no-role-selected">
-                                                    <p className="select-role-text">Vui lòng chọn vai trò</p>
+                                                <div className="rp-no-role-selected">
+                                                    <p className="rp-select-role-text">Vui lòng chọn vai trò</p>
                                                 </div>
                                             )}
                                         </div>
@@ -995,15 +995,15 @@ export default function RolePermissionPage() {
                         </div>
 
                         {/* COL 3: MENU QUYỀN HẠN */}
-                        <div className="col-md-3">
+                        <div className="col-md-3 col-12">
                             <div className="permission-menu-card">
                                 <div className="permission-menu-content">
-                                    <div className="d-flex align-items-center mb-3">
+                                    <div className="rp-title-container">
                                         <h5 className="permission-menu-title">
                                             Menu quyền hạn
                                         </h5>
                                         <button
-                                            className="expand-btn"
+                                            className="rp-expand-btn"
                                             onClick={() => setShowPermissionDialog(true)}
                                             title="Thêm quyền hạn mới"
                                         >
@@ -1014,10 +1014,10 @@ export default function RolePermissionPage() {
                                     {/* Form tìm kiếm permissions */}
                                     <div className="search-container">
                                         <form onSubmit={handlePermissionSearch} className="search-form">
-                                            <div className="input-group">
+                                            <div className="rp-input-group">
                                                 <input
                                                     type="text"
-                                                    className="search-input"
+                                                    className="rp-search-input"
                                                     placeholder="Tìm kiếm quyền hạn..."
                                                     value={permissionSearch}
                                                     onChange={(e) => setPermissionSearch(e.target.value)}
@@ -1025,7 +1025,7 @@ export default function RolePermissionPage() {
                                                 />
                                                 <button
                                                     type="submit"
-                                                    className="search-btn"
+                                                    className="rp-search-btn"
                                                     title="Tìm kiếm"
                                                 >
                                                     <i className="bi bi-search"></i>
@@ -1033,7 +1033,7 @@ export default function RolePermissionPage() {
                                                 {permissionSearch && (
                                                     <button
                                                         type="button"
-                                                        className="reset-btn"
+                                                        className="rp-reset-btn"
                                                         onClick={handleResetPermissionSearch}
                                                         title="Xóa tìm kiếm"
                                                     >
@@ -1049,10 +1049,10 @@ export default function RolePermissionPage() {
                                         )}
                                     </div>
 
-                                    <div className="scroll-wrapper">
-                                        <div className="scroll-content">
+                                    <div className="rp-scroll-wrapper">
+                                        <div className="rp-scroll-content">
                                             {filteredPermissions.length === 0 ? (
-                                                <p className="no-data-text">
+                                                <p className="rp-no-data-text">
                                                     {permissionSearch ? "Không tìm thấy quyền hạn phù hợp" : "Không có quyền hạn nào"}
                                                 </p>
                                             ) : (
@@ -1061,24 +1061,24 @@ export default function RolePermissionPage() {
                                                     return (
                                                         <div
                                                             key={per.id}
-                                                            className="permission-item-container"
+                                                            className="rp-permission-item-container"
                                                             onMouseEnter={() => setHoveredPermissionId(per.id)}
                                                             onMouseLeave={() => setHoveredPermissionId(null)}
                                                         >
-                                                            <div className="permission-info">
-                                                                <span className="permission-item-name">{per.name}</span>
+                                                            <div className="rp-permission-info">
+                                                                <span className="rp-permission-item-name">{per.name}</span>
                                                                 {per.description && (
                                                                     <span 
-                                                                        className="permission-item-desc"
+                                                                        className="rp-permission-item-desc"
                                                                         title={per.description}
                                                                     >
                                                                         {per.description}
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <div className="permission-item-actions">
+                                                            <div className="rp-permission-item-actions">
                                                                 <button
-                                                                    className={`add-permission-btn ${assigned ? "disabled" : ""}`}
+                                                                    className={`rp-add-permission-btn ${assigned ? "disabled" : ""}`}
                                                                     disabled={assigned || !selectedRole}
                                                                     onClick={() => handleAssign(per.id)}
                                                                     type="button"
@@ -1088,14 +1088,14 @@ export default function RolePermissionPage() {
                                                                 {hoveredPermissionId === per.id && (
                                                                     <>
                                                                         <button
-                                                                            className="action-btn edit-btn"
+                                                                            className="rp-action-btn rp-edit-btn"
                                                                             onClick={() => handleOpenEditDialog(per, 'permission')}
                                                                             title="Chỉnh sửa"
                                                                         >
                                                                             <i className="bi bi-pencil"></i>
                                                                         </button>
                                                                         <button
-                                                                            className="action-btn delete-btn"
+                                                                            className="rp-action-btn rp-delete-btn"
                                                                             onClick={() => {
                                                                                 setItemToDelete({ type: 'permission', id: per.id });
                                                                                 setShowDeleteConfirm(true);
@@ -1121,12 +1121,12 @@ export default function RolePermissionPage() {
 
                 {/* Dialog thêm vai trò mới */}
                 {showRoleDialog && (
-                    <div className="dialog-overlay">
-                        <div className="dialog-content">
-                            <div className="dialog-header">
-                                <h5 className="dialog-title">Thêm vai trò mới</h5>
+                    <div className="rp-dialog-overlay">
+                        <div className="rp-dialog-content">
+                            <div className="rp-dialog-header">
+                                <h5 className="rp-dialog-title">Thêm vai trò mới</h5>
                                 <button 
-                                    className="dialog-close-btn"
+                                    className="rp-dialog-close-btn"
                                     onClick={() => {
                                         setShowRoleDialog(false);
                                         setRoleFormData({ name: '', description: '', slug: '' });
@@ -1135,40 +1135,40 @@ export default function RolePermissionPage() {
                                     <i className="bi bi-x-lg"></i>
                                 </button>
                             </div>
-                            <div className="dialog-body">
-                                <div className="form-group">
+                            <div className="rp-dialog-body">
+                                <div className="rp-form-group">
                                     <label>Tên vai trò *</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={roleFormData.name}
                                         onChange={(e) => setRoleFormData(prev => ({ ...prev, name: e.target.value }))}
                                         placeholder="Nhập tên vai trò"
                                         autoFocus
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Mô tả</label>
                                     <textarea
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={roleFormData.description}
                                         onChange={(e) => setRoleFormData(prev => ({ ...prev, description: e.target.value }))}
                                         placeholder="Nhập mô tả"
                                         rows={3}
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Slug</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={roleFormData.slug || ''}
                                         onChange={(e) => setRoleFormData(prev => ({ ...prev, slug: e.target.value }))}
                                         placeholder="Nhập slug (tùy chọn)"
                                     />
                                 </div>
                             </div>
-                            <div className="dialog-footer">
+                            <div className="rp-dialog-footer">
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => {
@@ -1191,12 +1191,12 @@ export default function RolePermissionPage() {
 
                 {/* Dialog thêm quyền hạn mới */}
                 {showPermissionDialog && (
-                    <div className="dialog-overlay">
-                        <div className="dialog-content">
-                            <div className="dialog-header">
-                                <h5 className="dialog-title">Thêm quyền hạn mới</h5>
+                    <div className="rp-dialog-overlay">
+                        <div className="rp-dialog-content">
+                            <div className="rp-dialog-header">
+                                <h5 className="rp-dialog-title">Thêm quyền hạn mới</h5>
                                 <button 
-                                    className="dialog-close-btn"
+                                    className="rp-dialog-close-btn"
                                     onClick={() => {
                                         setShowPermissionDialog(false);
                                         setPermissionFormData({ name: '', description: '', slug: '' });
@@ -1205,40 +1205,40 @@ export default function RolePermissionPage() {
                                     <i className="bi bi-x-lg"></i>
                                 </button>
                             </div>
-                            <div className="dialog-body">
-                                <div className="form-group">
+                            <div className="rp-dialog-body">
+                                <div className="rp-form-group">
                                     <label>Tên quyền hạn *</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={permissionFormData.name}
                                         onChange={(e) => setPermissionFormData(prev => ({ ...prev, name: e.target.value }))}
                                         placeholder="Nhập tên quyền hạn"
                                         autoFocus
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Mô tả</label>
                                     <textarea
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={permissionFormData.description}
                                         onChange={(e) => setPermissionFormData(prev => ({ ...prev, description: e.target.value }))}
                                         placeholder="Nhập mô tả"
                                         rows={3}
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Slug</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={permissionFormData.slug || ''}
                                         onChange={(e) => setPermissionFormData(prev => ({ ...prev, slug: e.target.value }))}
                                         placeholder="Nhập slug (tùy chọn)"
                                     />
                                 </div>
                             </div>
-                            <div className="dialog-footer">
+                            <div className="rp-dialog-footer">
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => {
@@ -1261,12 +1261,12 @@ export default function RolePermissionPage() {
 
                 {/* Dialog chỉnh sửa vai trò */}
                 {showRoleEditDialog && (
-                    <div className="dialog-overlay">
-                        <div className="dialog-content">
-                            <div className="dialog-header">
-                                <h5 className="dialog-title">Chỉnh sửa vai trò</h5>
+                    <div className="rp-dialog-overlay">
+                        <div className="rp-dialog-content">
+                            <div className="rp-dialog-header">
+                                <h5 className="rp-dialog-title">Chỉnh sửa vai trò</h5>
                                 <button 
-                                    className="dialog-close-btn"
+                                    className="rp-dialog-close-btn"
                                     onClick={() => {
                                         setShowRoleEditDialog(false);
                                         setEditingItem(null);
@@ -1276,40 +1276,40 @@ export default function RolePermissionPage() {
                                     <i className="bi bi-x-lg"></i>
                                 </button>
                             </div>
-                            <div className="dialog-body">
-                                <div className="form-group">
+                            <div className="rp-dialog-body">
+                                <div className="rp-form-group">
                                     <label>Tên vai trò *</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={roleFormData.name}
                                         onChange={(e) => setRoleFormData(prev => ({ ...prev, name: e.target.value }))}
                                         placeholder="Nhập tên vai trò"
                                         autoFocus
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Mô tả</label>
                                     <textarea
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={roleFormData.description}
                                         onChange={(e) => setRoleFormData(prev => ({ ...prev, description: e.target.value }))}
                                         placeholder="Nhập mô tả"
                                         rows={3}
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Slug</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={roleFormData.slug || ''}
                                         onChange={(e) => setRoleFormData(prev => ({ ...prev, slug: e.target.value }))}
                                         placeholder="Nhập slug (tùy chọn)"
                                     />
                                 </div>
                             </div>
-                            <div className="dialog-footer">
+                            <div className="rp-dialog-footer">
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => {
@@ -1333,12 +1333,12 @@ export default function RolePermissionPage() {
 
                 {/* Dialog chỉnh sửa quyền hạn */}
                 {showPermissionEditDialog && (
-                    <div className="dialog-overlay">
-                        <div className="dialog-content">
-                            <div className="dialog-header">
-                                <h5 className="dialog-title">Chỉnh sửa quyền hạn</h5>
+                    <div className="rp-dialog-overlay">
+                        <div className="rp-dialog-content">
+                            <div className="rp-dialog-header">
+                                <h5 className="rp-dialog-title">Chỉnh sửa quyền hạn</h5>
                                 <button 
-                                    className="dialog-close-btn"
+                                    className="rp-dialog-close-btn"
                                     onClick={() => {
                                         setShowPermissionEditDialog(false);
                                         setEditingItem(null);
@@ -1348,40 +1348,40 @@ export default function RolePermissionPage() {
                                     <i className="bi bi-x-lg"></i>
                                 </button>
                             </div>
-                            <div className="dialog-body">
-                                <div className="form-group">
+                            <div className="rp-dialog-body">
+                                <div className="rp-form-group">
                                     <label>Tên quyền hạn *</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={permissionFormData.name}
                                         onChange={(e) => setPermissionFormData(prev => ({ ...prev, name: e.target.value }))}
                                         placeholder="Nhập tên quyền hạn"
                                         autoFocus
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Mô tả</label>
                                     <textarea
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={permissionFormData.description}
                                         onChange={(e) => setPermissionFormData(prev => ({ ...prev, description: e.target.value }))}
                                         placeholder="Nhập mô tả"
                                         rows={3}
                                     />
                                 </div>
-                                <div className="form-group">
+                                <div className="rp-form-group">
                                     <label>Slug</label>
                                     <input
                                         type="text"
-                                        className="form-control"
+                                        className="rp-form-control"
                                         value={permissionFormData.slug || ''}
                                         onChange={(e) => setPermissionFormData(prev => ({ ...prev, slug: e.target.value }))}
                                         placeholder="Nhập slug (tùy chọn)"
                                     />
                                 </div>
                             </div>
-                            <div className="dialog-footer">
+                            <div className="rp-dialog-footer">
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => {
@@ -1405,12 +1405,12 @@ export default function RolePermissionPage() {
 
                 {/* Dialog xác nhận xóa */}
                 {showDeleteConfirm && itemToDelete && (
-                    <div className="dialog-overlay">
-                        <div className="dialog-content">
-                            <div className="dialog-header">
-                                <h5 className="dialog-title">Xác nhận xóa</h5>
+                    <div className="rp-dialog-overlay">
+                        <div className="rp-dialog-content">
+                            <div className="rp-dialog-header">
+                                <h5 className="rp-dialog-title">Xác nhận xóa</h5>
                                 <button 
-                                    className="dialog-close-btn"
+                                    className="rp-dialog-close-btn"
                                     onClick={() => {
                                         setShowDeleteConfirm(false);
                                         setItemToDelete(null);
@@ -1419,10 +1419,10 @@ export default function RolePermissionPage() {
                                     <i className="bi bi-x-lg"></i>
                                 </button>
                             </div>
-                            <div className="dialog-body">
+                            <div className="rp-dialog-body">
                                 <p>Bạn có chắc chắn muốn xóa {itemToDelete.type === 'role' ? 'vai trò' : 'quyền hạn'} này? Hành động này không thể hoàn tác.</p>
                             </div>
-                            <div className="dialog-footer">
+                            <div className="rp-dialog-footer">
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => {
