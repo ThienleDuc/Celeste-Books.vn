@@ -4,7 +4,6 @@ import MainRoutesPath from "./routes/MainRoutes";
 import ProfileRoutes from "./routes/ProfileRoutes";
 import AuthRoutes from "./routes/AuthRoutes";
 import ProductRoutes from "./routes/ProductRoutes";
-import AdminRoutes from "./routes/AdminRoutes";
 
 const App = () => {
   return (
@@ -26,11 +25,6 @@ const App = () => {
 
         {/* Product routes */}
         {ProductRoutes.map(({ path, element }) => (
-          <Route key={path} path={path} element={element} />
-        ))}
-
-        {/* Admin routes */}
-        {AdminRoutes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
         ))}
 

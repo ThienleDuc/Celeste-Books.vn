@@ -1,18 +1,17 @@
 import MainLayout from "../layouts/_MainLayout.tsx";
-import PageLichTrinhTheoNgay from "../pages/Schedule/PageLichTrinhTheoNgay.tsx";
-import PageLichTrinhChuyenTau from "../pages/Schedule/PageLichTrinhChuyenTau.tsx";
-import PageLichTrinhPhanCong from "../pages/Schedule/PageLichTrinhPhanCong.tsx";
-import PagePhanCongLaiTau from "../pages/Schedule/PagePhanCongLaiTau.tsx";
-import PageYeuCauTamHoan from "../pages/Schedule/PageYeuCauTamHoan.tsx";
-import PageDungKhanCap from "../pages/Schedule/PageDungKhanCap.tsx";
+import PageThongKe from "../pages/Admin/PageThongKe.tsx";
+import RolesPermissionsPage from "../pages/Admin/PageVaiTro_QuyenHan.tsx";
+import ProductAddPage from "../pages/Admin/Product/ProductAddPage.tsx";
+import ProductEditPage from "../pages/Admin/Product/ProductEditPage.tsx";
+import ProductListPage from "../pages/Admin/Product/ProductListPage.tsx";
+
 
 const MainRoutes = [
-  { path: "/lich-trinh", element: <MainLayout><PageLichTrinhTheoNgay /></MainLayout> },
-  { path: "/lich-trinh/chuyen-tau/:maLichTrinh", element: <MainLayout><PageLichTrinhChuyenTau /></MainLayout> },
-  { path: "/chuyen-tau/lich-trinh/:maChuyenTau", element: <MainLayout><PageLichTrinhPhanCong /></MainLayout> },
-  { path: "/chuyen-tau/lich-trinh/:maChuyenTau/phan-cong/:maLichTrinhPhanCong", element: <MainLayout><PagePhanCongLaiTau /></MainLayout> },
-  { path: "/chuyen-tau/tam-hoan/:maChuyenTau", element: <MainLayout><PageYeuCauTamHoan /></MainLayout> },
-  { path: "/chuyen-tau/dung-khan-cap/:maChuyenTau", element: <MainLayout><PageDungKhanCap /></MainLayout> },
+  { path: "/phan-quyen", element: <MainLayout><RolesPermissionsPage /></MainLayout> },
+  { path: "/admin/statistics", element: <MainLayout><PageThongKe /></MainLayout> },
+  { path: "/admin/products", element: <MainLayout><ProductListPage /></MainLayout> },
+  { path: "/admin/products/add", element: <MainLayout><ProductAddPage /></MainLayout> },
+  { path: "/admin/products/edit/:id", element: <MainLayout><ProductEditPage /></MainLayout> }
 ];
 
 export default MainRoutes;
