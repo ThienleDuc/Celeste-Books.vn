@@ -101,29 +101,118 @@ class ProductController extends Controller
             ], 500);
         }
     }
+     // 2. LẤY CHI TIẾT SẢN PHẨM
+   public function show($id)
+{
+    try {
+        $product = Product::with(['detail', 'categories', 'images'])->find($id);
+
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy sản phẩm',
+                'data'    => []
+            ], 404);
+        }
+
+        // Tăng lượt xem
+        $product->increment('Views');
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Lấy chi tiết sản phẩm thành công',
+            'data'    => $product
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Lỗi server',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+}
 
     // 3. GỢI Ý SẢN PHẨM LIÊN QUAN
-    public function suggest($id)
-    {
-        try {
-            $product = Product::find($id);
+   public function suggest(Request $request, $id)
+{
+    try {
+        $product = Product::find($id);
 
-            if (!$product) {
-                return $this->jsonResponse([], 'Không tìm thấy sản phẩm', 404);
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy sản phẩm',
+                'data'    => []
+            ], 404);
+        }
+
+        // Lấy chữ cái đầu của tên sản phẩm
+        $firstChar = mb_substr($product->name, 0, 1);
+
+        $query = Product::with(['detail', 'categories', 'images'])
+            ->where('id', '!=', $id)
+            ->where('status', 1)
+            ->where('language', 'Tiếng Việt') // lọc tiếng Việt
+            ->whereRaw('LEFT(name, 1) = ?', [$firstChar]); // lọc cùng chữ cái đầu
+
+        // Lọc theo danh mục nếu có request
+        if ($request->has('category_id')) {
+            $categoryId = $request->category_id;
+            $query->whereHas('categories', function ($q) use ($categoryId) {
+                $q->where('categories.id', $categoryId);
+            });
+        }
+
+        // Sắp xếp theo purchase_count -> rating -> views -> created_at
+        $query->orderByDesc('purchase_count')
+            ->orderByDesc('rating')
+            ->orderByDesc('views')
+            ->orderByDesc('created_at');
+
+        // Lấy limit
+        $limit = $request->get('limit', 10);
+        $suggests = $query->limit($limit)->get();
+
+        // Transform dữ liệu
+        $suggests->transform(function ($p) {
+            // Tính % giảm giá nếu có
+            if ($p->detail && $p->detail->original_price > 0 && $p->detail->sale_price > 0) {
+                $p->discount_percent = round(
+                    (($p->detail->original_price - $p->detail->sale_price) / $p->detail->original_price) * 100
+                );
+            } else {
+                $p->discount_percent = 0;
             }
 
-            $suggests = Product::where('id', '!=', $id)
-                ->where('status', 1) // Chỉ lấy sản phẩm active
-                ->where('language', $product->language)
-                ->inRandomOrder()
-                ->limit(4)
-                ->get(['id', 'name', 'slug']);
+            $p->total_sold_formatted = number_format($p->purchase_count ?? 0);
 
-            return $this->jsonResponse($suggests, 'Lấy sản phẩm gợi ý thành công');
-        } catch (\Exception $e) {
-            return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
-        }
+            // Lấy ảnh chính
+            $p->primary_image = $p->images->firstWhere('is_primary', 1) 
+                ? $p->images->firstWhere('is_primary', 1)->image_url 
+                : ($p->images->first() ? $p->images->first()->image_url : null);
+
+            // Lấy các loại product_types
+            $p->product_types = $p->detail->pluck('product_type')->unique()->values()->toArray();
+
+            return $p;
+        });
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Lấy sản phẩm gợi ý thành công',
+            'data'    => $suggests
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Lỗi server',
+            'error'   => $e->getMessage()
+        ], 500);
     }
+}
+
 
     // 4. TẠO SẢN PHẨM MỚI
     // Thêm mới sản phẩm
@@ -802,10 +891,19 @@ class ProductController extends Controller
                 return $product;
             });
             
-            return $this->jsonResponse($bestSellers, 'Lấy sản phẩm bán chạy thành công');
+           return response()->json([
+            'status'  => true,
+            'message' => 'Lấy sản phẩm bán chạy thành công',
+            'data'    => $bestSellers
+        ], 200);
             
-        } catch (\Exception $e) {
-            return $this->jsonResponse([], 'Lỗi server', 500, $e->getMessage());
+                } catch (\Exception $e) {
+                return response()->json([
+            'status'  => false,
+            'message' => 'Lỗi server',
+            'error'   => $e->getMessage()
+        ], 500);
+
         }
     }
 

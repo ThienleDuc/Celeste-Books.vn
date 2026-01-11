@@ -58,11 +58,8 @@ useEffect(() => {
     console.log("🔍 Đang tìm model phù hợp...");
     fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`)
       .then((res) => res.json())
-      // 👇 SỬA Ở ĐÂY: Gán kiểu GeminiListResponse cho data
       .then((data: GeminiListResponse) => {
         if (data.models) {
-          // 👇 SỬA Ở ĐÂY: Xóa bỏ ": any".
-          // TypeScript sẽ tự hiểu "m" là GeminiModel nhờ vào interface bên trên.
           const bestModel =
             data.models.find(
               (m) =>
@@ -170,11 +167,9 @@ useEffect(() => {
   };
 const [userLogged, setUserLogged] = useState<User | null>(null);
   useEffect(() => {
-    // 1. Lấy token đã lưu khi đăng nhập (ví dụ lưu trong localStorage)
     const token = localStorage.getItem('access_token'); 
 
     if (token) {
-      // 2. Gọi API lấy user
       axios.get<User>('http://localhost:8000/api/user', {
         headers: {
           // Quan trọng: Phải gửi kèm Token dạng Bearer
@@ -192,38 +187,42 @@ const [userLogged, setUserLogged] = useState<User | null>(null);
       });
     }
   }, []);
-  return (
+ return (
     <>
       <button className="chat-toggle-btn" onClick={() => setOpen((prev) => !prev)}>
         <img src="/img/linh_vat_logo.png" alt="Chat Icon" className="chat-icon" />
       </button>
 
       {open && (
-        <div className="chat-box" ref={chatBoxRef} onPointerDown={(e) => e.stopPropagation()}>
+        // 1. THÊM "flex flex-col" ĐỂ INPUT LUÔN NẰM DƯỚI ĐÁY
+        <div className="chat-box flex flex-col" ref={chatBoxRef} onPointerDown={(e) => e.stopPropagation()}>
           <div className="chat-header">
             <img src="/img/linh_vat_logo.png" alt="Logo" className="chat-header-icon" />
             <span className="mx-2">Trợ lý Celeste Books</span>
           </div>
 
+          {/* Phần nội dung chat (Sẽ tự giãn ra nhờ flex: 1) */}
           <div className="chat-content-scroller" style={{ flex: 1, overflowY: "auto" }}>
             {userLogged ? (
               /* TRƯỜNG HỢP 1: ĐÃ ĐĂNG NHẬP */
               <div className="chat-messages p-3">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`message-row ${msg.type}`}>
-                    {msg.type === "received" && <img src="/img/linh_vat_logo.png" className="message-icon bot" />}
-                    <div className={`message ${msg.type}`}>{msg.text}</div>
-                    {msg.type === "sent" && <img src="/img/69ac12ab-e056-47b3-b0f1-e27966d80ce0.jpg" className="message-icon user" />}
-                  </div>
-                ))}
-                {isThinking && (
-                  <div className="message-row received">
-                    <img src="/img/linh_vat_logo.png" className="message-icon bot" />
-                    <div className="message received italic text-gray-400 text-sm">Đang suy nghĩ...</div>
-                  </div>
-                )}
-                <div ref={messagesEndRef}></div>
-              </div>
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`message-row ${msg.type}`}>
+                      {msg.type === "received" && <img src="/img/linh_vat_logo.png" className="message-icon bot" />}
+                      <div className={`message ${msg.type}`}>{msg.text}</div>
+                      {msg.type === "sent" && <img src="/img/69ac12ab-e056-47b3-b0f1-e27966d80ce0.jpg" className="message-icon user" />}
+                    </div>
+                  ))}
+                  {isThinking && (
+                    <div className="message-row received">
+                      <img src="/img/linh_vat_logo.png" className="message-icon bot" />
+                      <div className="message received italic text-gray-400 text-sm">Đang suy nghĩ...</div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef}></div>
+                  {/* Đã xóa input thừa ở đây nếu có */}
+                </div>
+              
             ) : (
               !isSubmitted ? (
                 <div className="chat-form-container p-3">
@@ -260,14 +259,27 @@ const [userLogged, setUserLogged] = useState<User | null>(null);
             )}
           </div>
 
-          {/* Ô NHẬP LIỆU (Chỉ hiện khi đã submit form) */}
-          {isSubmitted && (
-            <div className="chat-input-wrapper">
-              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex w-full">
-                <input className="text-black" type="text" value={input} onChange={(e) => setInput(e.target.value)} disabled={isThinking} />
-                <button type="submit" className="send-btn" disabled={isThinking}><i className="bi bi-send-arrow-up-fill">Gửi</i></button>
-              </form>
-            </div>
+          {/* 2. SỬA ĐIỀU KIỆN: HIỆN INPUT NẾU (ĐÃ SUBMIT HOẶC ĐÃ LOGGED IN) */}
+          {(isSubmitted || userLogged) && (
+            <div className="chat-input-wrapper p-3 bg-white border-t border-gray-200 shrink-0 z-10">
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
+              <input 
+                className="flex-1 px-4 py-2 bg-gray-100 border-none rounded-full text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-black"
+                type="text" 
+                placeholder="Nhập tin nhắn..."
+                value={input} 
+                onChange={(e) => setInput(e.target.value)} 
+                disabled={isThinking} 
+              />
+              <button 
+                type="submit" 
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors disabled:bg-gray-300"
+                disabled={isThinking}
+              >
+                <i className="bi bi-send-fill text-sm"></i>
+              </button>
+            </form>
+          </div>
           )}
         </div>
       )}

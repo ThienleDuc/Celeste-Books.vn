@@ -377,7 +377,8 @@ class RolePerController extends Controller
                 ->select(
                     'permissions.id',
                     'permissions.name',
-                    'permissions.slug'
+                    'permissions.slug',
+                    'permissions.description'
                 )
                 ->get();
 

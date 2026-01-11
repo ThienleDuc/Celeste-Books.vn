@@ -191,61 +191,95 @@ class UserController extends Controller
     /**
      * Cập nhật thông tin cơ bản (từ nhánh feature/User/UpdateUser)
      */
-    public function updateBasicInfo(Request $request, $id)
-    {
-        $request->validate([
-            'email'     => 'nullable|email',
-            'username'  => 'nullable|string|max:255',
-            'full_name' => 'nullable|string|max:255',
-            'phone'     => 'nullable|string|max:20',
-            'birthday'  => 'nullable|date',
-            'gender'    => 'nullable|in:male,female,other'
-        ]);
+public function updateBasicInfo(Request $request, $id)
+{
+    $request->validate([
+        'email'     => 'nullable|email',
+        'username'  => 'nullable|string|max:255',
+        'full_name' => 'nullable|string|max:255',
+        'phone'     => 'nullable|string|max:20',
+        'birthday'  => 'nullable|date',
+        'gender'    => 'nullable|in:male,female,other,Nam,Nữ,Khác',
+    ]);
 
-        $user = User::find($id);
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+    $user = User::find($id);
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
+
+    DB::beginTransaction();
+    try {
+        $userChanged = false;
+
+        // -----------------------------
+        // CẬP NHẬT USER
+        // -----------------------------
+        if ($request->filled('email')) {
+            $user->email = $request->email;
+            $userChanged = $user->isDirty();
+            if ($userChanged) $user->save();
         }
 
-        DB::beginTransaction();
-        try {
-            $user->fill($request->only(['email', 'username']));
-            $userChanged = $user->isDirty();
+        // -----------------------------
+        // CẬP NHẬT PROFILE
+        // -----------------------------
+        $profile = $user->profile()->firstOrNew(['user_id' => $user->id]);
 
-            $profile = $user->profile()->firstOrNew(['user_id' => $user->id]);
-            $profile->fill($request->only(['full_name', 'phone', 'birthday', 'gender']));
-            $profileChanged = $profile->isDirty();
-
-            // ❌ Không có gì thay đổi
-            if (!$userChanged && !$profileChanged) {
-                DB::rollBack();
-                return response()->json([
-                    'message' => 'Không có thông tin nào thay đổi'
-                ], 200);
+        $fields = ['full_name', 'phone', 'birthday', 'gender'];
+        foreach ($fields as $field) {
+            if ($request->filled($field)) {
+                // Map gender từ frontend nếu cần
+                if ($field === 'gender') {
+                    $genderMap = [
+                        'male' => 'Nam',
+                        'female' => 'Nữ',
+                        'other' => 'Khác',
+                        'Nam' => 'Nam',
+                        'Nữ' => 'Nữ',
+                        'Khác' => 'Khác',
+                    ];
+                    $profile->gender = $genderMap[$request->gender] ?? $profile->gender;
+                } else {
+                    $profile->$field = $request->$field;
+                }
             }
+        }
 
-            // ✅ Có thay đổi → save
-            if ($userChanged) $user->save();
-            if ($profileChanged) $profile->save();
+        $profileChanged = $profile->isDirty();
+        if ($profileChanged) $profile->save();
 
-            DB::commit();
-
-            // ✅ CHỈ tạo thông báo khi có thay đổi
-            $this->createUserNotification($user->id);
-
-            return response()->json([
-                'message' => 'Cập nhật thông tin thành công',
-                'data' => $user->load('profile')
-            ]);
-
-        } catch (\Exception $e) {
+        // -----------------------------
+        // KHÔNG CÓ GÌ THAY ĐỔỔI
+        // -----------------------------
+        if (!$userChanged && !$profileChanged) {
             DB::rollBack();
             return response()->json([
-                'message' => 'Cập nhật thất bại',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'Không có thông tin nào thay đổi'
+            ], 200);
         }
+
+        DB::commit();
+
+        // Tạo thông báo nếu có thay đổi
+        if ($userChanged || $profileChanged) {
+            $this->createUserNotification($user->id);
+        }
+
+        return response()->json([
+            'message' => 'Cập nhật thông tin thành công',
+            'data' => $user->load('profile')
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'message' => 'Cập nhật thất bại',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
+
     
     /**
      * Cập nhật toàn bộ thông tin người dùng (admin)
