@@ -701,3 +701,47 @@
 "}
 [2026-01-11 14:20:08] local.ERROR: Registration failed {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 78c81b3bbb01b44e068f0881f3038104a35fb6549ee968fe994912013c5f0a23, [\"*\"], 2026-01-18 14:20:08, C003, App\\Models\\User, 2026-01-11 14:20:08, 2026-01-11 14:20:08))"} 
 [2026-01-11 14:23:04] local.ERROR: Registration failed {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, caf6d53d0a7a39d5fb066c7fa85b4de678b9e43fcae7e9c7db475b5b6f22b517, [\"*\"], 2026-01-18 14:23:04, C003, App\\Models\\User, 2026-01-11 14:23:04, 2026-01-11 14:23:04))"} 
+[2026-01-11 13:36:30] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [] is not defined. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:212)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(137): Illuminate/Log/LogManager->resolve(NULL, NULL)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(124): Illuminate/Log/LogManager->get(NULL)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(681): Illuminate/Log/LogManager->driver()
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(317): Illuminate/Log/LogManager->error('Class \"Pdo//Mysq...', Array)
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(278): Illuminate/Foundation/Exceptions/Handler->reportThrowable(Object(Error))
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(523): Illuminate/Foundation/Exceptions/Handler->report(Object(Error))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(203): Illuminate/Foundation/Console/Kernel->reportException(Object(Error))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/artisan(35): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#8 {main}
+"} 
+[2026-01-11 13:36:30] laravel.ERROR: Class "Pdo\Mysql" not found {"exception":"[object] (Error(code: 0): Class \"Pdo\\Mysql\" not found at D:/Downloads/Final/Celeste-Books.vn/backend/config/database.php:62)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/LoadConfiguration.php(70): require()
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/LoadConfiguration.php(39): Illuminate/Foundation/Bootstrap/LoadConfiguration->loadConfigurationFiles(Object(Illuminate/Foundation/Application), Object(Illuminate/Config/Repository))
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(286): Illuminate/Foundation/Bootstrap/LoadConfiguration->bootstrap(Object(Illuminate/Foundation/Application))
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(447): Illuminate/Foundation/Application->bootstrapWith(Array)
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(199): Illuminate/Foundation/Console/Kernel->bootstrap()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/artisan(35): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#6 {main}
+"} 
+[2026-01-11 13:41:50] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [] is not defined. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:212)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(137): Illuminate/Log/LogManager->resolve(NULL, NULL)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(124): Illuminate/Log/LogManager->get(NULL)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(681): Illuminate/Log/LogManager->driver()
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(317): Illuminate/Log/LogManager->error('Class \"Pdo//Mysq...', Array)
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(278): Illuminate/Foundation/Exceptions/Handler->reportThrowable(Object(Error))
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(523): Illuminate/Foundation/Exceptions/Handler->report(Object(Error))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(203): Illuminate/Foundation/Console/Kernel->reportException(Object(Error))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/artisan(35): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#8 {main}
+"} 
+[2026-01-11 13:41:50] laravel.ERROR: Class "Pdo\Mysql" not found {"exception":"[object] (Error(code: 0): Class \"Pdo\\Mysql\" not found at D:/Downloads/Final/Celeste-Books.vn/backend/config/database.php:62)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/LoadConfiguration.php(70): require()
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/LoadConfiguration.php(39): Illuminate/Foundation/Bootstrap/LoadConfiguration->loadConfigurationFiles(Object(Illuminate/Foundation/Application), Object(Illuminate/Config/Repository))
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(286): Illuminate/Foundation/Bootstrap/LoadConfiguration->bootstrap(Object(Illuminate/Foundation/Application))
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(447): Illuminate/Foundation/Application->bootstrapWith(Array)
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(199): Illuminate/Foundation/Console/Kernel->bootstrap()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/artisan(35): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#6 {main}
+"} 
