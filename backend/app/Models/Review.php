@@ -50,4 +50,9 @@ class Review extends Model
         'created_at',
         'updated_at',
     ];
+    public function user()
+    {
+        // Liên kết với bảng users qua khóa ngoại user_id
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
 }

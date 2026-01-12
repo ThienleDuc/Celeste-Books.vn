@@ -5,8 +5,34 @@ use App\Models\Review;
 use App\Http\Requests\ReviewRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use  App\Models\OrderItem;
 class ReviewController extends Controller
-{
+{  
+     public function getReviewByProductId(Request $request, $id) {
+    try {
+        $orderItemIds = OrderItem::where('product_id', $id)->pluck('id');
+
+        $reviews = Review::with(['user:id,username,email']) // Thêm 'email' nếu muốn lấy cả email
+            ->whereIn('order_item_id', $orderItemIds)
+            ->get();
+
+       
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $reviews
+        ], 200);
+
+    } catch (\Throwable $th) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed',
+            'error' => $th->getMessage()
+        ], 500);
+    }
+}
+
+
     public function getReviews(Request $request){
         try {
             $getReview= Review::orderBy("created_at","desc")
@@ -24,21 +50,22 @@ class ReviewController extends Controller
         }
 
     }
-    public function getDetailReview($id){
-        try {
-            $detailReview= Review::findOrFail($id);
-            return response()->json([
-                'status'=>'success',
-                'data'=>$detailReview
-            ],200);
-        } catch (\Throwable $th) {
-            return response()->json ([
-                'status'=>'error',
-                'message'=>'Failed to retrieve review details.',
-                'error'=>$th->getMessage()
-            ]);
-        }
-    }
+    /////////===== cảm thấy thừa ============
+    // public function getDetailReview($id){
+    //     try {
+    //         $detailReview= Review::findOrFail($id);
+    //         return response()->json([
+    //             'status'=>'success',
+    //             'data'=>$detailReview
+    //         ],200);
+    //     } catch (\Throwable $th) {
+    //         return response()->json ([
+    //             'status'=>'error',
+    //             'message'=>'Failed to retrieve review details.',
+    //             'error'=>$th->getMessage()
+    //         ]);
+    //     }
+    // }
     public function createReview(ReviewRequest  $request){
         try {
             $createReviewInput=$request->validated();
@@ -94,6 +121,8 @@ class ReviewController extends Controller
             ]);
         }
     }
+    //lấy review theo mã sản phẩm
+    
         
 
 }

@@ -55,7 +55,6 @@ const ChatBox = () => {
  // === 1. TỰ ĐỘNG TÌM MODEL CHUẨN TRONG DANH SÁCH ===
 useEffect(() => {
   if (API_KEY) {
-    console.log("🔍 Đang tìm model phù hợp...");
     fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`)
       .then((res) => res.json())
       .then((data: GeminiListResponse) => {
@@ -74,7 +73,6 @@ useEffect(() => {
 
           if (bestModel) {
             const cleanName = bestModel.name.replace("models/", "");
-            console.log("✅ Đã chọn được model chuẩn:", cleanName);
             setActiveModel(cleanName);
           }
         }
@@ -107,7 +105,6 @@ useEffect(() => {
     const lastUserMessage = currentMessages[currentMessages.length - 1].text;
 
     try {
-      console.log(`🚀 Đang gọi API với model: ${activeModel}`);
       
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${API_KEY}`,
@@ -179,7 +176,6 @@ const [userLogged, setUserLogged] = useState<User | null>(null);
       })
       .then(response => {
         // 3. API trả về thông tin user, lưu vào state
-        console.log("User đang đăng nhập:", response.data);
         setUserLogged(response.data);
       })
       .catch(error => {

@@ -273,7 +273,7 @@ Route::prefix('review')->group(function () {
     //show contact list of messages
     Route::get('/', [\App\Http\Controllers\ReviewController::class, 'getReviews']);
     //show detail messages
-    Route::get('/{id}', [\App\Http\Controllers\ReviewController::class, 'getDetailReview']);
+    Route::get('/{id}', [\App\Http\Controllers\ReviewController::class, 'getReviewByProductId']);
     //create message
     Route::post('/', [\App\Http\Controllers\ReviewController::class, 'createReview']);
     //update message

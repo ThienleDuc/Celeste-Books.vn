@@ -178,7 +178,7 @@ const ProductDetailPage = () => {
             </div>
 
             <div className="col-12 col-md-8 ps-md-4">
-              <ReviewProductSection reviews={userReviews} />
+              <ReviewProductSection product_id={productId} />
             </div>
           </div>
         </div>
