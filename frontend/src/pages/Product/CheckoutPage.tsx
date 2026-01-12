@@ -1,7 +1,10 @@
 // ./pages/CheckoutPage.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { checkoutApi } from '../../api/checkout.api'; 
+import { checkoutApi } from '../../api/checkout.api';
+import type { CreateOrderRequest, CreateOrderItem, CheckoutProduct } from '../../api/checkout.api';
+
+
 
 // Import components - Đảm bảo đường dẫn đúng
 import CheckoutSteps from '../../components/Checkout/CheckoutSteps';
@@ -30,7 +33,15 @@ import {
   sampleWeightFees,
   sampleDistanceFees  
 } from '../../models/Checkout/discount.model';
-import type { LocalStorageCartData } from '../../models/Checkout/checkout.model';
+
+interface LocalStorageCartData {
+    userId: string;
+    products: any[];
+    totalPrice: number;
+    totalQuantity: number;
+    timestamp: string;
+}
+// import type { LocalStorageCartData } from '../../models/Checkout/checkout.model';
 import { sampleAddresses, getAddressFull } from '../../models/User/address.model';
 
 
@@ -256,64 +267,56 @@ useEffect(() => {
         setIsLoading(true);
         try {
             const effectiveUserId = String(userId || 'A01');
-            
-            // Gọi API
             const [addressRes, cartRes] = await Promise.all([
                 checkoutApi.getUserAddresses(effectiveUserId),
                 checkoutApi.getUserCart(effectiveUserId)
             ]);
 
             // 1. Xử lý Địa chỉ
-            const addrList = addressRes.data?.success ? addressRes.data.data : (Array.isArray(addressRes.data) ? addressRes.data : []);
+            const addrList = addressRes.data?.data || [];
             setAddresses(addrList);
-            const defAddr = addrList.find((a: any) => a.is_default === 1) || addrList[0];
-            setSelectedAddress(defAddr);
+            setSelectedAddress(addrList.find((a: any) => a.is_default === 1) || addrList[0]);
 
-            // 2. Xử lý Giỏ hàng (QUAN TRỌNG)
-
-            // Trong useEffect của CheckoutPage.tsx, phần xử lý Giỏ hàng:
+            // 2. Xử lý Giỏ hàng (Fix lặp dữ liệu và Type Error)
             if (cartRes.data?.success && cartRes.data.data) {
                 const apiItems = cartRes.data.data.items;
-                const apiSummary = cartRes.data.data.summary;
 
-                // Lọc trùng sản phẩm (nếu Backend chưa sửa)
+                // Lọc trùng sản phẩm dựa trên product_detail_id
                 const uniqueItems = apiItems.reduce((acc: any[], current: any) => {
-                    const isExist = acc.find((item: any) => item.product_id === current.product_id);
+                    const isExist = acc.find((item: any) => item.product_detail_id === current.product_detail_id);
                     if (!isExist) return acc.concat([current]);
                     return acc;
                 }, []);
 
                 setCartItems(uniqueItems);
 
-                // 2. Gán vào State cartItems (Dùng để hiển thị hình ảnh/tên)
-                setCartItems(uniqueItems);
-
-    // Cập nhật cartData với đầy đủ các trường yêu cầu
-// CheckoutPage.tsx
-
-        setCartData({
-            userId: String(effectiveUserId),
-            products: uniqueItems.map((item: any) => ({
-                id: item.cart_item_id,
-                productId: item.product_id,
-                productType: item.product_type,
-                quantity: item.quantity,
-                priceAtTime: parseFloat(item.price_at_time)
-            })),
-            totalPrice: parseFloat(cartRes.data.data.summary.subtotal),
-            totalQuantity: uniqueItems.length, // Sửa lại số lượng thực tế
-            timestamp: Date.now().toString()
-        });
-}
-            
+                const manualSubtotal = uniqueItems.reduce((sum: number, item: any) => {
+                    return sum + (parseFloat(item.price_at_time || 0) * Number(item.quantity || 0));
+                }, 0);
+                
+                const totalQty = uniqueItems.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
+                
+                setCartData({
+                    userId: String(effectiveUserId),
+                    products: uniqueItems.map((item: any): CheckoutProduct => ({
+                        id: item.cart_item_id,
+                        productId: item.product_id,
+                        product_detail_id: item.product_detail_id,
+                        productType: item.product_type,
+                        quantity: Number(item.quantity),
+                        priceAtTime: parseFloat(item.price_at_time)
+                    })),
+                    totalPrice: manualSubtotal,
+                    totalQuantity: totalQty,    
+                    timestamp: Date.now().toString()
+                });
+            }
         } catch (error) {
-            console.error("Lỗi load dữ liệu:", error);
-            setErrorMessage("Không thể tải dữ liệu giỏ hàng từ máy chủ.");
+            setErrorMessage("Không thể tải dữ liệu giỏ hàng.");
         } finally {
             setIsLoading(false);
         }
     };
-
     loadInitialData();
 }, [userId]);
 
@@ -324,7 +327,35 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedShippingType]);
 
+// Thêm logic này vào bên trong component CheckoutPage
 
+useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const paymentStatus = queryParams.get('payment_status');
+    const vnpResponseCode = queryParams.get('vnp_ResponseCode'); // VNPAY trả về mã này
+    const orderIdFromUrl = queryParams.get('order_id');
+
+    if ((paymentStatus === 'success' || vnpResponseCode === '00') && orderIdFromUrl) {
+        const fetchOrderAfterVnPay = async () => {
+            try {
+                setIsLoading(true);
+                const response = await checkoutApi.getOrderById(Number(orderIdFromUrl));
+                if (response.data?.success) {
+                    setOrder(response.data.order);
+                    setOrderItems(response.data.items);
+                    clearCheckoutDataFromStorage();
+                    setCurrentStep(5); 
+                    window.history.replaceState({}, '', `/thanh-toan/${userId}`);
+                }
+            } catch (error) {
+                console.error("Lỗi đồng bộ đơn hàng VNPAY:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchOrderAfterVnPay();
+    }
+}, [location.search, userId]);
 
     // Các hàm tính phí giống như trong ShippingStep
     const calculateWeightFee = (weight: number): number => {
@@ -379,6 +410,12 @@ useEffect(() => {
             description: 'Trả tiền khi nhận được hàng' 
         },
         { 
+            id: 'VnPay', // THÊM MỚI
+            name: 'Cổng thanh toán VNPAY', 
+            icon: 'bi-qr-code-scan', 
+            description: 'Thanh toán qua ứng dụng ngân hàng hoặc thẻ ATM/Quốc tế' 
+        },
+        { 
             id: 'momo', 
             name: 'Ví MoMo', 
             icon: 'bi-wallet2', 
@@ -420,40 +457,83 @@ useEffect(() => {
         }
     };
     
- const handlePlaceOrder = async () => {
-    if (!cartData || !selectedAddress) return;
-
-    const payload = {
-        user_id: String(userId || 'A01'),
-        shipping_address_id: selectedAddress.id,
-        payment_method: selectedPaymentMethod,
-        shipping_type: selectedShippingType,
-        product_discount_id: selectedProductDiscountId,
-        shipping_discount_id: selectedShippingDiscountId,
-        items: cartData.products.map(p => ({
-            product_id: p.productId,
-            quantity: p.quantity,
-            product_type: p.productType,
-            price: p.priceAtTime
-        }))
+    const calculateSidebarTotal = (): number => {
+        const subtotal = calculateSubtotal();
+        const shipping = calculateShippingFee();
+        const discount = calculateTotalDiscount();
+        const total = subtotal + shipping - discount;
+        
+        return Math.max(0, total);
     };
 
-    try {
-        setIsLoading(true);
-        const response = await checkoutApi.createOrder(payload);
-        
-        if (response.data) {
-            setOrder(response.data.order);
-            setOrderItems(response.data.items);
-            clearCheckoutDataFromStorage();
-            setCurrentStep(5); // Sang trang xác nhận
+    const handlePlaceOrder = async () => {
+
+        const subtotal = calculateSubtotal();
+        const shipping = calculateShippingFee();
+        const discount = calculateTotalDiscount();
+
+        const finalTotal = Math.round(subtotal + shipping - discount);
+
+        if (!cartData || !selectedAddress) {
+            alert("Vui lòng chọn địa chỉ giao hàng!");
+            return;
         }
-    } catch (error) {
-        alert("Có lỗi khi đặt hàng. Vui lòng thử lại!");
-    } finally {
-        setIsLoading(false);
-    }
-};
+    
+        const exactTotalAmount = calculateSidebarTotal();
+    
+        console.log("Giá hiển thị tổng cộng:", exactTotalAmount);
+    
+        const payload: any = {
+            user_id: String(userId || 'A01'),
+            shipping_address_id: selectedAddress.id,
+            payment_method: selectedPaymentMethod.toLowerCase(),
+            shipping_type: selectedShippingType,
+            product_discount_id: selectedProductDiscountId || null,
+            shipping_discount_id: selectedShippingDiscountId || null,
+            shipping_fee: shipping,
+            discount: discount,
+            total_amount: finalTotal, 
+            items: cartData.products.map((p: any) => ({
+                cart_item_id: p.id,
+                product_id: p.productId,
+                product_details_id: p.product_detail_id,
+                quantity: p.quantity,
+                product_type: p.productType,
+                price: p.priceAtTime
+            }))
+        };
+    
+        try {
+            setIsLoading(true);
+            const response = await checkoutApi.createOrder(payload);
+            
+            if (response.data?.success) {
+                if (selectedPaymentMethod.toLowerCase() === 'vnpay') {
+                    // 3. GỬI ĐÚNG CON SỐ finalTotal SANG VNPAY
+                    const vnpayRes = await checkoutApi.createVnpayUrl({
+                        order_id: response.data.order.id,
+                        amount: finalTotal // Chắc chắn sẽ là 120.800
+                    });
+                    
+                    if (vnpayRes.data?.payment_url) {
+                        window.location.href = vnpayRes.data.payment_url;
+                        return;
+                    }
+                }
+
+                // Trường hợp COD (Thanh toán khi nhận hàng)
+                clearCheckoutDataFromStorage();
+                setOrder(response.data.order);
+                setOrderItems(response.data.items);
+                setCurrentStep(5);
+            }
+        } catch (error: any) {
+            console.error("Lỗi đặt hàng:", error);
+            alert(error.response?.data?.message || "Đặt hàng thất bại!");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // Hàm hủy thanh toán
     const handleCancelCheckout = () => {
@@ -498,30 +578,31 @@ useEffect(() => {
         }
     };
     
-    // Tính subtotal từ cart data
-    const calculateSubtotal = (): number => {
-        if (urlAmount > 0) {
-            return urlAmount;
-        }
-        if (cartItems && cartItems.length > 0) {
-            return cartItems.reduce((sum: number, item: any) => {
-                const price = parseFloat(item.price_at_time || item.sale_price || 0);
-                const quantity = Number(item.quantity || 0);
-                return sum + (price * quantity);
-            }, 0);
-        }
     
-        // 3. Dự phòng 2: Lấy từ storage
-        return cartData?.totalPrice || 0;
-    };
-    
-    // Tính total cho sidebar
-    const calculateSidebarTotal = (): number => {
-        const subtotal = calculateSubtotal(); 
-        const shipping = calculateShippingFee(); 
-        const discount = calculateTotalDiscount(); 
-        return subtotal + shipping - discount;
-      };
+
+const calculateSubtotal = (): number => {
+    // Nếu có dữ liệu cartItems từ API (giống CartSummaryStep ưu tiên)
+    if (cartItems && cartItems.length > 0) {
+        return cartItems.reduce((sum: number, item: any) => {
+            // Dùng đúng các key mà CartSummaryStep đang dùng: price_at_time hoặc sale_price
+            const price = parseFloat(item.price_at_time || item.sale_price || 0);
+            const quantity = Number(item.quantity || 0);
+            return sum + (price * quantity);
+        }, 0);
+    }
+
+    // Nếu không có, lấy từ cartData storage
+    if (cartData && cartData.products) {
+        return cartData.products.reduce((sum: number, item: any) => {
+            const price = parseFloat(item.priceAtTime || item.price_at_time || 0);
+            const quantity = Number(item.quantity || 0);
+            return sum + (price * quantity);
+        }, 0);
+    }
+
+    return 0;
+};
+
 
     // Render current step
     const renderStep = () => {

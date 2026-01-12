@@ -366,7 +366,10 @@ class OrderController extends Controller
             if ($oldStatus != $request->status) {
                 $this->createOrderNotification($order, 'status_change', $request->note);
             }
-
+            $itemIds = collect($request->items)->pluck('cart_item_id')->filter();
+                if ($itemIds->isNotEmpty()) {
+                    CartItem::whereIn('id', $itemIds)->delete();
+                }
             DB::commit();
 
             return response()->json([
@@ -467,42 +470,7 @@ class OrderController extends Controller
         return $code;
     }
 
-    // Tính phí vận chuyển
-    private function calculateShippingFee($cartItems, $shippingMethod, $addressId)
-    {
-        // Lấy địa chỉ
-        $address = Address::with('commune')->find($addressId);
-        
-        // Tính tổng weight (chỉ sách giấy)
-        $totalWeight = $cartItems->sum(function($item) {
-            return $item->productDetail->product_type == 'Sách giấy' 
-                ? $item->productDetail->weight * $item->quantity 
-                : 0;
-        });
 
-        // Giả sử tính phí cơ bản
-        $baseFee = 15000; // Phí cơ bản
-        $weightFee = max(0, ($totalWeight - 1) * 5000); // 5000đ cho mỗi kg vượt
-        $methodMultiplier = $shippingMethod == 'express' ? 1.5 : 1;
-
-        return ($baseFee + $weightFee) * $methodMultiplier;
-    }
-
-    // Tính giảm giá
-    private function calculateDiscount($promoCode, $subtotal)
-    {
-        // Giả sử kiểm tra từ bảng discount
-        // Trả về số tiền giảm
-        if ($promoCode == 'SALE10K' && $subtotal >= 100000) {
-            return 10000;
-        }
-        
-        if ($promoCode == 'SALE5%' && $subtotal >= 50000) {
-            return $subtotal * 0.05;
-        }
-
-        return 0;
-    }
 
     // Tạo thông báo đơn hàng
     private function createOrderNotification($order, $type = 'created', $note = null)
@@ -548,10 +516,4 @@ class OrderController extends Controller
         return $info;
     }
 
-    // Tạo payment MoMo (giả lập)
-    private function createMoMoPayment($order)
-    {
-        // Giả lập tạo payment URL
-        return "https://test-payment.momo.vn/v2/gateway/api/create?orderId={$order->order_code}&amount={$order->total_amount}";
-    }
 }

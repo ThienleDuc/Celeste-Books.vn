@@ -96,27 +96,21 @@ const getProductInfo = (item: any): ProductInfo | null => {
 
   // Tính tổng tiền với giá hiện tại
   const calculateTotal = (): number => {
-    if (cartDataFromStorage) {
-      return cartDataFromStorage.products.reduce((total, product) => {
-        const priceChange = priceChanges.find(pc => pc.productId === product.productId);
-        const currentPrice = priceChange?.hasChanged ? priceChange.newPrice : product.priceAtTime;
-        return total + (currentPrice * product.quantity);
-      }, 0);
-    }
-    
-    return cartItems.reduce((total, cartItem) => {
-      const productInfo = getProductInfo(cartItem, false);
-      return total + (productInfo?.total || 0);
+    return displayItems.reduce((total, item) => {
+      return total + (parseFloat(item.sale_price || item.price_at_time || 0) * (item.quantity || 1));
+    }, 0);
+  };
+
+  const calculateOriginalTotal = (): number => {
+    return displayItems.reduce((total, item) => {
+      return total + (parseFloat(item.original_price || item.sale_price || 0) * (item.quantity || 1));
     }, 0);
   };
 
   // Tính tổng số lượng
   const calculateTotalQuantity = (): number => {
-    if (cartDataFromStorage) {
-      return cartDataFromStorage.totalQuantity;
-    }
-    
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
+    const items = getDisplayItems();
+    return items.reduce((total, item) => total + (item.quantity || 0), 0);
   };
 
   // Tính tổng tiền theo giá cũ
@@ -200,73 +194,72 @@ const getProductInfo = (item: any): ProductInfo | null => {
 
   // Hiển thị thông báo thay đổi giá
   const renderPriceChangeAlert = () => {
-    if (!hasPriceChanges || priceChanges.length === 0) return null;
-
-    const changedProducts = priceChanges.filter(pc => pc.hasChanged);
-    const totalOldPrice = calculateOldTotal();
+    const changedProducts = displayItems.filter(item => 
+      parseFloat(item.original_price) > parseFloat(item.sale_price)
+    );
+  
+    if (changedProducts.length === 0) return null;
+  
+    const totalOldPrice = calculateOriginalTotal();
     const totalNewPrice = calculateTotal();
-    const totalDifference = totalNewPrice - totalOldPrice;
-
+    const totalDifference = totalOldPrice - totalNewPrice;
+  
     return (
-      <div className="cart-summary-price-alert">
+      <div className="cart-summary-price-alert" style={{ backgroundColor: '#fff9e6', border: '1px solid #ffeeba', borderRadius: '8px' }}>
         <div className="cart-summary-price-alert-content">
-          <i className="bi bi-exclamation-triangle cart-summary-price-alert-icon"></i>
+          {/* Icon và tiêu đề màu cam/nâu vàng */}
+          <i className="bi bi-exclamation-triangle cart-summary-price-alert-icon" style={{ color: '#856404' }}></i>
           <div className="cart-summary-price-alert-details">
-            <div className="cart-summary-price-alert-title">
-              Giá sản phẩm đã thay đổi
+            <div className="cart-summary-price-alert-title" style={{ color: '#856404', fontWeight: 'bold' }}>
+              Ưu đãi giá tốt dành cho bạn
             </div>
-            <div className="cart-summary-price-alert-subtitle">
-              Giá của {changedProducts.length} sản phẩm đã được cập nhật theo giá hiện tại:
+            <div className="cart-summary-price-alert-subtitle" style={{ color: '#856404' }}>
+              Có {changedProducts.length} sản phẩm đang được giảm giá so với giá niêm yết:
             </div>
             
             <div className="cart-summary-price-change-list">
-              {changedProducts.map((change, index) => (
-                <div key={index} className="cart-summary-price-change-item">
-                  <span className="cart-summary-price-change-product-name">
-                    {change.productName}
-                  </span>
-                  <div className="cart-summary-price-change-prices">
-                    <span className="cart-summary-price-change-old">
-                      {change.oldPrice.toLocaleString('vi-VN')}₫
+              {changedProducts.map((item, index) => {
+                const oldP = parseFloat(item.original_price);
+                const newP = parseFloat(item.sale_price);
+                const percent = Math.round(((oldP - newP) / oldP) * 100);
+  
+                return (
+                  <div key={index} className="cart-summary-price-change-item" style={{ borderBottom: '1px solid #ffeeba' }}>
+                    <span className="cart-summary-price-change-product-name" style={{ color: '#856404' }}>
+                      {item.product_name}
                     </span>
-                    <i className="bi bi-arrow-right cart-summary-price-change-arrow"></i>
-                    <span className={`cart-summary-price-change-new ${
-                      change.newPrice > change.oldPrice ? 'cart-summary-price-increase' : 'cart-summary-price-decrease'
-                    }`}>
-                      {change.newPrice.toLocaleString('vi-VN')}₫
-                    </span>
-                    {change.percentageChange && (
-                      <span className={`cart-summary-price-change-percentage ${
-                        change.newPrice > change.oldPrice ? 'cart-summary-percentage-increase' : 'cart-summary-percentage-decrease'
-                      }`}>
-                        {change.percentageChange > 0 ? '+' : ''}{change.percentageChange.toFixed(1)}%
+                    <div className="cart-summary-price-change-prices">
+                      <span className="cart-summary-price-change-old">
+                        {oldP.toLocaleString('vi-VN')}₫
                       </span>
-                    )}
+                      <i className="bi bi-arrow-right cart-summary-price-change-arrow" style={{ color: '#856404' }}></i>
+                      <span className="cart-summary-price-change-new" style={{ color: '#28a745', fontWeight: 'bold' }}>
+                        {newP.toLocaleString('vi-VN')}₫
+                      </span>
+                      <span className="cart-summary-price-change-percentage" style={{ backgroundColor: '#d4edda', color: '#155724', padding: '2px 5px', borderRadius: '4px' }}>
+                        -{percent}%
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
-            <div className="cart-summary-price-change-total">
+            {/* Phần tổng tiết kiệm màu vàng */}
+            <div className="cart-summary-price-change-total" style={{ borderTop: '1px solid #ffeeba', marginTop: '10px' }}>
               <div className="cart-summary-price-change-total-row">
-                <span className="cart-summary-price-change-total-label">Tổng thay đổi:</span>
+                <span className="cart-summary-price-change-total-label" style={{ color: '#856404', fontWeight: 'bold' }}>Tổng tiết kiệm:</span>
                 <div className="cart-summary-price-change-total-prices">
                   <span className="cart-summary-price-change-total-old">
                     {totalOldPrice.toLocaleString('vi-VN')}₫
                   </span>
-                  <i className="bi bi-arrow-right cart-summary-price-change-arrow"></i>
-                  <span className={`cart-summary-price-change-total-new ${
-                    totalDifference > 0 ? 'cart-summary-price-increase' : 'cart-summary-price-decrease'
-                  }`}>
+                  <i className="bi bi-arrow-right cart-summary-price-change-arrow" style={{ color: '#856404' }}></i>
+                  <span className="cart-summary-price-change-total-new" style={{ color: '#28a745', fontWeight: 'bold' }}>
                     {totalNewPrice.toLocaleString('vi-VN')}₫
                   </span>
-                  {totalDifference !== 0 && (
-                    <span className={`cart-summary-total-difference ${
-                      totalDifference > 0 ? 'cart-summary-difference-increase' : 'cart-summary-difference-decrease'
-                    }`}>
-                      {totalDifference > 0 ? '+' : ''}{totalDifference.toLocaleString('vi-VN')}₫
-                    </span>
-                  )}
+                  <span className="cart-summary-total-difference" style={{ backgroundColor: '#d4edda', color: '#155724', padding: '2px 5px', borderRadius: '4px', marginLeft: '5px' }}>
+                    -{totalDifference.toLocaleString('vi-VN')}₫
+                  </span>
                 </div>
               </div>
             </div>
@@ -316,104 +309,150 @@ const getProductInfo = (item: any): ProductInfo | null => {
             {renderPriceChangeAlert()}
             
             {/* Phần tổng kết */}
-            <div className="cart-summary-totals">
-              <div className="cart-summary-details">
-                <div className="cart-summary-row">
-                  <span className="cart-summary-label">Tổng tiền hàng:</span>
-                  <span className="cart-summary-value">
-                    {calculateTotal().toLocaleString('vi-VN')}₫
-                  </span>
-                </div>
-                
-                {hasPriceChanges && (
-                  <div className="cart-summary-price-update">
-                    <span className="cart-summary-price-update-text">
-                      <i className="bi bi-exclamation-triangle"></i>
-                      Đã cập nhật giá:
-                    </span>
-                    <div className="cart-summary-price-update-prices">
-                      <span className="cart-summary-price-update-old">
-                        {calculateOldTotal().toLocaleString('vi-VN')}₫
-                      </span>
-                      <i className="bi bi-arrow-right cart-summary-price-update-arrow"></i>
-                      <span className="cart-summary-price-update-new">
-                        {calculateTotal().toLocaleString('vi-VN')}₫
-                      </span>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="cart-summary-row cart-summary-product-count">
-                  <span className="cart-summary-count-label">Số sản phẩm:</span>
-                  <span className="cart-summary-count-value">{calculateTotalQuantity()}</span>
-                </div>
+            <div className="cart-summary-totals" style={{ backgroundColor: 'rgb(255, 249, 230)' }}>
+            <div className="cart-summary-details">
+              {/* 1. Tổng tiền hàng (Giá chưa giảm) */}
+              <div className="cart-summary-row">
+                <span className="cart-summary-label">Tổng tiền hàng:</span>
+                <span className="cart-summary-value text-muted text-decoration-line-through">
+                  {calculateOriginalTotal().toLocaleString('vi-VN')}₫
+                </span>
               </div>
-              
-              <div className="cart-summary-payment">
-                <div className="cart-summary-payment-row">
-                  <span className="cart-summary-payment-label">Tổng thanh toán:</span>
-                  <span className="cart-summary-payment-value">
-                    {calculateTotal().toLocaleString('vi-VN')}₫
+
+              {/* 2. Số tiền giảm giá (Phần chênh lệch giữa giá gốc và giá bán) */}
+              {calculateOriginalTotal() > calculateTotal() && (
+                <div className="cart-summary-row text-danger">
+                  <span className="cart-summary-label">Giảm giá trực tiếp:</span>
+                  <span className="cart-summary-value">
+                    -{ (calculateOriginalTotal() - calculateTotal()).toLocaleString('vi-VN') }₫
                   </span>
                 </div>
-                <div className="cart-summary-vat-notice">
-                  <i className="bi bi-info-circle"></i>
-                  Đã bao gồm thuế VAT (nếu có)
-                </div>
+              )}
+              
+              <div className="cart-summary-row cart-summary-product-count">
+                <span className="cart-summary-count-label">Số lượng sản phẩm:</span>
+                <span className="cart-summary-count-value">{calculateTotalQuantity()}</span>
               </div>
             </div>
+  
+            <div className="cart-summary-payment">
+              <div className="cart-summary-payment-row">
+                <span className="cart-summary-payment-label">Tổng thanh toán:</span>
+                <div className="text-end">
+                  <span className="cart-summary-payment-value text-primary fs-4 fw-bold">
+                    {calculateTotal().toLocaleString('vi-VN')}₫
+                  </span>
+                  {/* Tính % giảm giá tổng thể */}
+                  {calculateOriginalTotal() > 0 && (
+                    <div className="text-danger small fw-bold">
+                      (Tiết kiệm {Math.round(((calculateOriginalTotal() - calculateTotal()) / calculateOriginalTotal()) * 100)}%)
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="cart-summary-vat-notice">
+                <i className="bi bi-check-circle-fill text-success me-1"></i>
+                Giá đã bao gồm VAT
+              </div>
+            </div>
+          </div>
           </div>
           
           {/* Cột bên phải - Danh sách sản phẩm với chiều cao bằng cột trái */}
           <div className="cart-summary-right-column" style={{ height: leftColumnHeight || 'auto' }}>
-            <div className="cart-summary-product-list">
-                {displayItems.map((item: any, index: number) => {
-                // 1. Ép kiểu dữ liệu để tính toán chính xác
-                const itemPrice = Number(item.price_at_time || 0);
-                const itemQuantity = Number(item.quantity || 0);
-                const itemTotal = itemPrice * itemQuantity;
+            {/* Cột bên phải - Danh sách sản phẩm với chiều cao bằng cột trái */}
+<div className="cart-summary-right-column" style={{ height: leftColumnHeight || 'auto', overflowY: 'auto' }}>
+  <div className="cart-summary-product-list">
+    {displayItems.map((item, index) => {
+      const isFromStorage = cartDataFromStorage !== undefined;
+      const productInfo = getProductInfo(item, isFromStorage);
+      
+      if (!productInfo) return null;
 
-                    return (
-                      <div key={index} className="d-flex align-items-center mb-3 p-2 border-bottom">
-                        {/* 2. Đổ ảnh - dùng đúng key primary_image */}
-                        <div className="product-image" style={{ width: '70px', height: '90px' }}>
-                          <img 
-                            src={item.primary_image || 'https://via.placeholder.com/70x90'} 
-                            alt={item.product_name}
-                            className="img-fluid rounded shadow-sm"
-                            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                          />
-                        </div>
+      // Tính toán phần trăm giảm giá dựa trên dữ liệu Postman
+      const hasDiscount = productInfo.originalPrice > productInfo.price;
+      const discountPercent = hasDiscount 
+        ? Math.round(((productInfo.originalPrice - productInfo.price) / productInfo.originalPrice) * 100)
+        : 0;
 
-                        <div className="product-details ms-3 flex-grow-1">
-                          {/* 3. Đổ tên sản phẩm và Tác giả */}
-                          <h6 className="mb-0 fw-bold text-dark">{item.product_name}</h6>
-                          <div className="text-muted small mb-1">Tác giả: {item.author}</div>
-                          
-                          <div className="d-flex justify-content-between align-items-end">
-                            <div>
-                              {/* 4. Đổ loại sản phẩm (Sách giấy/Ebook) */}
-                              <span className="badge bg-info-subtle text-info small me-2">
-                                {item.product_type}
-                              </span>
-                              <span className="small text-secondary">x{itemQuantity}</span>
-                            </div>
-                  
-                        {/* 5. Đổ giá tiền */}
-                        <div className="text-end">
-                          <div className="fw-bold text-primary">
-                            {itemTotal.toLocaleString('vi-VN')}₫
-                          </div>
-                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                            {itemPrice.toLocaleString('vi-VN')}₫/sp
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+      return (
+        <div 
+          key={productInfo.id || index} 
+          className="cart-summary-product-item"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '15px',
+            marginBottom: '10px',
+            backgroundColor: hasDiscount ? '#fff9e6' : '#fff', // Màu vàng nhạt nếu có giảm giá
+            border: hasDiscount ? '1px solid #ffeeba' : '1px solid #eee',
+            borderRadius: '8px'
+          }}
+        >
+          {/* Ảnh sản phẩm */}
+          <div className="cart-summary-product-image" style={{ width: '70px', height: '90px', flexShrink: 0 }}>
+            <img 
+              src={productInfo.imageUrl} 
+              alt={productInfo.name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+              onError={(e) => {
+                e.currentTarget.src = '/img/no-image.png';
+              }}
+            />
+          </div>
+          
+          {/* Thông tin sản phẩm */}
+          <div className="cart-summary-product-info" style={{ marginLeft: '15px', flexGrow: 1 }}>
+            <h4 className="cart-summary-product-name" style={{ margin: '0 0 5px 0', fontSize: '1rem', fontWeight: 'bold' }}>
+              {productInfo.name}
+            </h4>
+            
+            <div className="cart-summary-product-details">
+              <div className="cart-summary-product-tags" style={{ marginBottom: '5px' }}>
+                <span className="badge bg-info-subtle text-info me-2" style={{ fontSize: '0.75rem' }}>
+                  {productInfo.productType}
+                </span>
+                <span className="text-secondary small">x{productInfo.quantity}</span>
+              </div>
+
+              <div className="cart-summary-product-prices">
+                {/* Giá gốc gạch ngang */}
+                {hasDiscount && (
+                  <span className="text-muted text-decoration-line-through small me-2">
+                    {productInfo.originalPrice.toLocaleString('vi-VN')}₫
+                  </span>
+                )}
+                {/* Giá bán hiện tại */}
+                <span style={{ fontWeight: 'bold', color: hasDiscount ? '#28a745' : '#333' }}>
+                  {productInfo.price.toLocaleString('vi-VN')}₫/sp
+                </span>
+              </div>
             </div>
+          </div>
+          
+          {/* Tổng tiền của item đó */}
+          <div className="cart-summary-product-total" style={{ textAlign: 'right', minWidth: '100px' }}>
+            {hasDiscount && (
+              <div style={{ marginBottom: '2px' }}>
+                <span className="badge bg-danger" style={{ fontSize: '0.7rem' }}>
+                  -{discountPercent}%
+                </span>
+              </div>
+            )}
+            <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#007bff' }}>
+              {productInfo.total.toLocaleString('vi-VN')}₫
+            </div>
+            {hasDiscount && (
+              <div className="text-muted small text-decoration-line-through">
+                {(productInfo.originalPrice * productInfo.quantity).toLocaleString('vi-VN')}₫
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</div>
           </div>
         </div>
       )}

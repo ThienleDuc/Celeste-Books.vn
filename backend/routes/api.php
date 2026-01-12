@@ -17,6 +17,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\ShoppingCartController;
 use App\Http\Controllers\CartItemController;
+use App\Http\Controllers\VnPayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -327,29 +328,24 @@ Route::prefix('shopping-carts')->group(function () {
     Route::post('/add', [ShoppingCartController::class, 'addToCart']);
 });
 
-
-Route::get('/addresses/default/{userId}', [AddressController::class, 'getDefaultAddress']);
-Route::put('/addresses/{id}/default', [AddressController::class, 'setDefaultAddress']);
-Route::get('/addresses/{id}/validate', [AddressController::class, 'validateForCheckout']);
-Route::post('/addresses/quick-create', [AddressController::class, 'quickCreateForCheckout']);
-Route::get('/addresses/{addressId}/verify/{userId}', [AddressController::class, 'verifyOwnership']);
-
+// Lấy giỏ hàng của người dùng
 Route::get('/cart/user/{userId}', [CartItemController::class, 'getUserCart']);
-Route::get('/cart/item/{cartItemId}', [CartItemController::class, 'getCartItemDetail']);
-Route::get('/cart/{userId}/check-stock', [CartItemController::class, 'checkStockAvailability']);
-Route::get('/cart/{userId}/weight', [CartItemController::class, 'calculateCartWeight']);
-Route::get('/cart/{userId}/summary', [CartItemController::class, 'getCartSummary']);
-Route::get('/cart/{userId}/for-checkout', [CartItemController::class, 'getCartForCheckout']);
 
-// Order routes
-Route::post('/orders/create', [OrderController::class, 'createOrder']);
-Route::get('/orders/user/{userId}', [OrderController::class, 'getUserOrders']);
-Route::get('/orders/{orderCode}', [OrderController::class, 'getOrderDetail']);
-Route::put('/orders/{orderId}/cancel', [OrderController::class, 'cancelOrder']);
-Route::post('/orders/calculate', [OrderController::class, 'calculateOrder']);
-Route::put('/orders/{orderId}/status', [OrderController::class, 'updateOrderStatus']);
-Route::get('/orders/status/{status}', [OrderController::class, 'getOrdersByStatus']);
-Route::get('/orders/search', [OrderController::class, 'searchOrders']);
 
-Route::post('/vnpay/create-payment', [VnPayController::class, 'createPayment']);
-Route::get('/vnpay/return', [VnPayController::class, 'vnpayReturn']);
+// ==================== ORDER ROUTES ====================
+Route::prefix('orders')->group(function () {
+    Route::post('/create', [OrderController::class, 'createOrder']);
+    Route::get('/user/{userId}', [OrderController::class, 'getUserOrders']);
+    Route::get('/{orderCode}', [OrderController::class, 'getOrderDetail']);
+    Route::put('/{orderId}/cancel', [OrderController::class, 'cancelOrder']);
+    Route::post('/calculate', [OrderController::class, 'calculateOrder']);
+    Route::put('/{orderId}/status', [OrderController::class, 'updateOrderStatus']);
+    Route::get('/status/{status}', [OrderController::class, 'getOrdersByStatus']);
+    Route::get('/search', [OrderController::class, 'searchOrders']);
+});
+
+// VNPay routes với prefix 'vnpay'
+Route::prefix('vnpay')->group(function () {
+    Route::post('/create-payment', [VnPayController::class, 'createPayment']);
+    Route::get('/return', [VnPayController::class, 'vnpayReturn']);
+});
