@@ -8,16 +8,13 @@ import {
   type ProductFull,
 } from "../../models/Product/product.model";
 
-import {
-  type UserReview,
-  sampleUserReviews,
-} from "../../models/Order/userReviews.model";
-
-import ProductGridSection from "../../components/Product/ProductGridSection";
-import ReviewProductSection from "../../components/Product/ReviewProductSection";
-
 import ProductRightSection from "../../components/Product/ProductRightDetailSection";
 import ThumbnailCarousel from "../../components/Utils/ThumbnailCarousel";
+
+// Import 3 components mới
+import ProductReviewsSection from "../../components/Product/ProductReviewsSection";
+import ProductRecommendedSection from "../../components/Product/ProductRecommendedSection";
+import ProductSuggestedSection from "../../components/Product/ProductSuggestedSection";
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,28 +46,6 @@ const ProductDetailPage = () => {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [mainImage, setMainImage] = useState(mainImageDefault);
-
-  /* ================== REVIEWS ================== */
-  const userReviews: UserReview[] = sampleUserReviews.filter(
-    (r) => r.productId === product.id
-  );
-
-  const ratingData = [
-    { stars: 5, percent: 60 },
-    { stars: 4, percent: 20 },
-    { stars: 3, percent: 10 },
-    { stars: 2, percent: 5 },
-    { stars: 1, percent: 5 },
-  ];
-
-  /* ================== PRODUCTS ================== */
-  const recommendedProducts = sampleProducts
-    .filter((p) => p.product.id !== product.id)
-    .slice(0, 6);
-
-  const suggestedProducts = sampleProducts
-    .filter((p) => p.product.id !== product.id)
-    .slice(0, 12);
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const leftRef = useRef<HTMLDivElement>(null);
@@ -146,59 +121,20 @@ const ProductDetailPage = () => {
       </div>
 
       {/* ================== ĐÁNH GIÁ ================== */}
-      <h5 className="title-section">Đánh giá sản phẩm</h5>
-      <div className="card shadow-sm mb-4">
-        <div className="card-body">
-          <div className="row">
-            <div className="col-12 col-md-4 border-end">
-              <div className="text-center mb-3">
-                <h2 className="fw-bold mb-1">
-                  4.5 <small className="text-muted">/5</small>
-                </h2>
-                <p className="text-muted mb-0">
-                  {userReviews.length} đánh giá
-                </p>
-              </div>
+      <ProductReviewsSection />
 
-              {ratingData.map((r) => (
-                <div
-                  key={r.stars}
-                  className="d-flex align-items-center gap-2 mb-2"
-                >
-                  <span style={{ width: 60 }}>{r.stars} sao</span>
-                  <div className="progress flex-grow-1" style={{ height: 8 }}>
-                    <div
-                      className="progress-bar bg-warning"
-                      style={{ width: `${r.percent}%` }}
-                    />
-                  </div>
-                  <span className="text-muted">{r.percent}%</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="col-12 col-md-8 ps-md-4">
-              <ReviewProductSection reviews={userReviews} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ================== RECOMMENDED ================== */}
-      <h5 className="title-section">Sản phẩm giới thiệu</h5>
-      <ProductGridSection
-        products={recommendedProducts}
-        hiddenPagination
-        itemsPerPage={6}
+      {/* ================== SUGGESTED ================== */}
+      <ProductSuggestedSection
+        title="Sản phẩm liên quan"
+        productId={Number(id)} // Truyền productId từ URL
+        itemsPerLoad={6}
         colMd={2}
       />
 
-      {/* ================== SUGGESTED ================== */}
-      <h5 className="title-section">Sản phẩm gợi ý</h5>
-      <ProductGridSection
-        products={suggestedProducts}
-        hiddenPagination
-        itemsPerPage={12}
+      {/* ================== RECOMMENDED ================== */}
+      <ProductRecommendedSection
+        title="Sản phẩm giới thiệu"
+        itemsPerLoad={6}
         colMd={2}
       />
     </div>

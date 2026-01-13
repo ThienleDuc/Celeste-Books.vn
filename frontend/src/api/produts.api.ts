@@ -2,11 +2,12 @@ import axiosClient from "./axios";
 
 /* ===================== TYPES ===================== */
 
+/** Product chung cho frontend */
 export interface Product {
   id: number;
   name: string;
   slug: string;
-  image: string;
+  image?: string;
   original_price?: number | null;
   sale_price?: number | null;
   rating: number;
@@ -14,72 +15,83 @@ export interface Product {
   purchase_count: number;
   created_at: string;
 
-  // optional
-  product_types?: string[];
+  // Optional từ các API khác
+  primary_image?: string;
+  discount_percent?: number;
   total_sold?: number;
+  total_sold_formatted?: string;
+  product_types?: string[];
+  category_slug?: string[];
   avg_rating?: number;
-}
-
-/* ---------- Image & Category ---------- */
-
-export interface ProductImage {
-  id: number;
-  product_id: number;
-  image_url: string;
-  is_primary: 0 | 1;
-  sort_order: number;
-  created_at: string;
-}
-
-export interface ProductCategory {
-  product_id: number;
-  category_id: number;
-}
-
-/* ---------- Detail ---------- */
-
-export interface ProductDetail {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string | null;
-  author?: string | null;
-  publisher?: string | null;
-  publication_year?: number | null;
-  language?: string | null;
-  status: boolean;
-  categories?: ProductCategory[];
-  images?: ProductImage[];
 }
 
 /* ===================== PAGINATION ===================== */
 
-export interface PaginationResponse<T> {
+export interface PaginatedResponse<T> {
+  current_page: number;
+  data: T[];
+  per_page: number;
+  total: number;
+  last_page: number;
+}
+
+export interface ApiResponse<T> {
   status: boolean;
   message: string;
-  data: T[];
+  data: T;
+}
+
+// Response cho API /products (có phân trang)
+export interface ProductListResponse {
+  status: boolean;
+  message: string;
+  data: PaginatedResponse<Product>;
+}
+
+// Response cho API /product-details/best-sellers (không phân trang)
+export interface BestSellersResponse {
+  status: boolean;
+  message: string;
+  data: Product[];
+}
+
+// Response cho API /products/sort
+export interface ProductSortResponse {
+  status: boolean;
+  message: string;
+  data: Product[]; // Mảng sản phẩm trực tiếp
   current_page: number;
   per_page: number;
   total: number;
   last_page: number;
-  filters?: Record<string, string | number | boolean> | null;
 }
 
-export interface ProductListPaginate {
+// Response cho API tăng lượt views
+export interface IncrementViewsResponse {
   status: boolean;
   message: string;
   data: {
-    data: Product[];
-    current_page: number;
-    per_page: number;
-    total: number;
-    last_page: number;
+    id: number;
+    name: string;
+    views: number;
+    updated_at: string;
   };
 }
 
+// Response cho các API với limit/offset (suggest, featured, etc.)
+export interface ProductLimitOffsetResponse {
+  status: boolean;
+  message: string;
+  data: {
+    products: Product[];
+    has_more: boolean;
+    total: number;
+    limit?: number;
+    offset?: number;
+  };
+}
 /* ===================== PARAM TYPES ===================== */
 
-// index()
 export interface ProductListParams {
   page?: number;
   per_page?: number;
@@ -87,113 +99,84 @@ export interface ProductListParams {
   sort_order?: "asc" | "desc";
 }
 
-// searchByName()
 export interface ProductSearchParams {
   name: string;
   page?: number;
   per_page?: number;
 }
 
-// sort()
 export interface ProductSortParams {
   page?: number;
   per_page?: number;
+  keyword?: string;
+  product_type?: "all" | "paper" | "e-book" | "both";
+  ranking?: "all" | "day" | "week" | "month" | "new";
+  category_slug?: string;
   sort_by?: "id" | "name" | "rating" | "views" | "purchase_count" | "sale_price" | "created_at";
   sort_order?: "asc" | "desc";
-  product_type?: "all" | "paper" | "e-book" | "both";
-  category_slug?: string;
-  ranking?: "all" | "day" | "week" | "month" | "year";
 }
 
-// create / update
-export interface ProductPayload {
-  name?: string;
-  description_file?: File;
-  author?: string;
-  publisher?: string;
-  publication_year?: number;
-  language?: string;
-  status?: boolean;
-  images?: string[];      // URL list
-  categories?: number[];  // category_id list
+// Params cho API suggest
+export interface ProductLimitOffsetParams {
+  limit?: number;
+  offset?: number;
 }
 
 /* ===================== API ===================== */
 
 const productsApi = {
-  // 1. Lấy danh sách sản phẩm
+  /** 1. Lấy danh sách sản phẩm (CÓ CACHE) */
   getList(params?: ProductListParams) {
-    return axiosClient.get<ProductListPaginate>("/products", { params });
+    return axiosClient.get<ProductListResponse>("/products", { 
+        params,
+        cache: true // Cache danh sách để chuyển trang nhanh
+    });
   },
 
-  // 2. Tìm kiếm theo tên
+  /** 2. Tìm kiếm sản phẩm theo tên (CÓ CACHE) */
   searchByName(params: ProductSearchParams) {
-    return axiosClient.get<PaginationResponse<Product>>(
-      "/products/search",
-      { params }
-    );
+    return axiosClient.get<ProductListResponse>("/products/search/name", { 
+        params,
+        cache: true // Cache kết quả tìm kiếm giống nhau
+    });
   },
 
-  // 3. Sort + filter nâng cao
+  /** 3. Sort + filter nâng cao (CÓ CACHE) */
   sort(params: ProductSortParams) {
-    return axiosClient.get<PaginationResponse<Product>>(
-      "/products/sort",
-      { params }
-    );
-  },
-
-  // 4. Gợi ý sản phẩm liên quan
-  suggest(productId: number) {
-    return axiosClient.get<{
-      status: boolean;
-      message: string;
-      data: Pick<Product, "id" | "name" | "slug">[];
-    }>(`/products/${productId}/suggest`);
-  },
-
-  // 5. Tạo sản phẩm
-  create(data: ProductPayload) {
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (value === undefined || value === null) return;
-
-      if (Array.isArray(value)) {
-        value.forEach((v) => formData.append(`${key}[]`, String(v)));
-      } else {
-        formData.append(key, value);
-      }
-    });
-
-    return axiosClient.post("/products", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    return axiosClient.get<ProductSortResponse>("/products/sort", { 
+        params,
+        cache: true // Cache kết quả lọc (quan trọng cho trang Search)
     });
   },
 
-  // 6. Cập nhật sản phẩm
-  update(id: number, data: ProductPayload) {
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (value === undefined || value === null) return;
-
-      if (Array.isArray(value)) {
-        value.forEach((v) => formData.append(`${key}[]`, String(v)));
-      } else {
-        formData.append(key, value);
-      }
-    });
-
-    return axiosClient.post(`/products/${id}?_method=PUT`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+  /** 4. Lấy sản phẩm bán chạy (CÓ CACHE) */
+  getBestSellers(limit?: number) {
+    return axiosClient.get<BestSellersResponse>("/product-details/best-sellers", {
+      params: { limit },
+      cache: true // Best seller ít thay đổi trong ngày -> Cache tốt
     });
   },
 
-  // 7. Xóa sản phẩm
-  delete(id: number) {
-    return axiosClient.delete<{ status: boolean; message: string }>(
-      `/products/${id}`
-    );
+  /** 5. Lấy sản phẩm gợi ý (CÓ CACHE) */
+  suggest(productId: number, params?: ProductLimitOffsetParams) {
+    return axiosClient.get<ProductLimitOffsetResponse>(`/products/${productId}/suggest`, {
+      params,
+      cache: true
+    });
+  },
+
+  /** 6. Tăng lượt views sản phẩm (KHÔNG CACHE, POST) */
+  incrementViews(productId: number) {
+    // Không dùng cache vì đây là hành động ghi (Mutation)
+    return axiosClient.post<IncrementViewsResponse>(`/products/${productId}/views`);
+  },
+
+  /** 7. Lấy sản phẩm giới thiệu (CÓ CACHE) */
+  featured(params?: ProductLimitOffsetParams) {
+    return axiosClient.get<ProductLimitOffsetResponse>("/products/featured", {
+      params,
+      cache: true // Featured thường là config cố định -> Cache tốt
+    });
   },
 };
 

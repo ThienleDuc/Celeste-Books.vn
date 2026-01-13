@@ -1,89 +1,72 @@
 import { NavLink } from "react-router-dom";
 
 const Sidebar = () => {
+  const linkClass = ({ isActive }: { isActive: boolean }) =>
+    `nav-link ${isActive ? "active" : ""}`;
+
   return (
     <nav className="sb-sidenav accordion sb-sidenav-light" id="sidenavAccordion">
       <div className="sb-sidenav-menu">
         <div className="nav">
 
-          {/* --- QUẢN LÝ DANH MỤC --- */}
-          <div className="sb-sidenav-menu-heading">Danh mục</div>
+          {/* ===== THỐNG KÊ ===== */}
+          <div className="sb-sidenav-menu-heading">Thống kê</div>
 
-          <NavLink to="/loai-tau" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-train-front me-2"></i> Loại tàu
+          <NavLink to="/thong-ke/nhap-kho" className={linkClass}>
+            <i className="bi bi-box-arrow-in-down me-2"></i>
+            Sản phẩm nhập vào
           </NavLink>
 
-          <NavLink to="/loai-toa" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-window-sidebar me-2"></i> Loại toa
+          <NavLink to="/thong-ke/ban-ra" className={linkClass}>
+            <i className="bi bi-graph-up-arrow me-2"></i>
+            Sản phẩm bán ra
           </NavLink>
 
-          <NavLink to="/loai-khoang" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-grid-3x3-gap me-2"></i> Loại khoang
+          {/* ===== HỆ THỐNG ===== */}
+          <div className="sb-sidenav-menu-heading">Hệ thống</div>
+
+          <NavLink to="/phan-quyen" className={linkClass}>
+            <i className="bi bi-shield-lock me-2"></i>
+            Phân quyền
           </NavLink>
 
-          <NavLink to="/loai-ghe" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-credit-card-2-front me-2"></i> Loại ghế
+          <NavLink to="/nguoi-dung" className={linkClass}>
+            <i className="bi bi-people me-2"></i>
+            Người dùng
           </NavLink>
 
-          <NavLink to="/ga-tau" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-geo-alt me-2"></i> Ga tàu
+          {/* ===== QUẢN LÝ SẢN PHẨM ===== */}
+          <div className="sb-sidenav-menu-heading">Quản lý sản phẩm</div>
+
+          <NavLink to="/san-pham" className={linkClass}>
+            <i className="bi bi-box-seam me-2"></i>
+            Sản phẩm
           </NavLink>
 
-          <NavLink to="/tuyen-tau" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-signpost-split me-2"></i> Tuyến tàu
+          <NavLink to="/khoi-luong-dinh-muc" className={linkClass}>
+            <i className="bi bi-speedometer2 me-2"></i>
+            Khối lượng định mức
           </NavLink>
 
-          <NavLink to="/tuyen-tau-ga" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-link-45deg me-2"></i> Tuyến tàu – Ga
+          <NavLink to="/voucher" className={linkClass}>
+            <i className="bi bi-ticket-perforated me-2"></i>
+            Voucher
           </NavLink>
 
-          {/* --- CẤU TRÚC TÀU --- */}
-          <div className="sb-sidenav-menu-heading">Cấu trúc tàu</div>
+          {/* ===== ĐƠN HÀNG ===== */}
+          <div className="sb-sidenav-menu-heading">Đơn hàng</div>
 
-          <NavLink to="/doan-tau" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-train-freight-front me-2"></i> Đoàn tàu
+          <NavLink to="/xac-nhan-don-hang" className={linkClass}>
+            <i className="bi bi-check2-square me-2"></i>
+            Xác nhận đơn hàng
           </NavLink>
 
-          <NavLink to="/toa-tau" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-columns me-2"></i> Toa tàu
-          </NavLink>
-
-          <NavLink to="/khoang-tau" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-layers me-2"></i> Khoang tàu
-          </NavLink>
-
-          <NavLink to="/ghe-ngoi" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-box-seam me-2"></i> Ghế / Giường
-          </NavLink>
-
-          <NavLink to="/vi-tri-ngoi" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-layout-sidebar me-2"></i> Vị trí ngồi
-          </NavLink>
-
-          {/* --- LỊCH TRÌNH & GIÁ VÉ --- */}
-          <div className="sb-sidenav-menu-heading">Lịch trình & Giá vé</div>
-
-          <NavLink to="/lich-trinh" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-calendar-event me-2"></i> Lịch trình
-          </NavLink>
-
-          <NavLink to="/gia-tien-khoang-cach" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-cash-coin me-2"></i> Giá theo khoảng cách
-          </NavLink>
-
-          <NavLink to="/gia-ve-tham-khao" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-receipt me-2"></i> Giá vé
-          </NavLink>
-
-          <NavLink to="/tinh-trang-ve" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <i className="bi bi-info-circle me-2"></i> Tình trạng vé
-          </NavLink>
         </div>
       </div>
 
       <div className="sb-sidenav-footer">
         <div className="small">Logged in as:</div>
-        Start Bootstrap Admin
+        Admin
       </div>
     </nav>
   );

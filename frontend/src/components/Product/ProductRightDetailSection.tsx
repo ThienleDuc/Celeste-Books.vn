@@ -106,7 +106,7 @@ const ProductRightSection = ({ productFull }: Props) => {
                     </div>
 
                     <QuantitySelector
-                        id={`quantity-${selectedDetail.id}`}   // id riêng cho từng sản phẩm
+                        id={`quantity-${selectedDetail.id}`}
                         value={quantities[selectedDetail.id]}
                         stock={selectedDetail.stock}
                         onChange={(newValue) =>

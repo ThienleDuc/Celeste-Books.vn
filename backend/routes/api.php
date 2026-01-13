@@ -128,8 +128,7 @@ Route::prefix('role-permissions')->group(function () {
     Route::delete('/', [RolePerController::class, 'destroy']);
     
     // Lấy theo role_id
-    Route::get('/role/{roleId}', [RolePerController::class, 'getByRole'])
-        ->where('roleId', '[0-9]+');
+    Route::get('/role/{roleId}', [RolePerController::class, 'getByRole']);
     
     // Lấy theo per_id
     Route::get('/permission/{perId}', [RolePerController::class, 'getByPermission'])
@@ -205,10 +204,14 @@ Route::prefix('categories')->group(function () {
 Route::prefix('products')->group(function () {
     // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
     Route::get('/', [ProductController::class, 'index']);
-// Lấy chi tiết sản phẩm theo ID
-    Route::get('/{id}', [ProductController::class, 'show']);
-//lấy sản phẩm gợi ý
-    Route::get('/{id}/suggest', [ProductController::class, 'suggest']);
+
+    // Tăng lượt xem sản phẩm
+    Route::post('/{id}/increment-views', [ProductController::class, 'incrementViews'])
+        ->where('id', '[0-9]+');
+    
+    // Lấy sản phẩm gợi ý
+    Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
+        ->where('id', '[0-9]+');
     
     // Thêm sản phẩm mới
     Route::post('/', [ProductController::class, 'store']);
@@ -220,12 +223,16 @@ Route::prefix('products')->group(function () {
     // Xóa sản phẩm bằng ID
     Route::delete('/{id}', [ProductController::class, 'destroy'])
         ->where('id', '[0-9]+');
-    
-    // Tìm kiếm sản phẩm (endpoint riêng cho search)
-    Route::get('/search', [ProductController::class, 'searchByName']);
 
     // Sắp xếp sản phẩm theo các tiêu chí
     Route::get('/sort', [ProductController::class, 'sort']);
+
+    // POST: Tăng lượt views sản phẩm
+    Route::post('/{id}/views', [ProductController::class, 'incrementViews'])
+        ->where('id', '[0-9]+');
+
+    // routes/api.php
+    Route::get('/featured', [ProductController::class, 'featured']);
 });
 
 // ================= PRODUCT DETAILS ROUTES =================
@@ -244,6 +251,8 @@ Route::prefix('product-details')->group(function () {
     Route::delete('/{id}', [ProductDetailController::class, 'destroy'])
         ->where('id', '[0-9]+');
     Route::get('/best-sellers', [ProductController::class, 'getBestSellers']);
+        // Lấy chi tiết sản phẩm theo ID
+    Route::get('/{id}', [ProductController::class, 'show']);
         
 });
 
@@ -281,6 +290,7 @@ Route::prefix('review')->group(function () {
     //delete message
     Route::delete('/{id}', [\App\Http\Controllers\ReviewController::class, 'deleteReview']);
 });
+
 //==================REVIEW ROUTES ===================
 Route::prefix('review-image')->group(function () {
     //show contact list of messages

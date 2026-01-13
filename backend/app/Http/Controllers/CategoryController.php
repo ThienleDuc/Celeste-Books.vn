@@ -41,9 +41,8 @@ class CategoryController extends Controller
             $sortOrder = $request->get('sort_order', 'desc');
             $query->orderBy($sortBy, $sortOrder);
             
-            // Phân trang
-            $perPage = $request->get('per_page', 20);
-            $categories = $query->paginate($perPage);
+            // KHÔNG phân trang - lấy tất cả
+            $categories = $query->get(); // Thay paginate() bằng get()
             
             return $this->jsonResponse($categories, 'Lấy danh sách danh mục thành công');
         } catch (\Exception $e) {

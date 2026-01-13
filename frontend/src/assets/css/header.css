@@ -365,6 +365,26 @@
 .dropdown-menu.productType {
   min-width: 300px;
 }
+
+/* Dropdown menu category với wrap và 2 columns */
+.dropdown-menu.category {
+  min-width: 280px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Mỗi li chiếm 50% trừ đi gap */
+.dropdown-menu.category li {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Style cho link bên trong */
+.dropdown-menu.category li a {
+  display: block;
+  width: 100%;
+}
+
 /* Ẩn mũi tên Bootstrap */
 .product-nav-link.dropdown-toggle::after {
   display: inline-block;
