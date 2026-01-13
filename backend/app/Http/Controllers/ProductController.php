@@ -23,7 +23,7 @@ class ProductController extends Controller
     }
 
     // 1. LẤY DANH SÁCH SẢN PHẨM
-    public function index(Request $request)
+    public function getListProducts(Request $request)
     {
         try {
             // Sử dụng subquery để xử lý phân trang với DISTINCT

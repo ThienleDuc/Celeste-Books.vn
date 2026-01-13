@@ -3,11 +3,13 @@ import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import authApi, { type RegisterPayload } from "../../api/auth.api";
+import rolesApi from "../../api/roles.api";
+import type { Role } from "../../api/roles.api";
 import { getRedirectPath } from "../../utils/redirect";
 
 const OTP_DURATION = 60; // 60 giây
 
-const Register = () => {
+const EmployeeRegister = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -17,8 +19,11 @@ const Register = () => {
     password: "",
     passwordConfirmation: "",
     otp: "",
+    role_id: "",
   });
   
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
   const [loading, setLoading] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -28,6 +33,35 @@ const Register = () => {
 
   const otpInputRef = useRef<HTMLInputElement>(null);
   const countdownRef = useRef<number | null>(null);
+
+  // Load danh sách vai trò
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        setLoadingRoles(true);
+        const res = await rolesApi.getAll();
+        
+        if (res.data.success) {
+          const filteredRoles = res.data.data.filter(role => role.id !== "C");
+          setRoles(filteredRoles);
+          
+          if (filteredRoles.length > 0 && !formData.role_id) {
+            setFormData(prev => ({
+              ...prev,
+              role_id: filteredRoles[0].id
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi load danh sách vai trò:", err);
+        setError("Không thể tải danh sách vai trò. Vui lòng thử lại sau.");
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+    
+    loadRoles();
+  }, [formData.role_id]);
 
   // Đếm ngược tự động
   useEffect(() => {
@@ -143,6 +177,13 @@ const Register = () => {
     setFieldErrors({});
     setLoading(true);
 
+    // Kiểm tra đã chọn vai trò chưa
+    if (!formData.role_id) {
+      setError("Vui lòng chọn vai trò");
+      setLoading(false);
+      return;
+    }
+
     // Kiểm tra OTP đã hết hạn chưa
     if (otpSent && countdown === 0) {
       setFieldErrors(prev => ({
@@ -176,7 +217,7 @@ const Register = () => {
         password_confirmation: formData.passwordConfirmation,
         full_name: formData.fullName,
         otp: formData.otp,
-        role_id: "C"
+        role_id: formData.role_id
       };
 
       const res = await authApi.register(payload);
@@ -199,14 +240,14 @@ const Register = () => {
         const errors: Record<string, string> = {};
         
         Object.entries(error.response.data.errors).forEach(([key, messages]) => {
-          if (key === 'role_id') return;
-          
           let fieldKey = key;
           
           if (key === 'full_name') {
             fieldKey = 'fullName';
           } else if (key === 'password_confirmation') {
             fieldKey = 'passwordConfirmation';
+          } else if (key === 'role_id') {
+            fieldKey = 'role_id';
           }
           
           if (messages && messages.length > 0) {
@@ -332,7 +373,7 @@ const Register = () => {
   return (
     <>
       <Helmet>
-        <title>Đăng ký tài khoản</title>
+        <title>Đăng ký nhân viên</title>
       </Helmet>
 
       <div className="auth-title-container position-relative text-center mb-4">
@@ -345,8 +386,8 @@ const Register = () => {
         </a>
 
         <h3 className="fw-bold auth-title d-inline-flex align-items-center gap-2 mb-0">
-          <i className="bi bi-person-plus"></i>
-          Đăng ký tài khoản
+          <i className="bi bi-person-badge"></i>
+          Đăng ký nhân viên
         </h3>
       </div>
 
@@ -474,6 +515,42 @@ const Register = () => {
               )}
             </div>
           </div>
+
+          <div className="col-12">
+            <div className="mb-3">
+              <label className="form-label fw-semibold">
+                Vai trò <span className="text-danger">*</span>
+              </label>
+              {loadingRoles ? (
+                <div className="d-flex align-items-center">
+                  <div className="spinner-border spinner-border-sm me-2"></div>
+                  <span>Đang tải danh sách vai trò...</span>
+                </div>
+              ) : roles.length > 0 ? (
+                <select
+                  className={`form-select ${getFieldError('role_id') ? 'is-invalid' : ''}`}
+                  value={formData.role_id}
+                  onChange={(e) => handleChange('role_id', e.target.value)}
+                  required
+                >
+                  {roles.map(role => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="alert alert-warning">
+                  Không tìm thấy vai trò nào. Vui lòng liên hệ quản trị viên.
+                </div>
+              )}
+              {getFieldError('role_id') && (
+                <div className="invalid-feedback d-block">
+                  {getFieldError('role_id')}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* OTP Section */}
@@ -517,26 +594,26 @@ const Register = () => {
             </div>
 
             {/* Thông báo lỗi OTP */}
-            {getFieldError('otp') ? (
-              <div className={`${countdown === 0 ? 'text-danger' : 'invalid-feedback'} d-block mt-1`}>
-                <i className="bi bi-exclamation-triangle me-1"></i>
-                {getFieldError('otp')}
-              </div>
-            ) : (
-              // Thông báo OTP đã được gửi
-              otpSent && countdown > 0 && (
-                <small className="form-text text-muted mt-1 d-block">
-                  <i className="bi bi-check-circle me-1"></i>
-                  Mã OTP đã được gửi đến {formData.email}
-                </small>
-              )
-            )}
+                {getFieldError('otp') ? (
+                  <div className={`${countdown === 0 ? 'text-danger' : 'invalid-feedback'} d-block mt-1`}>
+                    <i className="bi bi-exclamation-triangle me-1"></i>
+                    {getFieldError('otp')}
+                  </div>
+                ) : (
+                  // Thông báo OTP đã được gửi
+                  otpSent && countdown > 0 && (
+                    <small className="form-text text-muted mt-1 d-block">
+                      <i className="bi bi-check-circle me-1"></i>
+                      Mã OTP đã được gửi đến {formData.email}
+                    </small>
+                  )
+                )}
           </div>
         </div>
 
         <button
           className="btn btn-success w-50 mt-4 text-center d-block mx-auto"
-          disabled={loading || (otpSent && !formData.otp) || (otpSent && countdown === 0)}
+          disabled={loading || (otpSent && !formData.otp) || (otpSent && countdown === 0) || roles.length === 0 || loadingRoles}
           type="submit"
         >
           {loading ? (
@@ -544,7 +621,7 @@ const Register = () => {
               <span className="spinner-border spinner-border-sm me-2" role="status"></span>
               Đang xử lý...
             </>
-          ) : "Đăng ký"}
+          ) : "Đăng ký nhân viên"}
         </button>
 
         <div className="text-center mt-4">
@@ -553,7 +630,7 @@ const Register = () => {
           </small>
           <div className="mt-1">
             <small className="text-muted">
-              Bạn là nhân viên? <a href="/nhan-vien/dang-ky" className="text-decoration-none">Đăng ký tại đây</a>
+              Bạn là khách hàng? <a href="/dang-ky" className="text-decoration-none">Đăng ký tại đây</a>
             </small>
           </div>
         </div>
@@ -562,4 +639,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default EmployeeRegister;

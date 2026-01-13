@@ -5,14 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Services\EmailService;
+use App\Models\OTPVerification;
 
 class AuthController extends Controller
 {
+    protected EmailService $emailService;
+
+    public function __construct(EmailService $emailService)
+    {
+        $this->emailService = $emailService;
+    }
+
     /**
      * Tạo ID tự động theo role
      */
@@ -24,33 +32,155 @@ class AuthController extends Controller
         return $roleId . $formattedNumber;
     }
     
+    public function sendOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|max:255'
+        ], [
+            'email.required' => 'Email là bắt buộc',
+            'email.email' => 'Email không đúng định dạng'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $email = $request->email;
+
+        // Kiểm tra email đã đăng ký chưa
+        if (User::where('email', $email)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email đã được sử dụng'
+            ], 422);
+        }
+
+        // Gửi OTP
+        $result = $this->emailService->sendOtp($email, 'register');
+
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'data' => [
+                    'expires_at' => $result['expires_at']->toDateTimeString()
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $result['message']
+        ], 500);
+    }
+
     /**
-     * Đăng ký (WEB & API) - Tạo user và profile với gender = 'Khác' và full_name
+     * Xác thực OTP
+     */
+    public function verifyOtp($email, $otp, $purpose = 'register')
+    {
+        // Tìm OTP record với email và otp khớp
+        $otpRecord = OTPVerification::where('email', $email) // THÊM điều kiện email
+                                ->where('otp', $otp)
+                                ->where('purpose', $purpose)
+                                ->first();
+
+        if (!$otpRecord) {
+            return [
+                'success' => false,
+                'message' => 'Mã OTP không hợp lệ cho email này'
+            ];
+        }
+
+        if ($otpRecord->is_used) {
+            return [
+                'success' => false,
+                'message' => 'Mã OTP đã được sử dụng'
+            ];
+        }
+
+        if (!$otpRecord->expires_at || $otpRecord->expires_at->isPast()) {
+            return [
+                'success' => false,
+                'message' => 'Mã OTP đã hết hạn'
+            ];
+        }
+
+        // Đánh dấu OTP đã sử dụng
+        $otpRecord->update(['is_used' => true]);
+
+        return [
+            'success' => true,
+            'message' => 'Xác thực OTP thành công'
+        ];
+    }
+
+    /**
+     * Đăng ký với OTP verification
      */
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'username' => 'required|string|min:8|max:16|unique:users',
+            'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|max:12|confirmed',
-            'role_id' => 'required|string|max:10|exists:roles,id',
-            'full_name' => 'required|string|max:50'
+            'full_name' => 'required|string|max:50',
+            'otp' => 'required|string|size:6',
+            'role_id' => 'required|string|max:10|exists:roles,id'
         ], [
             'username.required' => 'Tên đăng nhập là bắt buộc',
             'username.min' => 'Tên đăng nhập phải có ít nhất 8 ký tự',
             'username.max' => 'Tên đăng nhập không được vượt quá 16 ký tự',
             'username.unique' => 'Tên đăng nhập đã được sử dụng',
+            'email.required' => 'Email là bắt buộc',
+            'email.email' => 'Email không đúng định dạng',
+            'email.max' => 'Email không được vượt quá 255 ký tự',
+            'email.unique' => 'Email đã được sử dụng',
             'password.required' => 'Mật khẩu là bắt buộc',
             'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự',
             'password.max' => 'Mật khẩu không được vượt quá 12 ký tự',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp',
-            'role_id.required' => 'Vai trò là bắt buộc',
-            'role_id.exists' => 'Vai trò không tồn tại trong hệ thống',
             'full_name.required' => 'Họ tên là bắt buộc',
-            'full_name.max' => 'Họ tên không được vượt quá 50 ký tự'
+            'full_name.max' => 'Họ tên không được vượt quá 50 ký tự',
+            'otp.required' => 'Mã OTP là bắt buộc',
+            'otp.size' => 'Mã OTP phải có 6 chữ số',
+            'role_id.required' => 'Vai trò là bắt buộc',
+            'role_id.exists' => 'Vai trò không tồn tại trong hệ thống'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // Kiểm tra OTP có tồn tại và chưa sử dụng cho email này không
+        $otpExists = OTPVerification::where('email', $request->email)
+                                ->where('otp', $request->otp)
+                                ->where('purpose', 'register')
+                                ->where('is_used', false)
+                                ->exists();
+
+        if (!$otpExists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã OTP không hợp lệ hoặc đã được sử dụng cho email này'
+            ], 422);
+        }
+
+        // Xác thực OTP (sẽ đánh dấu là đã dùng)
+        $otpVerification = $this->emailService->verifyOtp(
+            $request->email,  // Đảm bảo email khớp
+            $request->otp, 
+            'register'
+        );
+
+        if (!$otpVerification['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $otpVerification['message']
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -60,6 +190,7 @@ class AuthController extends Controller
             $user = User::create([
                 'id' => $userId,
                 'username' => $request->username,
+                'email' => $request->email,
                 'password_hash' => bcrypt($request->password),
                 'is_active' => true,
                 'role_id' => $request->role_id,
@@ -71,27 +202,27 @@ class AuthController extends Controller
                 'gender' => 'Khác'
             ]);
 
-            // Tạo token (7 ngày)
+            // Tạo token
             $expiresAt = now()->addDays(7);
             $tokenObj = $user->createToken('auth_token', ['*'], $expiresAt);
             $plainToken = $tokenObj->plainTextToken;
 
-            // Truy xuất model token (fallback)
             $tokenModel = $tokenObj->accessToken ?? $user->tokens()->latest('id')->first();
             $tokenId = $tokenModel?->id ?? null;
             $tokenExpiresAt = $tokenModel?->expires_at ?? $expiresAt;
 
             DB::commit();
 
+            // Gửi thông báo
             UserNotification::add($user->id, 'Đăng ký', "Người dùng {$user->username} vừa tạo tài khoản", 'account');
 
-            // Chỉ trả về JSON
             return response()->json([
                 'success' => true,
                 'message' => 'Đăng ký thành công',
                 'data' => [
                     'user_id' => $user->id,
                     'username' => $user->username,
+                    'email' => $user->email,
                     'role_id' => $user->role_id,
                     'full_name' => $request->full_name,
                     'gender' => 'Khác',

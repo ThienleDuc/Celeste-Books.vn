@@ -127,7 +127,7 @@ export interface ProductLimitOffsetParams {
 const productsApi = {
   /** 1. Lấy danh sách sản phẩm (CÓ CACHE) */
   getList(params?: ProductListParams) {
-    return axiosClient.get<ProductListResponse>("/products", { 
+    return axiosClient.get<ProductListResponse>("/products/list", { 
         params,
         cache: true // Cache danh sách để chuyển trang nhanh
     });

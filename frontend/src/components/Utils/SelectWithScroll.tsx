@@ -7,7 +7,8 @@ interface SelectWithScrollProps {
   onChange: (value: string) => void;
   placeholder?: string;
   maxHeight?: number;
-  isDisabled?: boolean; // thêm prop mới
+  isDisabled?: boolean;
+  className?: string; // 👈 THÊM className prop
 }
 
 const SelectWithScroll: React.FC<SelectWithScrollProps> = ({
@@ -16,7 +17,8 @@ const SelectWithScroll: React.FC<SelectWithScrollProps> = ({
   onChange,
   placeholder = "-- Chọn --",
   maxHeight = 150,
-  isDisabled = false, // default false
+  isDisabled = false,
+  className = "", // 👈 default empty string
 }) => {
   const selectedOption = options.find(opt => opt.value === value) || null;
 
@@ -31,7 +33,9 @@ const SelectWithScroll: React.FC<SelectWithScrollProps> = ({
       onChange={handleChange}
       placeholder={placeholder}
       isSearchable
-      isDisabled={isDisabled} // truyền xuống react-select
+      isDisabled={isDisabled}
+      className={className} // 👈 TRUYỀN className vào React-Select
+      classNamePrefix="react-select" // 👈 THÊM prefix để custom CSS dễ hơn
       styles={{
         menuList: (provided) => ({ ...provided, maxHeight }),
       }}

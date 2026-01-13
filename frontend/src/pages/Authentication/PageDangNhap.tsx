@@ -28,10 +28,24 @@ const Login = () => {
       const res = await authApi.login(payload);
 
       if (res.data.success) {
+        // Kiểm tra data có tồn tại không
+        if (!res.data.data) {
+          setError("Đăng nhập thất bại: không nhận được dữ liệu từ server");
+          return;
+        }
+
         const {
           access_token,
           role_id,
         } = res.data.data;
+
+        // Kiểm tra role là Customer (C) - chỉ cho phép Customer đăng nhập ở trang này
+        if (role_id !== 'C') {
+          setError("Tài khoản này không phải là tài khoản khách hàng. Vui lòng sử dụng trang đăng nhập nhân viên.");
+          // Xóa token nếu không phải Customer
+          localStorage.removeItem("access_token");
+          return;
+        }
 
         // 1. Lưu token
         localStorage.setItem("access_token", access_token);
@@ -57,7 +71,7 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Đăng nhập</title>
+        <title>Đăng nhập khách hàng</title>
       </Helmet>
 
       <div className="auth-title-container position-relative text-center mb-4">
@@ -71,11 +85,10 @@ const Login = () => {
 
         <h3 className="fw-bold auth-title d-inline-flex align-items-center gap-2 mb-0">
           <i className="bi bi-box-arrow-in-right"></i>
-          Đăng nhập
+          Đăng nhập khách hàng
         </h3>
       </div>
 
-      {/* 👉 chỉ thêm onSubmit */}
       <form onSubmit={handleLogin}>
         {/* ERROR */}
         {error && (
@@ -126,21 +139,30 @@ const Login = () => {
         <button
           className="btn btn-success w-100 mb-3"
           disabled={loading}
+          type="submit"
         >
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}
         </button>
-
+        
+        {/* Option: Google Login cho Customer (nếu có) */}
         <button type="button" className="btn btn-google w-100">
           <i className="bi bi-google google-icon"></i>
           <span className="google-text">Đăng nhập với Google</span>
         </button>
-      </form>
+        
+        <div className="text-center mt-3">
+          <small className="text-muted">
+            Chưa có tài khoản? <a href="/dang-ky" className="text-decoration-none">Đăng ký</a>
+          </small>
+        </div>
 
-      <div className="text-center mt-3">
-        <small>
-          Chưa có tài khoản? <a href="/dang-ky">Đăng ký</a>
-        </small>
-      </div>
+        {/* Option: Hiển thị nút chuyển sang đăng nhập nhân viên */}
+        <div className="text-center mt-3">
+          <small className="text-muted">
+            Bạn là nhân viên? <a href="/nhan-vien/dang-nhap" className="text-decoration-none">Đăng nhập tại đây</a>
+          </small>
+        </div>
+      </form>
     </>
   );
 };

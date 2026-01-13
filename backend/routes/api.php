@@ -203,7 +203,7 @@ Route::prefix('categories')->group(function () {
 // ==================== PRODUCT ROUTES ====================
 Route::prefix('products')->group(function () {
     // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
-    Route::get('/', [ProductController::class, 'index']);
+    Route::get('list/', [ProductController::class, 'getListProducts']);
 
     // Tăng lượt xem sản phẩm
     Route::post('/{id}/increment-views', [ProductController::class, 'incrementViews'])
@@ -313,6 +313,8 @@ Route::prefix('oders')->group(function() {
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/send-otp', [AuthController::class, 'sendOtp']);
+    Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/check-exists', [AuthController::class, 'checkExists']);
     Route::post('/suggest-role', [AuthController::class, 'suggestRole']);
 

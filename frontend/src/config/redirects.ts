@@ -20,7 +20,7 @@ export const redirects = {
   } as RedirectConfig,
 
   afterLogout: {
-    A: "/nhan-vien-dang-nhap",
+    A: "/nhan-vien/dang-nhap",
     C: "/",
     default: "/",
   } as RedirectConfig,
