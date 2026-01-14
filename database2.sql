@@ -736,12 +736,12 @@ INSERT INTO orders (id, user_id, order_code, status, subtotal, shipping_fee, dis
 (1, 'C01', 'ORD001', 'delivered', 80000, 20000, 0, 100000, 1, 'momo', 'paid'),
 (2, 'C02', 'ORD002', 'shipped', 350000, 30000, 5000, 375000, 3, 'cod', 'unpaid'),
 (3, 'C01', 'ORD003', 'pending', 60000, 15000, 0, 75000, 2, 'bank_transfer', 'unpaid'),
-(4, 'S02', 'ORD004', 'cancelled', 90000, 20000, 0, 110000, NULL, 'cod', 'unpaid'),
+(4, 'S02', 'ORD004', 'pending', 90000, 20000, 0, 110000, NULL, 'cod', 'unpaid'),
 (5, 'S03', 'ORD005', 'processing', 200000, 25000, 10000, 215000, 7, 'credit_card', 'paid'),
 (6, 'C01', 'ORD006', 'delivered', 150000, 20000, 5000, 165000, 1, 'cod', 'paid'),
-(7, 'C02', 'ORD007', 'delivered', 22000, 10000, 2000, 30000, 3, 'momo', 'paid'),
-(8, 'S04', 'ORD008', 'processing', 280000, 35000, 15000, 300000, NULL, 'bank_transfer', 'paid'),
-(9, 'C01', 'ORD009', 'delivered', 280000, 30000, 10000, 300000, 1, 'cod', 'paid'),
+(7, 'C02', 'ORD007', 'pending', 22000, 10000, 2000, 30000, 3, 'momo', 'paid'),
+(8, 'S04', 'ORD008', 'pending', 280000, 35000, 15000, 300000, NULL, 'bank_transfer', 'paid'),
+(9, 'C01', 'ORD009', 'pending', 280000, 30000, 10000, 300000, 1, 'cod', 'paid'),
 (10, 'M01', 'ORD010', 'pending', 40000, 15000, 0, 55000, 9, 'momo', 'unpaid');
 
 -- 16. Order Items
