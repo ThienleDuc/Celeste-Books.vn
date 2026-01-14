@@ -22,6 +22,12 @@ const DiscountSelector: React.FC<DiscountSelectorProps> = ({
   const [tempProductDiscountId, setTempProductDiscountId] = useState<number | undefined>(selectedProductDiscountId);
   const [tempShippingDiscountId, setTempShippingDiscountId] = useState<number | undefined>(selectedShippingDiscountId);
 
+
+  const formatCurrency = (value: any) => {
+    const amount = Math.round(Number(value || 0));
+    return amount.toLocaleString('vi-VN');
+  };
+
   const getDiscountTypeText = (type: DiscountType): string => {
     switch(type) {
       case 'promo_code': return 'Mã khuyến mãi';
@@ -141,7 +147,7 @@ const DiscountSelector: React.FC<DiscountSelectorProps> = ({
                     {getDiscountTypeText(selectedProductDiscount.type)}
                   </div>
                   <div className="discount-selected-amount">
-                    -{selectedProductDiscount.amount.toLocaleString('vi-VN')}₫
+                  -{formatCurrency(selectedProductDiscount.amount)}₫
                   </div>
                 </div>
                 <button 
@@ -162,7 +168,7 @@ const DiscountSelector: React.FC<DiscountSelectorProps> = ({
                     {getDiscountTypeText(selectedShippingDiscount.type)}
                   </div>
                   <div className="discount-selected-amount">
-                    -{selectedShippingDiscount.amount.toLocaleString('vi-VN')}₫
+                  -{formatCurrency(selectedShippingDiscount.amount)}₫
                   </div>
                 </div>
                 <button 
@@ -178,7 +184,7 @@ const DiscountSelector: React.FC<DiscountSelectorProps> = ({
             <div className="discount-total-summary">
               <span>Tổng giảm giá:</span>
               <span className="discount-total-amount">
-                -{getCurrentTotalDiscount().toLocaleString('vi-VN')}₫
+              -{formatCurrency(getCurrentTotalDiscount())}₫
               </span>
             </div>
           </div>
@@ -246,7 +252,7 @@ const DiscountSelector: React.FC<DiscountSelectorProps> = ({
                             </div>
                           </div>
                           <div className="discount-card-amount">
-                            Giảm {discount.amount.toLocaleString('vi-VN')}₫
+                          Giảm {formatCurrency(discount.amount)}₫
                           </div>
                           {isSelected && (
                             <div className="discount-card-selected-badge">
@@ -296,7 +302,7 @@ const DiscountSelector: React.FC<DiscountSelectorProps> = ({
                             </div>
                           </div>
                           <div className="discount-card-amount">
-                            Giảm {discount.amount.toLocaleString('vi-VN')}₫
+                          Giảm {formatCurrency(discount.amount)}₫
                           </div>
                           {isSelected && (
                             <div className="discount-card-selected-badge">

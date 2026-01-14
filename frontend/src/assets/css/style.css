@@ -1,3 +1,4 @@
+
 @charset "UTF-8";
 /*!
 * Start Bootstrap - SB Admin v7.0.7 (https://startbootstrap.com/template/sb-admin)
@@ -139,6 +140,18 @@ h2, .h2 {
     font-size: 2rem;
   }
 }
+.product-main-image {
+  width: 100%;
+  height: 420px;
+  object-fit: contain;       /* thu nhỏ, không cắt */
+  object-position: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+
+  margin-bottom: 16px;       /* 👉 TẠO KHOẢNG CÁCH */
+}
+
+
 
 h3, .h3 {
   font-size: calc(1.3rem + 0.6vw);
@@ -597,7 +610,7 @@ progress {
   color: #6c757d;
 }
 .blockquote-footer::before {
-  content: "— ";
+  content: "— ";
 }
 
 .img-fluid {
@@ -11179,3 +11192,9 @@ body {
 .sb-sidenav-linear .sb-sidenav-footer {
   background: rgba(0, 0, 0, 0.2);
 }
+
+
+
+
+
+

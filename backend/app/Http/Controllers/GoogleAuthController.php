@@ -4,124 +4,139 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Profile;
-use Illuminate\Support\Facades\Auth;
+use App\Models\UserNotification; // ✅ Import model thông báo
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
 
 class GoogleAuthController extends Controller
 {
     /**
-     * Redirect to Google OAuth
+     * 1. Chuyển hướng người dùng sang Google
      */
     public function redirectToGoogle()
     {
-        // Bạn có thể dùng ->stateless() nếu vẫn gặp InvalidStateException
-        return Socialite::driver('google')->redirect();
+        // Sử dụng stateless() vì chúng ta đang làm API (React tách rời Laravel)
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     /**
-     * Handle Google OAuth callback
+     * 2. Xử lý khi Google gọi lại (Callback)
      */
     public function handleGoogleCallback()
     {
         try {
-            // Lấy dữ liệu từ Google
-            $googleUser = Socialite::driver('google')->user();
-
-            // Log dữ liệu để debug
-            Log::info('Google User Data:', [
-                'id'     => $googleUser->getId(),
-                'email'  => $googleUser->getEmail(),
-                'name'   => $googleUser->getName(),
-                'avatar' => $googleUser->getAvatar(),
-                'raw'    => $googleUser->user,
-            ]);
-
-            // Hiển thị dữ liệu (bỏ ra nếu muốn lưu luôn)
-            // dd([
-            //     'Google ID'  => $googleUser->getId(),
-            //     'Email'      => $googleUser->getEmail(),
-            //     'Name'       => $googleUser->getName(),
-            //     'Avatar'     => $googleUser->getAvatar(),
-            //     'Raw Data'   => $googleUser->user,
-            // ]);
+            // Lấy thông tin user từ Google
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
             $email  = $googleUser->getEmail();
             $name   = $googleUser->getName();
             $avatar = $googleUser->getAvatar();
+            $googleId = $googleUser->getId();
 
-            // Kiểm tra user đã tồn tại chưa
+            // Tìm user trong DB theo email
             $user = User::where('email', $email)->first();
 
+            // --- TRƯỜNG HỢP 1: USER CHƯA TỒN TẠI (ĐĂNG KÝ MỚI) ---
             if (!$user) {
-                $newUserId = $this->generateNextUserId();
+                // Mặc định role là Khách hàng (C)
+                $roleId = 'C'; 
 
+                // 1. Xử lý trùng tên (Username)
+                // Ví dụ: "Quoc Phan" -> "Quoc Phan", "Quoc Phan 1", "Quoc Phan 2"...
+                $baseUsername = $name;
+                $newUsername = $baseUsername;
+                $counter = 1;
+                while (User::where('username', $newUsername)->exists()) {
+                    $newUsername = $baseUsername . ' ' . $counter;
+                    $counter++;
+                }
 
-                DB::transaction(function () use ($newUserId, $email, $name, $avatar) {
-                    Log::info("Creating new user $newUserId with email $email");
+                // 2. Tạo ID mới (Ví dụ: C001, C002...)
+                $newUserId = $this->generateNextUserId($roleId);
 
+                // 3. Sử dụng Transaction để đảm bảo toàn vẹn dữ liệu
+                DB::transaction(function () use ($newUserId, $email, $newUsername, $name, $avatar, $roleId, $googleId) {
+                    
                     // Tạo User
                     User::create([
                         'id'            => $newUserId,
-                        'username'      => $name,
+                        'username'      => $newUsername,
                         'email'         => $email,
-                        'password_hash' => null,
+                        // ⚠️ QUAN TRỌNG: Để null để Frontend biết là user này chưa có mật khẩu (hiện 2 ô)
+                        // Yêu cầu: Cột password_hash trong DB phải cho phép NULL (nullable)
+                        'password_hash' => null, 
                         'is_active'     => true,
-                        'role_id'       => "C",
+                        'role_id'       => $roleId,
+                        // Có thể lưu thêm google_id nếu bảng users có cột này
+                        // 'google_id'  => $googleId, 
                     ]);
 
                     // Tạo Profile
                     Profile::create([
                         'user_id'    => $newUserId,
                         'full_name'  => $name,
-                        'avatar_url' => $avatar,
-                        'phone'      => null,
-                        'birthday'   => null,
-                        'gender'     => null,
+                        'avatar_url' => $avatar, // Lưu link ảnh từ Google
+                        'gender'     => 'Khác', // Mặc định
                     ]);
-
-                    Log::info("User $newUserId and profile created successfully");
                 });
 
+                // Lấy lại user vừa tạo
                 $user = User::find($newUserId);
+
+                 }
+
+            // --- TRƯỜNG HỢP 2: ĐĂNG NHẬP (TẠO TOKEN) ---
+
+            // Kiểm tra xem tài khoản có bị khóa không
+            if (!$user->is_active) {
+                return redirect()->to(config('app.frontend_url') . '/dang-nhap?error=account_locked');
             }
 
-            // Login user
-            Auth::login($user);
+            // Tạo Token Sanctum (Hạn 7 ngày giống AuthController cũ)
+            $expiresAt = now()->addDays(7);
+            $tokenObj = $user->createToken('google_auth_token', ['*'], $expiresAt);
+            $plainToken = $tokenObj->plainTextToken;
 
-            return redirect()->intended('/');
+            // Ghi log đăng nhập
+            UserNotification::add($user->id, 'Đăng nhập', "Người dùng {$user->username} vừa đăng nhập bằng Google", 'account');
+
+            // --- CHUYỂN HƯỚNG VỀ REACT ---
+            // Gửi token qua URL để React bắt lấy và lưu vào localStorage
+            return redirect()->to(
+                config('app.frontend_url') . "/dang-nhap?token={$plainToken}"
+            );
 
         } catch (\Exception $e) {
-            // Lỗi chi tiết
-            Log::error('Google login failed', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-            ]);
+    // Tạm thời dùng dd() để xem lỗi là gì nếu Login thất bại
+    dd($e->getMessage(), $e->getTraceAsString());
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Google login failed',
-                'error'   => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-            ], 500);
-        }
+    // Sau khi fix xong hết thì mới mở lại đoạn redirect này
+    /*
+    Log::error('Google login failed', ['error' => $e->getMessage()]);
+    return redirect()->to(config('app.frontend_url') . '/dang-nhap?error=login_failed');
+    */
+}
     }
 
-   private function generateNextUserId()
-{
-    // Lấy max số từ ID hiện tại
-    $maxNumber = User::selectRaw(
-        "MAX(CAST(SUBSTRING(id, 2) AS UNSIGNED)) as max_id"
-    )->value('max_id');
+    /**
+     * Hàm sinh ID kế tiếp (Giống logic cũ của bạn nhưng an toàn hơn)
+     * Ví dụ: Tìm ID lớn nhất C005 -> Tạo C006
+     */
+    private function generateNextUserId($roleId)
+    {
+        // Lấy số lớn nhất hiện tại trong DB (Cắt chuỗi từ ký tự thứ 2, ép về kiểu số)
+        $maxId = User::where('id', 'like', $roleId . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(id, 2) AS UNSIGNED)) as max_num")
+            ->value('max_num');
 
-    // Chuyển sang integer để chắc chắn
-    $nextNumber = intval($maxNumber) + 1;
+        $nextNumber = intval($maxId) + 1;
 
-    // Luôn pad đủ 3 chữ số
-    $paddedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        // Pad số 0 vào đầu cho đủ 3 chữ số (1 -> 001)
+        $formattedNumber = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
-    return 'C' . $paddedNumber;
-}
-
+        return $roleId . $formattedNumber;
+    }
 }

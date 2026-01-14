@@ -1,6 +1,7 @@
-import axiosClient from "./axios";
+// Import clearCache từ axios
+import axiosClient, { clearCache } from "./axios";
 
-/* ===================== TYPES ===================== */
+/* ===================== TYPES (Giữ nguyên) ===================== */
 
 export interface Role {
   id: string;
@@ -34,30 +35,39 @@ export interface UpdateRolePayload {
 /* ===================== API ===================== */
 
 export const rolesApi = {
-  /* ---------- GET LIST (optional search) ---------- */
+  /* ---------- GET LIST (CÓ CACHE) ---------- */
   getAll(keyword?: string) {
     return axiosClient.get<RoleListResponse>("/roles", {
       params: keyword ? { keyword } : undefined,
+      cache: true, // Danh sách Role ít thay đổi -> Cache để load nhanh
     });
   },
 
-  /* ---------- GET BY SLUG ---------- */
+  /* ---------- GET BY SLUG (CÓ CACHE) ---------- */
   getBySlug(slug: string) {
-    return axiosClient.get<RoleDetailResponse>(`/roles/${slug}`);
+    return axiosClient.get<RoleDetailResponse>(`/roles/${slug}`, {
+      cache: true,
+    });
   },
 
-  /* ---------- CREATE ---------- */
+  /* ---------- CREATE (XÓA CACHE) ---------- */
   create(data: CreateRolePayload) {
+    // Tạo Role mới -> Danh sách cũ trong cache bị thiếu -> Xóa cache
+    clearCache("/roles");
     return axiosClient.post("/roles", data);
   },
 
-  /* ---------- UPDATE (by ID) ---------- */
+  /* ---------- UPDATE (XÓA CACHE) ---------- */
   update(id: string, data: UpdateRolePayload) {
+    // Sửa Role -> Cache cũ sai thông tin -> Xóa cache
+    clearCache("/roles");
     return axiosClient.put(`/roles/${id}`, data);
   },
 
-  /* ---------- DELETE (by ID) ---------- */
+  /* ---------- DELETE (XÓA CACHE) ---------- */
   delete(id: string) {
+    // Xóa Role -> Cache cũ thừa thông tin -> Xóa cache
+    clearCache("/roles");
     return axiosClient.delete(`/roles/${id}`);
   },
 };

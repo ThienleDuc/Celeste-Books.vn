@@ -1,64 +1,97 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 
-interface Props {
-  images: { id: number; imageUrl: string }[];
-  mainImage: string;
-  setMainImage: (url: string) => void;
-  visibleCount?: number; // số ảnh hiển thị cùng lúc
+interface ProductImage {
+  id: number;
+  image_url: string;
 }
 
-const ThumbnailCarousel = ({ images, mainImage, setMainImage, visibleCount = 4 }: Props) => {
-  const [startIndex, setStartIndex] = useState(0);
-  const [showButtons, setShowButtons] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
+interface Props {
+  images: ProductImage[];
+  mainImage: string;
+  setMainImage: (url: string) => void;
+  activeId: number | null;        // ID ảnh đang hiển thị
+  setActiveId: (id: number) => void; 
+  visibleCount?: number;
+}
+
+const ThumbnailCarousel = ({
+  images = [],
+  setMainImage,
+  activeId,
+  setActiveId,
+  visibleCount = 4,
+}: Props) => {
+  const [start, setStart] = useState(0);
 
   useEffect(() => {
-    if (containerRef.current) {
-      const containerWidth = containerRef.current.offsetWidth;
-      const totalWidth = images.length * 60 + (images.length - 1) * 8; // 60px ảnh + 8px gap
-      setShowButtons(totalWidth > containerWidth);
-    }
+    setStart(0);
   }, [images]);
 
-  const handlePrev = () => setStartIndex((prev) => Math.max(prev - 1, 0));
-  const handleNext = () =>
-    setStartIndex((prev) => Math.min(prev + 1, images.length - visibleCount));
+  if (!images || images.length === 0) return null;
 
-  const visibleImages = images.slice(startIndex, startIndex + visibleCount);
+  const visibleImages = images.slice(start, start + visibleCount);
+
+  const handleImageClick = (img: ProductImage) => {
+    setMainImage(img.image_url);
+    setActiveId(img.id);
+  };
 
   return (
-    <div className="thumbnail-carousel position-relative d-flex align-items-center overflow-hidden" ref={containerRef}>
-      {showButtons && (
-        <button
-          className="thumb-btn prev-btn"
-          onClick={handlePrev}
-          disabled={startIndex === 0}
-        >
-          &laquo;
-        </button>
-      )}
+    <div className="d-flex align-items-center justify-content-center gap-2 mt-2">
+      {/* Prev Button */}
+      <button
+        type="button"
+        className="btn btn-sm btn-light border"
+        disabled={start === 0}
+        onClick={() => setStart((s) => Math.max(0, s - 1))}
+        style={{ width: '30px', height: '100%' }}
+      >
+        ‹
+      </button>
 
-      <div className="thumbnails d-flex gap-2 flex-grow-1 mx-4">
+      {/* Thumbnails */}
+      <div className="d-flex gap-2 overflow-hidden">
         {visibleImages.map((img) => (
-          <img
+          <div
             key={img.id}
-            src={img.imageUrl}
-            alt="thumb"
-            className={`thumb-img ${mainImage === img.imageUrl ? "border-primary" : ""}`}
-            onClick={() => setMainImage(img.imageUrl)}
-          />
+            onClick={() => handleImageClick(img)}
+            style={{
+              cursor: "pointer",
+              border: activeId === img.id ? "2px solid #0d6efd" : "1px solid #dee2e6",
+              borderRadius: "4px",
+              padding: "2px",
+            
+              transition: "all 0.2s"
+            }}
+          >
+            <img
+              src={img.image_url}
+              alt="thumb"
+              style={{
+                width: "60px",
+                height: "60px",
+                objectFit: "cover",
+                display: "block",
+                borderRadius: "2px"
+              }}
+              onError={(e) => {
+                e.currentTarget.src = "/img/no-image.png";
+              }}
+            />
+          </div>
         ))}
       </div>
 
-      {showButtons && (
-        <button
-          className="thumb-btn next-btn"
-          onClick={handleNext}
-          disabled={startIndex + visibleCount >= images.length}
-        >
-          &raquo;
-        </button>
-      )}
+      {/* Next Button */}
+      <button
+        type="button"
+        className="btn btn-sm btn-light border"
+        disabled={start + visibleCount >= images.length}
+        onClick={() => setStart((s) => Math.min(images.length - visibleCount, s + 1))}
+        style={{ width: '30px', height: '100%' }}
+      >
+        ›
+      </button>
     </div>
   );
 };

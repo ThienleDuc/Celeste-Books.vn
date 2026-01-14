@@ -1,121 +1,173 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
-// Import categories từ product.model.ts
-import { categories } from "../../models/Product/product.model";
+import { NavLink, Link, useLocation } from "react-router-dom";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import categoriesApi, { type Category } from "../../api/categories.api";
+
+// --- CONSTANTS ---
+const RANK_LABELS: Record<string, string> = {
+  all: "Top tất cả",
+  day: "Top ngày",
+  week: "Top tuần",
+  month: "Top tháng",
+  new: "Mới cập nhật",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  all: "Tất cả",
+  paper: "Sách giấy",
+  "e-book": "Sách điện tử",
+  both: "Cả hai",
+};
 
 const ProductNav = () => {
   const [openRank, setOpenRank] = useState(false);
   const [openCategory, setOpenCategory] = useState(false);
   const [openProductType, setOpenProductType] = useState(false);
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const rankRef = useRef<HTMLLIElement | null>(null);
   const categoryRef = useRef<HTMLLIElement | null>(null);
   const productTypeRef = useRef<HTMLLIElement | null>(null);
 
-  const navigate = useNavigate();
   const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
 
-  const currentRank = searchParams.get("rank");
-  const currentCategory = searchParams.get("category");
-  const currentProductType = searchParams.get("productType");
+  // useMemo: Parse params 1 lần khi location đổi
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
-  // Sửa: Sử dụng default value "all" cho tất cả params
-  const currentRankValue = currentRank || "all";
-  const currentCategoryValue = currentCategory || "all";
-  const currentProductTypeValue = currentProductType || "all";
+  const currentRanking = searchParams.get("ranking") || "all";
+  const currentCategorySlug = searchParams.get("category_slug") || "all";
+  const currentProductType = searchParams.get("product_type") || "all";
 
+  // --- CLICK OUTSIDE HANDLER ---
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (rankRef.current && !rankRef.current.contains(e.target as Node)) {
-        setOpenRank(false);
-      }
-      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
-        setOpenCategory(false);
-      }
-      if (productTypeRef.current && !productTypeRef.current.contains(e.target as Node)) {
-        setOpenProductType(false);
-      }
+      const target = e.target as Node;
+      if (rankRef.current && !rankRef.current.contains(target)) setOpenRank(false);
+      if (categoryRef.current && !categoryRef.current.contains(target)) setOpenCategory(false);
+      if (productTypeRef.current && !productTypeRef.current.contains(target)) setOpenProductType(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Hàm xử lý click vào filter trong dropdown - GIỮ NGUYÊN CÁC PARAMS KHÁC
-  const handleFilterClick = (newParams: Record<string, string>) => {
-    // Tạo URLSearchParams từ URL hiện tại
+  // --- FETCH DATA ---
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCategories = async () => {
+      setLoading(true);
+      try {
+        const response = await categoriesApi.getAll();
+        
+        if (isMounted) {
+          // Type Guard logic để tránh dùng 'any'
+          const resData = response.data;
+          
+          if (resData && typeof resData === 'object') {
+            if ('success' in resData && (resData as { success: boolean }).success && Array.isArray((resData as { data: Category[] }).data)) {
+               // Trường hợp chuẩn: { success: true, data: [...] }
+               setCategories((resData as { data: Category[] }).data);
+            } 
+            else if ('data' in resData && typeof (resData as { data: unknown }).data === 'object') {
+               // Trường hợp phân trang: { data: { data: [...] } }
+               const nestedData = (resData as { data: { data: Category[] } }).data;
+               if (nestedData && Array.isArray(nestedData.data)) {
+                 setCategories(nestedData.data);
+               } else {
+                 setCategories([]);
+               }
+            } else {
+               setCategories([]);
+            }
+          }
+        }
+      } catch {
+        if (isMounted) setCategories([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchCategories();
+    return () => { isMounted = false; };
+  }, []);
+
+  // --- MEMOIZED DATA ---
+  const filteredCategories = useMemo(() => {
+    return categories.filter(cat => cat.slug && cat.slug !== "all" && cat.name);
+  }, [categories]);
+
+  const currentRankLabel = useMemo(() => RANK_LABELS[currentRanking] || "Xếp hạng", [currentRanking]);
+  
+  const currentCategoryLabel = useMemo(() => {
+    if (currentCategorySlug === "all") return "Thể loại";
+    const category = categories.find(c => c.slug === currentCategorySlug);
+    return category?.name || "Thể loại";
+  }, [currentCategorySlug, categories]);
+
+  const currentProductTypeLabel = useMemo(() => TYPE_LABELS[currentProductType] || "Loại sách", [currentProductType]);
+
+  // --- HELPER: GENERATE URL STRING ---
+  // Tạo URL string để đưa vào thẻ Link/NavLink
+  const getFilterUrl = useCallback((newParams: Record<string, string>) => {
     const params = new URLSearchParams(location.search);
     
-    // Cập nhật từng param mới
     Object.entries(newParams).forEach(([key, value]) => {
-      if (value === "all") {
-        params.delete(key); // Xóa param nếu là "all"
-      } else {
-        params.set(key, value); // Set giá trị mới
-      }
+      if (value === "all") params.delete(key);
+      else params.set(key, value);
     });
     
-    // Navigate với params mới, giữ nguyên các params khác
-    navigate(`/tim-sach${params.toString() ? `?${params.toString()}` : ''}`);
-    
-    // Đóng dropdown sau khi click
+    params.delete("page"); // Reset page về 1
+    return `/tim-sach?${params.toString()}`;
+  }, [location.search]);
+
+  // Đóng dropdown khi click vào Link con
+  const closeDropdowns = useCallback(() => {
     setOpenRank(false);
     setOpenCategory(false);
     setOpenProductType(false);
-  };
-
-  // Hàm navigate đến trang khác (không phải tim-sach) - giữ nguyên
-  const handleNavClick = (path: string) => {
-    navigate(path);
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  // Lọc bỏ category "Tất cả" từ model (vì đã có item "Tất cả" riêng)
-  const filteredCategories = categories.filter(cat => cat.slug !== "all");
+  }, []);
 
   return (
     <div className="product-nav-wrapper">
       <nav className="product-nav">
         <ul className="product-nav-list">
 
-          {/* Trang chủ */}
+          {/* === DÙNG NAVLINK CHO MENU CHÍNH === */}
+          {/* NavLink tự động thêm class 'active' khi URL khớp */}
+          
           <li className="product-nav-item">
-            <a
-              onClick={() => handleNavClick("/")}
-              className={`product-nav-link ${isActive("/") ? "active" : ""}`}
-              style={{ cursor: "pointer" }}
+            <NavLink
+              to="/"
+              className={({ isActive }) => `product-nav-link ${isActive ? "active" : ""}`}
+              title="Về trang chủ"
             >
               Trang chủ
-            </a>
+            </NavLink>
           </li>
 
-          {/* Tìm sách */}
           <li className="product-nav-item">
-            <a
-              onClick={() => handleNavClick("/tim-sach")}
-              className={`product-nav-link ${isActive("/tim-sach") ? "active" : ""}`}
-              style={{ cursor: "pointer" }}
+            <NavLink
+              to="/tim-sach"
+              className={({ isActive }) => `product-nav-link ${isActive ? "active" : ""}`}
+              title="Tìm kiếm sách"
             >
-              Tìm sách
-            </a>
+              Tìm kiếm
+            </NavLink>
           </li>
 
-          {/* Lịch sử */}
           <li className="product-nav-item">
-            <a
-              onClick={() => handleNavClick("/lich-su")}
-              className={`product-nav-link ${isActive("/lich-su") ? "active" : ""}`}
-              style={{ cursor: "pointer" }}
+            <NavLink
+              to="/lich-su"
+              className={({ isActive }) => `product-nav-link ${isActive ? "active" : ""}`}
+              title="Lịch sử xem"
             >
               Lịch sử
-            </a>
+            </NavLink>
           </li>
 
-          {/* XẾP HẠNG */}
+          {/* === XẾP HẠNG === */}
           <li className="product-nav-item dropdown" ref={rankRef}>
             <a
               className="product-nav-link dropdown-toggle"
@@ -126,65 +178,71 @@ const ProductNav = () => {
               }}
               aria-expanded={openRank}
               style={{ cursor: "pointer" }}
+              title="Lọc theo xếp hạng"
             >
-              Xếp hạng
+              {currentRankLabel}
             </a>
 
             <ul className={`dropdown-menu rank two-col ${openRank ? "show" : ""}`}>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ rank: "all" })}
-                  className={`dropdown-item ${currentRankValue === "all" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ ranking: "all" })}
+                  className={`dropdown-item ${currentRanking === "all" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Hiển thị tất cả xếp hạng"
                 >
                   <i className="bi bi-trophy icon-all"></i>
                   Top tất cả
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ rank: "day" })}
-                  className={`dropdown-item ${currentRankValue === "day" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ ranking: "day" })}
+                  className={`dropdown-item ${currentRanking === "day" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Sách hot trong ngày"
                 >
                   <i className="bi bi-calendar-day icon-day"></i>
                   Top ngày
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ rank: "week" })}
-                  className={`dropdown-item ${currentRankValue === "week" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ ranking: "week" })}
+                  className={`dropdown-item ${currentRanking === "week" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Sách hot trong tuần"
                 >
                   <i className="bi bi-calendar-week icon-week"></i>
                   Top tuần
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ rank: "month" })}
-                  className={`dropdown-item ${currentRankValue === "month" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ ranking: "month" })}
+                  className={`dropdown-item ${currentRanking === "month" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Sách hot trong tháng"
                 >
                   <i className="bi bi-calendar-month icon-month"></i>
                   Top tháng
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ rank: "new" })}
-                  className={`dropdown-item ${currentRankValue === "new" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ ranking: "new" })}
+                  className={`dropdown-item ${currentRanking === "new" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Sách mới cập nhật"
                 >
                   <i className="bi bi-arrow-repeat icon-new"></i>
                   Mới cập nhật
-                </a>
+                </Link>
               </li>
             </ul>
           </li>
 
-          {/* THỂ LOẠI - SỬ DỤNG TỪ MODEL */}
+          {/* === THỂ LOẠI === */}
           <li className="product-nav-item dropdown" ref={categoryRef}>
             <a
               className="product-nav-link dropdown-toggle"
@@ -195,38 +253,50 @@ const ProductNav = () => {
               }}
               aria-expanded={openCategory}
               style={{ cursor: "pointer" }}
+              title="Lọc theo thể loại"
             >
-              Thể loại
+              {currentCategoryLabel}
             </a>
 
             <ul className={`dropdown-menu category two-col ${openCategory ? "show" : ""}`}>
-              {/* Thêm "Tất cả" vào đầu dropdown - QUAN TRỌNG: so sánh với currentCategoryValue */}
               <li>
-                <a
-                  onClick={() => handleFilterClick({ category: "all" })}
-                  className={`dropdown-item ${currentCategoryValue === "all" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ category_slug: "all" })}
+                  className={`dropdown-item ${currentCategorySlug === "all" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Tất cả thể loại"
                 >
                   Tất cả
-                </a>
+                </Link>
               </li>
-              
-              {/* Render các thể loại từ model (đã lọc bỏ "Tất cả") */}
-              {filteredCategories.map((category) => (
-                <li key={category.id}>
-                  <a
-                    onClick={() => handleFilterClick({ category: category.slug })}
-                    className={`dropdown-item ${currentCategoryValue === category.slug ? "active" : ""}`}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {category.name}
-                  </a>
+
+              {loading ? (
+                <li className="px-3 py-2 text-muted">
+                  <div className="d-flex align-items-center">
+                    <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span className="small">Đang tải...</span>
+                  </div>
                 </li>
-              ))}
+              ) : (
+                filteredCategories.map(category => (
+                  <li key={category.id}>
+                    <Link
+                      to={getFilterUrl({ category_slug: category.slug })}
+                      className={`dropdown-item ${
+                        currentCategorySlug === category.slug ? "active" : ""
+                      }`}
+                      onClick={closeDropdowns}
+                      title={`Thể loại: ${category.name}`}
+                    >
+                      {category.name}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
           </li>
 
-          {/* LOẠI SÁCH */}
+          {/* === LOẠI SÁCH === */}
           <li className="product-nav-item dropdown" ref={productTypeRef}>
             <a
               className="product-nav-link dropdown-toggle"
@@ -237,50 +307,55 @@ const ProductNav = () => {
               }}
               aria-expanded={openProductType}
               style={{ cursor: "pointer" }}
+              title="Lọc theo loại sách"
             >
-              Loại sách
+              {currentProductTypeLabel}
             </a>
 
             <ul className={`dropdown-menu productType two-col ${openProductType ? "show" : ""}`}>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ productType: "all" })}
-                  className={`dropdown-item ${currentProductTypeValue === "all" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ product_type: "all" })}
+                  className={`dropdown-item ${currentProductType === "all" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Tất cả loại sách"
                 >
                   <i className="bi bi-card-list icon-all"></i>
                   Tất cả
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ productType: "paper" })}
-                  className={`dropdown-item ${currentProductTypeValue === "paper" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ product_type: "paper" })}
+                  className={`dropdown-item ${currentProductType === "paper" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Chỉ hiển thị sách giấy"
                 >
                   <i className="bi bi-book-half icon-paper"></i>
                   Sách giấy
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ productType: "ebook" })}
-                  className={`dropdown-item ${currentProductTypeValue === "ebook" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ product_type: "e-book" })}
+                  className={`dropdown-item ${currentProductType === "e-book" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Chỉ hiển thị sách điện tử"
                 >
                   <i className="bi bi-tablet-landscape icon-ebook"></i>
                   Sách điện tử
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  onClick={() => handleFilterClick({ productType: "both" })}
-                  className={`dropdown-item ${currentProductTypeValue === "both" ? "active" : ""}`}
-                  style={{ cursor: "pointer" }}
+                <Link
+                  to={getFilterUrl({ product_type: "both" })}
+                  className={`dropdown-item ${currentProductType === "both" ? "active" : ""}`}
+                  onClick={closeDropdowns}
+                  title="Hiển thị combo cả hai"
                 >
                   <i className="bi bi-stack icon-both"></i>
                   Cả hai
-                </a>
+                </Link>
               </li>
             </ul>
           </li>

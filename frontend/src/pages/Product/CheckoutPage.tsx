@@ -1,6 +1,10 @@
 // ./pages/CheckoutPage.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { checkoutApi } from '../../api/checkout.api';
+import type { CreateOrderRequest, CreateOrderItem, CheckoutProduct } from '../../api/checkout.api';
+
+
 
 // Import components - Đảm bảo đường dẫn đúng
 import CheckoutSteps from '../../components/Checkout/CheckoutSteps';
@@ -29,16 +33,28 @@ import {
   sampleWeightFees,
   sampleDistanceFees  
 } from '../../models/Checkout/discount.model';
-import type { LocalStorageCartData } from '../../models/Checkout/checkout.model';
+
+interface LocalStorageCartData {
+    userId: string;
+    products: any[];
+    totalPrice: number;
+    totalQuantity: number;
+    timestamp: string;
+}
+// import type { LocalStorageCartData } from '../../models/Checkout/checkout.model';
 import { sampleAddresses, getAddressFull } from '../../models/User/address.model';
 
 
 const CheckoutPage: React.FC = () => {
+    const [addresses, setAddresses] = useState<AddressFull[]>([]);
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [productDiscounts, setProductDiscounts] = useState<OrderProductDiscount[]>([]);
+    const [shippingDiscounts, setShippingDiscounts] = useState<OrderShippingDiscount[]>([]);
+    const [shippingFeeConfig, setShippingFeeConfig] = useState<any>(null);
     
     // State với proper types
     const [selectedAddress, setSelectedAddress] = useState<AddressFull | null>(null);
@@ -53,10 +69,14 @@ const CheckoutPage: React.FC = () => {
     const [cartData, setCartData] = useState<LocalStorageCartData | null>(null);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const urlAmount = parseFloat(queryParams.get('amount') || '0');
+
     // Hàm lấy dữ liệu từ localStorage
     const getCartDataFromLocalStorage = useCallback((): LocalStorageCartData | null => {
         try {
-            const effectiveUserId = userId || 'U001';
+            const effectiveUserId = String(userId || 'A01');
             const storageKey = `checkout_${effectiveUserId}`;
             const expiryKey = `${storageKey}_expiry`;
             
@@ -198,37 +218,42 @@ const CheckoutPage: React.FC = () => {
     }, []);
 
     // Load dữ liệu từ localStorage khi component mount
-    useEffect(() => {
-        setIsLoading(true);
-        setErrorMessage(null);
-        
-        const loadCartData = () => {
-            const data = getCartDataFromLocalStorage();
+    const loadCartData = async () => {
+        const data = getCartDataFromLocalStorage();
+        if (!data) return;
+    
+        setCartData(data);
+    
+        try {
+            const productIds = data.products.map(p => p.productId);
+            const response = await checkoutApi.getProductsDetails(productIds);
             
-            if (!data) {
-                setErrorMessage('Không tìm thấy dữ liệu giỏ hàng...');
-                setIsLoading(false);
-                return;
+            if (response.data && response.data.success) {
+                const serverItems = response.data.data; // Giả sử API trả về mảng chi tiết sản phẩm
+    
+                // 1. Lọc trùng nếu server trả về nhiều danh mục cho 1 sản phẩm
+                const uniqueItems = serverItems.reduce((acc: any[], current: any) => {
+                    const isExist = acc.find((item: any) => item.product_id === current.product_id);
+                    if (!isExist) return acc.concat([current]);
+                    return acc;
+                }, []);
+    
+                // 2. Cập nhật state để hiển thị lên giao diện
+                setCartItems(uniqueItems);
+                
+                // 3. Cập nhật lại tổng tiền dựa trên giá thực tế từ server
+                const newTotal = uniqueItems.reduce((sum: number, item: any) => sum + (parseFloat(item.sale_price) * item.quantity), 0);
+                
+                setCartData(prev => prev ? {
+                    ...prev,
+                    totalPrice: newTotal,
+                    timestamp: Date.now().toString()
+                } : null);
             }
-            
-            if (data.products.length === 0) {
-                setErrorMessage('Giỏ hàng của bạn đang trống.');
-                setIsLoading(false);
-                return;
-            }
-            
-            setCartData(data);
-            setCartItems(convertToCartItems(data.products));
-            setIsLoading(false);
-        };
-        
-        const timer = setTimeout(() => {
-            loadCartData();
-        }, 300);
-        
-        return () => clearTimeout(timer);
-    }, [userId, getCartDataFromLocalStorage, convertToCartItems, setIsLoading, setErrorMessage]);
-
+        } catch (error) {
+            console.error("Không thể load thông tin sản phẩm từ server", error);
+        }
+    };
     useEffect(() => {
         return () => {
             if (currentStep === 5 && order) {
@@ -238,28 +263,84 @@ const CheckoutPage: React.FC = () => {
     }, [currentStep, order, clearCheckoutDataFromStorage]);
 
     // Thêm useEffect để tự động chọn địa chỉ mặc định khi có cartData
-    useEffect(() => {
-        if (cartData && !selectedAddress) {
-            // Lấy userId từ cartData
-            const effectiveUserId = cartData.userId;
-            
-            // Lọc địa chỉ của user và tìm địa chỉ mặc định
-            const userAddresses = sampleAddresses
-                .filter(address => address.userId === effectiveUserId)
-                .map(getAddressFull);
-            
-            const defaultAddress = userAddresses.find(address => address.isDefault);
-            
-            if (defaultAddress) {
-                setSelectedAddress(defaultAddress);
-                console.log('Đã tự động chọn địa chỉ mặc định:', defaultAddress);
-            } else if (userAddresses.length > 0) {
-                // Nếu không có địa chỉ mặc định, chọn địa chỉ đầu tiên
-                setSelectedAddress(userAddresses[0]);
-                console.log('Đã chọn địa chỉ đầu tiên:', userAddresses[0]);
+// CheckoutPage.tsx
+
+useEffect(() => {
+    const loadInitialData = async () => {
+        setIsLoading(true);
+        try {
+            const effectiveUserId = String(userId || 'A01');
+            const [addressRes, cartRes] = await Promise.all([
+                checkoutApi.getUserAddresses(effectiveUserId),
+                checkoutApi.getUserCart(effectiveUserId)
+            ]);
+
+            // 1. Xử lý Địa chỉ
+            const addrList = addressRes.data?.data || [];
+            setAddresses(addrList);
+            setSelectedAddress(addrList.find((a: any) => a.is_default === 1) || addrList[0]);
+
+            // 2. Xử lý Giỏ hàng (Fix lặp dữ liệu và Type Error)
+            if (cartRes.data?.success && cartRes.data.data) {
+                const apiItems = cartRes.data.data.items;
+
+                // Lọc trùng sản phẩm dựa trên product_detail_id
+                const uniqueItems = apiItems.reduce((acc: any[], current: any) => {
+                    const isExist = acc.find((item: any) => item.product_detail_id === current.product_detail_id);
+                    if (!isExist) return acc.concat([current]);
+                    return acc;
+                }, []);
+
+                setCartItems(uniqueItems);
+
+                const manualSubtotal = uniqueItems.reduce((sum: number, item: any) => {
+                    return sum + (parseFloat(item.price_at_time || 0) * Number(item.quantity || 0));
+                }, 0);
+                
+                const totalQty = uniqueItems.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
+                
+                setCartData({
+                    userId: String(effectiveUserId),
+                    products: uniqueItems.map((item: any): CheckoutProduct => ({
+                        id: item.cart_item_id,
+                        productId: item.product_id,
+                        product_detail_id: item.product_detail_id,
+                        productType: item.product_type,
+                        quantity: Number(item.quantity),
+                        priceAtTime: parseFloat(item.price_at_time)
+                    })),
+                    totalPrice: manualSubtotal,
+                    totalQuantity: totalQty,    
+                    timestamp: Date.now().toString()
+                });
             }
+        } catch (error) {
+            setErrorMessage("Không thể tải dữ liệu giỏ hàng.");
+        } finally {
+            setIsLoading(false);
         }
-    }, [cartData, selectedAddress]);
+    };
+    loadInitialData();
+}, [userId]);
+
+useEffect(() => {
+    const fetchDiscountAndShippingData = async () => {
+        try {
+            const [prodRes, shipRes, feeRes] = await Promise.all([
+                checkoutApi.getProductDiscounts(),
+                checkoutApi.getShippingDiscounts(),
+                checkoutApi.getShippingFeeDetails()
+            ]);
+
+            if (prodRes.data.success) setProductDiscounts(prodRes.data.data);
+            if (shipRes.data.success) setShippingDiscounts(shipRes.data.data);
+            if (feeRes.data.success) setShippingFeeConfig(feeRes.data.data);
+        } catch (error) {
+            console.error("Lỗi khi tải cấu hình giảm giá và phí ship:", error);
+        }
+    };
+    fetchDiscountAndShippingData();
+}, []);
 
     // Debug shipping type changes
     useEffect(() => {
@@ -267,6 +348,36 @@ const CheckoutPage: React.FC = () => {
         console.log('Calculated shipping fee:', calculateShippingFee());
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedShippingType]);
+
+// Thêm logic này vào bên trong component CheckoutPage
+
+useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const paymentStatus = queryParams.get('payment_status');
+    const vnpResponseCode = queryParams.get('vnp_ResponseCode'); // VNPAY trả về mã này
+    const orderIdFromUrl = queryParams.get('order_id');
+
+    if ((paymentStatus === 'success' || vnpResponseCode === '00') && orderIdFromUrl) {
+        const fetchOrderAfterVnPay = async () => {
+            try {
+                setIsLoading(true);
+                const response = await checkoutApi.getOrderById(Number(orderIdFromUrl));
+                if (response.data?.success) {
+                    setOrder(response.data.order);
+                    setOrderItems(response.data.items);
+                    clearCheckoutDataFromStorage();
+                    setCurrentStep(5); 
+                    window.history.replaceState({}, '', `/thanh-toan/${userId}`);
+                }
+            } catch (error) {
+                console.error("Lỗi đồng bộ đơn hàng VNPAY:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchOrderAfterVnPay();
+    }
+}, [location.search, userId]);
 
     // Các hàm tính phí giống như trong ShippingStep
     const calculateWeightFee = (weight: number): number => {
@@ -291,17 +402,14 @@ const CheckoutPage: React.FC = () => {
 
     // Tính phí vận chuyển dựa trên loại đã chọn
     const calculateShippingFee = (): number => {
-        const baseFee = 20000; // Phí cơ sở
+        const baseFee = 20000;
+        
         const totalWeight = calculateTotalWeight();
-        const distance = 15; // Khoảng cách mặc định 15km
-        
-        // Tìm hệ số cho loại vận chuyển đã chọn
-        const typeFee = sampleShippingTypeFees.find(
-            fee => fee.shipping_type === selectedShippingType
-        );
-        
-        const weightMultiplier = calculateWeightFee(totalWeight);
+        const distance = 15; 
+        const weightMultiplier = calculateWeightFee(totalWeight); 
         const distanceMultiplier = calculateDistanceFee(distance);
+        
+        const typeFee = sampleShippingTypeFees.find(f => f.shipping_type === selectedShippingType);
         const typeMultiplier = typeFee?.multiplier || 1;
         
         return Math.round(baseFee * weightMultiplier * distanceMultiplier * typeMultiplier);
@@ -319,6 +427,12 @@ const CheckoutPage: React.FC = () => {
             name: 'Thanh toán khi nhận hàng', 
             icon: 'bi-cash', 
             description: 'Trả tiền khi nhận được hàng' 
+        },
+        { 
+            id: 'VnPay', // THÊM MỚI
+            name: 'Cổng thanh toán VNPAY', 
+            icon: 'bi-qr-code-scan', 
+            description: 'Thanh toán qua ứng dụng ngân hàng hoặc thẻ ATM/Quốc tế' 
         },
         { 
             id: 'momo', 
@@ -362,75 +476,82 @@ const CheckoutPage: React.FC = () => {
         }
     };
     
-    const handlePlaceOrder = () => {
-        if (!cartData) {
-            alert('Không có dữ liệu giỏ hàng. Vui lòng quay lại giỏ hàng.');
-            return;
-        }
-        
-        if (!selectedAddress) {
-            alert('Vui lòng chọn địa chỉ giao hàng.');
-            return;
-        }
-        
-        // 1. Lấy order_id mới
-        const nextOrderId = getNextOrderId();
-        
-        // 2. Chuyển đổi thành OrderItems
-        const newOrderItems = convertToOrderItems(cartData.products, nextOrderId);
-        
-        // 3. Tính toán các giá trị
-        const subtotal = cartData.totalPrice;
-        const shippingFee = calculateShippingFee();
+    const calculateSidebarTotal = (): number => {
+        const subtotal = calculateSubtotal();
+        const shipping = calculateShippingFee();
         const discount = calculateTotalDiscount();
-        const totalAmount = subtotal + shippingFee - discount;
+        const total = subtotal + shipping - discount;
         
-        // 4. Tạo order mới
-        const newOrder: Order = {
-            id: nextOrderId,
-            user_id: cartData.userId,
-            order_code: generateOrderCode(nextOrderId),
-            status: 'pending' as OrderStatus,
-            subtotal,
-            shipping_fee: shippingFee,
-            discount,
-            total_amount: totalAmount,
-            shipping_address_id: selectedAddress.id,
-            payment_method: selectedPaymentMethod,
-            payment_status: selectedPaymentMethod === 'cod' ? 'unpaid' : 'paid' as PaymentStatus,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        };
-        
-        console.log('Order created:', newOrder);
-        console.log('Order items:', newOrderItems);
-        
-        // 5. Lưu vào localStorage để phòng trường hợp refresh trang
-        try {
-            const orderData = {
-                order: newOrder,
-                orderItems: newOrderItems,
-                address: selectedAddress,
-                createdTime: new Date().getTime()
-            };
-            
-            localStorage.setItem(`order_${newOrder.order_code}`, JSON.stringify(orderData));
-            localStorage.setItem(`last_order_user_${cartData.userId}`, newOrder.order_code);
-            
-            console.log('Đã lưu order vào localStorage:', newOrder.order_code);
-        } catch (error) {
-            console.error('Lỗi khi lưu order vào localStorage:', error);
+        return Math.max(0, total);
+    };
+
+    const handlePlaceOrder = async () => {
+
+        const subtotal = calculateSubtotal();
+        const shipping = calculateShippingFee();
+        const discount = calculateTotalDiscount();
+
+        const finalTotal = Math.round(subtotal + shipping - discount);
+
+        if (!cartData || !selectedAddress) {
+            alert("Vui lòng chọn địa chỉ giao hàng!");
+            return;
         }
-        
-        // 6. Cập nhật state
-        setOrder(newOrder);
-        setOrderItems(newOrderItems);
-        
-        // 7. Xóa dữ liệu checkout khỏi localStorage
-        clearCheckoutDataFromStorage();
-        
-        // 8. Chuyển sang step xác nhận
-        setCurrentStep(5);
+    
+        const exactTotalAmount = calculateSidebarTotal();
+    
+        console.log("Giá hiển thị tổng cộng:", exactTotalAmount);
+    
+        const payload: any = {
+            user_id: String(userId || 'A01'),
+            shipping_address_id: selectedAddress.id,
+            payment_method: selectedPaymentMethod.toLowerCase(),
+            shipping_type: selectedShippingType,
+            product_discount_id: selectedProductDiscountId || null,
+            shipping_discount_id: selectedShippingDiscountId || null,
+            shipping_fee: shipping,
+            discount: discount,
+            total_amount: finalTotal, 
+            items: cartData.products.map((p: any) => ({
+                cart_item_id: p.id,
+                product_id: p.productId,
+                product_details_id: p.product_detail_id,
+                quantity: p.quantity,
+                product_type: p.productType,
+                price: p.priceAtTime
+            }))
+        };
+    
+        try {
+            setIsLoading(true);
+            const response = await checkoutApi.createOrder(payload);
+            
+            if (response.data?.success) {
+                if (selectedPaymentMethod.toLowerCase() === 'vnpay') {
+                    // 3. GỬI ĐÚNG CON SỐ finalTotal SANG VNPAY
+                    const vnpayRes = await checkoutApi.createVnpayUrl({
+                        order_id: response.data.order.id,
+                        amount: finalTotal // Chắc chắn sẽ là 120.800
+                    });
+                    
+                    if (vnpayRes.data?.payment_url) {
+                        window.location.href = vnpayRes.data.payment_url;
+                        return;
+                    }
+                }
+
+                // Trường hợp COD (Thanh toán khi nhận hàng)
+                clearCheckoutDataFromStorage();
+                setOrder(response.data.order);
+                setOrderItems(response.data.items);
+                setCurrentStep(5);
+            }
+        } catch (error: any) {
+            console.error("Lỗi đặt hàng:", error);
+            alert(error.response?.data?.message || "Đặt hàng thất bại!");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Hàm hủy thanh toán
@@ -440,21 +561,22 @@ const CheckoutPage: React.FC = () => {
     };
     
     // Tính tổng discount
-    const calculateTotalDiscount = (): number => {
-        let total = 0;
-        
-        if (selectedProductDiscountId) {
-            const discount = sampleOrderProductDiscounts.find(d => d.id === selectedProductDiscountId);
-            if (discount) total += discount.amount;
-        }
-        
-        if (selectedShippingDiscountId) {
-            const discount = sampleOrderShippingDiscounts.find(d => d.id === selectedShippingDiscountId);
-            if (discount) total += discount.amount;
-        }
-        
-        return total;
-    };
+const calculateTotalDiscount = (): number => {
+    let total = 0;
+    
+    // Tìm trong danh sách dữ liệu THẬT từ API
+    if (selectedProductDiscountId) {
+        const discount = productDiscounts.find(d => d.id === selectedProductDiscountId);
+        if (discount) total += Number(discount.amount);
+    }
+    
+    if (selectedShippingDiscountId) {
+        const discount = shippingDiscounts.find(d => d.id === selectedShippingDiscountId);
+        if (discount) total += Number(discount.amount);
+    }
+    
+    return total;
+};
     
     // Discount handlers
     const handleSelectProductDiscount = (discount: OrderProductDiscount | null) => {
@@ -476,16 +598,31 @@ const CheckoutPage: React.FC = () => {
         }
     };
     
-    // Tính subtotal từ cart data
-    const calculateSubtotal = (): number => {
-        if (!cartData) return 0;
-        return cartData.totalPrice;
-    };
     
-    // Tính total cho sidebar
-    const calculateSidebarTotal = (): number => {
-        return calculateSubtotal() + calculateShippingFee() - calculateTotalDiscount();
-    };
+
+const calculateSubtotal = (): number => {
+    // Nếu có dữ liệu cartItems từ API (giống CartSummaryStep ưu tiên)
+    if (cartItems && cartItems.length > 0) {
+        return cartItems.reduce((sum: number, item: any) => {
+            // Dùng đúng các key mà CartSummaryStep đang dùng: price_at_time hoặc sale_price
+            const price = parseFloat(item.price_at_time || item.sale_price || 0);
+            const quantity = Number(item.quantity || 0);
+            return sum + (price * quantity);
+        }, 0);
+    }
+
+    // Nếu không có, lấy từ cartData storage
+    if (cartData && cartData.products) {
+        return cartData.products.reduce((sum: number, item: any) => {
+            const price = parseFloat(item.priceAtTime || item.price_at_time || 0);
+            const quantity = Number(item.quantity || 0);
+            return sum + (price * quantity);
+        }, 0);
+    }
+
+    return 0;
+};
+
 
     // Render current step
     const renderStep = () => {
@@ -493,10 +630,11 @@ const CheckoutPage: React.FC = () => {
             case 1:
                 return (
                     <AddressSelector
-                        userId={cartData?.userId || userId || 'U001'}
-                        selectedAddressId={selectedAddress?.id}
-                        onSelectAddress={setSelectedAddress}
-                    />
+                    userId={String(userId || 'A01')} // Đảm bảo truyền string
+                    selectedAddressId={Number(selectedAddress?.id)} // Đảm bảo truyền number cho ID địa chỉ
+                    onSelectAddress={setSelectedAddress}
+                    addresses={addresses}
+                />
                 );
                 
             case 2:
@@ -505,23 +643,22 @@ const CheckoutPage: React.FC = () => {
                         selectedShippingType={selectedShippingType}
                         onSelect={setSelectedShippingType}
                         totalWeight={calculateTotalWeight()}
-                        distance={15}
-                        baseFee={20000}
+                        distance={15} 
+                        baseFee={20000} 
                     />
                 );
                 
-            case 3:
-                return (
-                    <DiscountSelector
-                        productDiscounts={sampleOrderProductDiscounts}
-                        shippingDiscounts={sampleOrderShippingDiscounts}
-                        selectedProductDiscountId={selectedProductDiscountId}
-                        selectedShippingDiscountId={selectedShippingDiscountId}
-                        onSelectProductDiscount={handleSelectProductDiscount}
-                        onSelectShippingDiscount={handleSelectShippingDiscount}
-                    />
-                );
-                
+                case 3:
+                    return (
+                        <DiscountSelector
+                            productDiscounts={productDiscounts} // Dữ liệu thật từ state
+                            shippingDiscounts={shippingDiscounts} // Dữ liệu thật từ state
+                            selectedProductDiscountId={selectedProductDiscountId}
+                            selectedShippingDiscountId={selectedShippingDiscountId}
+                            onSelectProductDiscount={handleSelectProductDiscount}
+                            onSelectShippingDiscount={handleSelectShippingDiscount}
+                        />
+                    );
             case 4:
                 return (
                     <PaymentStep
@@ -718,14 +855,16 @@ const CheckoutPage: React.FC = () => {
                                 <div className="checkout-address-preview flex-grow-1">
                                     <h3 className="checkout-address-title">Địa chỉ giao hàng</h3>
                                     <div className="checkout-address-details">
-                                        <div className="checkout-address-name">{selectedAddress.receiverName}</div>
-                                        <div className="checkout-address-phone">{selectedAddress.phone}</div>
-                                        <div className="checkout-address-street">{selectedAddress.streetAddress}</div>
-                                        {selectedAddress.commune?.name && selectedAddress.province?.name && (
-                                            <div className="checkout-address-location">
-                                                {selectedAddress.commune.name}, {selectedAddress.province.name}
-                                            </div>
-                                        )}
+                                        {/* Dùng toán tử OR để handle cả 2 trường hợp tên trường */}
+                                        <div className="checkout-address-name">
+                                            {(selectedAddress as any).receiver_name || selectedAddress.receiverName}
+                                        </div>
+                                        <div className="checkout-address-phone">
+                                            {selectedAddress.phone}
+                                        </div>
+                                        <div className="checkout-address-street">
+                                            {(selectedAddress as any).street_address || selectedAddress.streetAddress}
+                                        </div>
                                     </div>
                                 </div>
                             )}

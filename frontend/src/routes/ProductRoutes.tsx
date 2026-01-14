@@ -15,7 +15,7 @@ const ProductRoutes = [
     ),
   },
   {
-    path: "/san-pham/:id",
+    path: "/san-pham/:slug",
     element: (
       <ProductLayout>
         <ProductDetailPage />

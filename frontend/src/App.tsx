@@ -1,9 +1,11 @@
 // App.tsx
+import ProductDetailPage from "./pages/Product/ProductDetailPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainRoutesPath from "./routes/MainRoutes";
 import ProfileRoutes from "./routes/ProfileRoutes";
 import AuthRoutes from "./routes/AuthRoutes";
 import ProductRoutes from "./routes/ProductRoutes";
+
 
 const App = () => {
   return (
@@ -11,6 +13,9 @@ const App = () => {
     
     <Router>
       <Routes>
+        {/* === SỬA LẠI: Đưa Route này vào bên trong Routes === */}
+        <Route path="/san-pham/:slug" element={<ProductDetailPage />} />
+
         {/* Main routes */}
         {MainRoutesPath.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
@@ -20,6 +25,7 @@ const App = () => {
         {ProfileRoutes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
         ))}
+
         {/* Auth routes */}
         {AuthRoutes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
@@ -38,5 +44,3 @@ const App = () => {
 };
 
 export default App;
-
-

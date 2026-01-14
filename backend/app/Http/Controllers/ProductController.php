@@ -23,77 +23,138 @@ class ProductController extends Controller
     }
 
     // 1. LẤY DANH SÁCH SẢN PHẨM
-    public function index(Request $request)
+    public function getListProducts(Request $request)
     {
         try {
-            $query = DB::table('products as p')
+            // Sử dụng subquery để xử lý phân trang với DISTINCT
+            $baseQuery = DB::table('products as p')
                 // JOIN ảnh chính
                 ->leftJoin('product_images as pi', function ($join) {
                     $join->on('pi.product_id', '=', 'p.id')
                         ->where('pi.is_primary', 1);
                 })
-                // JOIN product_details lấy giá thấp nhất
-                ->leftJoin('product_details as pd', function ($join) {
+                // Subquery để lấy product_detail có giá thấp nhất
+                ->leftJoin(DB::raw('(
+                    SELECT 
+                        pd1.*,
+                        ROW_NUMBER() OVER (PARTITION BY pd1.product_id ORDER BY pd1.sale_price ASC) as rn
+                    FROM product_details pd1
+                ) as pd'), function ($join) {
                     $join->on('pd.product_id', '=', 'p.id')
-                        ->whereRaw(
-                            'pd.sale_price = (
-                                SELECT pd2.sale_price
-                                FROM product_details pd2
-                                WHERE pd2.product_id = p.id
-                                ORDER BY pd2.sale_price ASC
-                                LIMIT 1
-                            )'
-                        );
+                        ->where('pd.rn', '=', 1);
                 })
                 ->where('p.status', 1);
 
-            /* ===== SORT (WHITELIST) ===== */
+            /* ===== SORT ===== */
+            $sortBy = $request->get('sort_by', 'p.id');
+            $sortOrder = strtolower($request->get('sort_order')) === 'asc' ? 'asc' : 'desc';
+            
             $sortable = [
-                'id'               => 'p.id',
-                'name'             => 'p.name',
-                'rating'           => 'p.rating',
-                'views'            => 'p.views',
-                'purchase_count'   => 'p.purchase_count',
-                'sale_price'       => 'pd.sale_price',
-                'created_at'       => 'p.created_at',
+                'id' => 'p.id',
+                'name' => 'p.name',
+                'rating' => 'p.rating',
+                'views' => 'p.views',
+                'purchase_count' => 'p.purchase_count',
+                'sale_price' => 'pd.sale_price',
+                'created_at' => 'p.created_at',
             ];
 
-            $sortBy    = $request->get('sort_by', 'p.id');
-            $sortOrder = strtolower($request->get('sort_order')) === 'asc'
-                ? 'asc'
-                : 'desc';
-
             if (isset($sortable[$sortBy])) {
-                $query->orderBy($sortable[$sortBy], $sortOrder);
+                $baseQuery->orderBy($sortable[$sortBy], $sortOrder);
             } else {
-                $query->orderBy('p.id', 'desc');
+                $baseQuery->orderBy('p.id', 'desc');
             }
 
-            /* ===== SELECT ===== */
-            $query->select([
+            /* ===== SELECT với DISTINCT ===== */
+            $baseQuery->select([
                 'p.id',
                 'p.name',
                 'p.slug',
-                DB::raw('COALESCE(pi.image_url, "") as image'),
-                'pd.original_price',
-                'pd.sale_price',
                 'p.rating',
                 'p.views',
                 'p.purchase_count',
                 'p.created_at',
+                DB::raw('COALESCE(pi.image_url, "") as image'),
+                DB::raw('pi.image_url as primary_image'),
+                DB::raw('COALESCE(pd.original_price, 0) as original_price'),
+                DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
+                DB::raw('CASE 
+                    WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                        AND pd.original_price > pd.sale_price
+                    THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
+                    ELSE 0 
+                END as discount_percent'),
+                DB::raw('p.purchase_count as total_sold'),
+                DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted')
             ]);
 
-            /* ===== PAGINATION ===== */
-            $perPage  = (int) $request->get('per_page', 20);
-            $products = $query->paginate($perPage);
+            // THÊM DISTINCT VÀO ĐÂY
+            $baseQuery->distinct('p.id');
+
+            /* ===== PAGINATION với DISTINCT ===== */
+            $perPage = (int) $request->get('per_page', 20);
+            
+            // Lấy tổng số sản phẩm phân biệt
+            $totalQuery = clone $baseQuery;
+            $total = DB::table(DB::raw("({$totalQuery->toSql()}) as sub"))
+                ->mergeBindings($totalQuery)
+                ->count();
+            
+            // Lấy dữ liệu trang hiện tại
+            $page = $request->get('page', 1);
+            $offset = ($page - 1) * $perPage;
+            
+            $products = DB::table(DB::raw("({$baseQuery->toSql()}) as sub"))
+                ->mergeBindings($baseQuery)
+                ->offset($offset)
+                ->limit($perPage)
+                ->get();
 
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => 'Lấy danh sách sản phẩm thành công',
-                'data'    => $products
+                'data' => [
+                    'data' => $products,
+                    'current_page' => (int) $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'last_page' => ceil($total / $perPage)
+                ]
             ], 200);
 
         } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Lỗi server',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+     // 2. LẤY CHI TIẾT SẢN PHẨM
+    public function show($id)
+    {
+        try {
+            $product = Product::with(['detail', 'categories', 'images'])->find($id);
+
+            if (!$product) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Không tìm thấy sản phẩm',
+                    'data'    => []
+                ], 404);
+            }
+
+            // Tăng lượt xem
+            $product->increment('views');
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Lấy chi tiết sản phẩm thành công',
+                'data'    => $product
+            ]);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'status'  => false,
                 'message' => 'Lỗi server',
@@ -101,119 +162,327 @@ class ProductController extends Controller
             ], 500);
         }
     }
-     // 2. LẤY CHI TIẾT SẢN PHẨM
-   public function show($id)
-{
-    try {
-        $product = Product::with(['detail', 'categories', 'images'])->find($id);
-
-        if (!$product) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Không tìm thấy sản phẩm',
-                'data'    => []
-            ], 404);
-        }
-
-        // Tăng lượt xem
-        $product->increment('Views');
-
-        return response()->json([
-            'status'  => true,
-            'message' => 'Lấy chi tiết sản phẩm thành công',
-            'data'    => $product
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status'  => false,
-            'message' => 'Lỗi server',
-            'error'   => $e->getMessage()
-        ], 500);
-    }
-}
 
     // 3. GỢI Ý SẢN PHẨM LIÊN QUAN
-   public function suggest(Request $request, $id)
-{
-    try {
-        $product = Product::find($id);
+    public function suggest(Request $request, $id)
+    {
+        try {
+            $product = Product::find($id);
 
-        if (!$product) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Không tìm thấy sản phẩm',
-                'data'    => []
-            ], 404);
-        }
-
-        // Lấy chữ cái đầu của tên sản phẩm
-        $firstChar = mb_substr($product->name, 0, 1);
-
-        $query = Product::with(['detail', 'categories', 'images'])
-            ->where('id', '!=', $id)
-            ->where('status', 1)
-            ->where('language', 'Tiếng Việt') // lọc tiếng Việt
-            ->whereRaw('LEFT(name, 1) = ?', [$firstChar]); // lọc cùng chữ cái đầu
-
-        // Lọc theo danh mục nếu có request
-        if ($request->has('category_id')) {
-            $categoryId = $request->category_id;
-            $query->whereHas('categories', function ($q) use ($categoryId) {
-                $q->where('categories.id', $categoryId);
-            });
-        }
-
-        // Sắp xếp theo purchase_count -> rating -> views -> created_at
-        $query->orderByDesc('purchase_count')
-            ->orderByDesc('rating')
-            ->orderByDesc('views')
-            ->orderByDesc('created_at');
-
-        // Lấy limit
-        $limit = $request->get('limit', 10);
-        $suggests = $query->limit($limit)->get();
-
-        // Transform dữ liệu
-        $suggests->transform(function ($p) {
-            // Tính % giảm giá nếu có
-            if ($p->detail && $p->detail->original_price > 0 && $p->detail->sale_price > 0) {
-                $p->discount_percent = round(
-                    (($p->detail->original_price - $p->detail->sale_price) / $p->detail->original_price) * 100
-                );
-            } else {
-                $p->discount_percent = 0;
+            if (!$product) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Không tìm thấy sản phẩm',
+                    'data'    => []
+                ], 404);
             }
 
-            $p->total_sold_formatted = number_format($p->purchase_count ?? 0);
+            // Lấy TẤT CẢ category_id của sản phẩm gốc (từ bảng product_categories)
+            $categoryIds = DB::table('product_categories')
+                ->where('product_id', $id)
+                ->pluck('category_id')
+                ->toArray();
 
-            // Lấy ảnh chính
-            $p->primary_image = $p->images->firstWhere('is_primary', 1) 
-                ? $p->images->firstWhere('is_primary', 1)->image_url 
-                : ($p->images->first() ? $p->images->first()->image_url : null);
+            // Nếu sản phẩm không có category nào, trả về mảng rỗng
+            if (empty($categoryIds)) {
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'Sản phẩm không có thể loại',
+                    'data'    => [
+                        'products' => [],
+                        'has_more' => false,
+                        'total' => 0,
+                        'limit' => 0,
+                        'offset' => 0
+                    ]
+                ], 200);
+            }
 
-            // Lấy các loại product_types
-            $p->product_types = $p->detail->pluck('product_type')->unique()->values()->toArray();
+            // Tính số lượng category trùng cho mỗi sản phẩm (để ưu tiên sản phẩm có nhiều category giống)
+            $matchCounts = DB::table('product_categories as pc')
+                ->select(
+                    'pc.product_id',
+                    DB::raw('COUNT(*) as match_count')
+                )
+                ->whereIn('pc.category_id', $categoryIds)
+                ->where('pc.product_id', '!=', $id)
+                ->groupBy('pc.product_id');
 
-            return $p;
-        });
+            // Sử dụng query builder giống index
+            $baseQuery = DB::table('products as p')
+                // JOIN ảnh chính
+                ->leftJoin('product_images as pi', function ($join) {
+                    $join->on('pi.product_id', '=', 'p.id')
+                        ->where('pi.is_primary', 1);
+                })
+                // Subquery để lấy product_detail có giá thấp nhất
+                ->leftJoin(DB::raw('(
+                    SELECT 
+                        pd1.*,
+                        ROW_NUMBER() OVER (PARTITION BY pd1.product_id ORDER BY pd1.sale_price ASC) as rn
+                    FROM product_details pd1
+                ) as pd'), function ($join) {
+                    $join->on('pd.product_id', '=', 'p.id')
+                        ->where('pd.rn', '=', 1);
+                })
+                // JOIN với matchCounts để có số category trùng
+                ->leftJoinSub($matchCounts, 'mc', function ($join) {
+                    $join->on('mc.product_id', '=', 'p.id');
+                })
+                ->where('p.status', 1)
+                ->where('p.id', '!=', $id)
+                ->whereNotNull('mc.product_id'); // Chỉ lấy sản phẩm có ít nhất 1 category trùng
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Lấy sản phẩm gợi ý thành công',
-            'data'    => $suggests
-        ], 200);
+            /* ===== SELECT với DISTINCT ===== */
+            $baseQuery->select([
+                'p.id',
+                'p.name',
+                'p.slug',
+                'p.rating',
+                'p.views',
+                'p.purchase_count',
+                'p.created_at',
+                DB::raw('COALESCE(pi.image_url, "") as image'),
+                DB::raw('pi.image_url as primary_image'),
+                DB::raw('COALESCE(pd.original_price, 0) as original_price'),
+                DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
+                DB::raw('CASE 
+                    WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                        AND pd.original_price > pd.sale_price
+                    THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
+                    ELSE 0 
+                END as discount_percent'),
+                DB::raw('p.purchase_count as total_sold'),
+                DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted'),
+                DB::raw('COALESCE(mc.match_count, 0) as category_match_count')
+            ]);
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'status'  => false,
-            'message' => 'Lỗi server',
-            'error'   => $e->getMessage()
-        ], 500);
+            // THÊM DISTINCT VÀO ĐÂY để không bị trùng sản phẩm
+            $baseQuery->distinct('p.id');
+
+            // Sắp xếp ưu tiên: số category trùng nhiều nhất -> purchase_count -> rating -> views
+            $baseQuery->orderByDesc('category_match_count')
+                ->orderByDesc('p.purchase_count')
+                ->orderByDesc('p.rating')
+                ->orderByDesc('p.views')
+                ->orderByDesc('p.created_at');
+
+            /* ===== LẤY TỔNG SỐ SẢN PHẨM ===== */
+            $totalQuery = clone $baseQuery;
+            $total = DB::table(DB::raw("({$totalQuery->toSql()}) as sub"))
+                ->mergeBindings($totalQuery)
+                ->count();
+
+            /* ===== LẤY DỮ LIỆU VỚI LIMIT VÀ OFFSET ===== */
+            $limit = (int) $request->get('limit', 6);
+            $offset = (int) $request->get('offset', 0);
+            
+            // Lấy dữ liệu với limit và offset
+            $products = DB::table(DB::raw("({$baseQuery->toSql()}) as sub"))
+                ->mergeBindings($baseQuery)
+                ->offset($offset)
+                ->limit($limit)
+                ->get();
+
+            // Kiểm tra xem còn dữ liệu để load thêm không
+            $hasMore = ($offset + $limit) < $total;
+
+            // Thêm product_types vào kết quả
+            $productIds = $products->pluck('id')->toArray();
+            if (!empty($productIds)) {
+                $productTypes = DB::table('product_details')
+                    ->whereIn('product_id', $productIds)
+                    ->select('product_id', DB::raw('GROUP_CONCAT(DISTINCT product_type) as types'))
+                    ->groupBy('product_id')
+                    ->get()
+                    ->keyBy('product_id');
+
+                $products->transform(function ($item) use ($productTypes) {
+                    if (isset($productTypes[$item->id])) {
+                        $item->product_types = explode(',', $productTypes[$item->id]->types);
+                    } else {
+                        $item->product_types = [];
+                    }
+                    return $item;
+                });
+            }
+
+            // Thêm category_slug vào kết quả
+            if (!empty($productIds)) {
+                $categories = DB::table('categories as c')
+                    ->join('product_categories as pc', 'pc.category_id', '=', 'c.id')
+                    ->whereIn('pc.product_id', $productIds)
+                    ->select('pc.product_id', DB::raw('GROUP_CONCAT(DISTINCT c.slug) as category_slugs'))
+                    ->groupBy('pc.product_id')
+                    ->get()
+                    ->keyBy('product_id');
+
+                $products->transform(function ($item) use ($categories) {
+                    if (isset($categories[$item->id])) {
+                        $item->category_slug = explode(',', $categories[$item->id]->category_slugs);
+                    } else {
+                        $item->category_slug = [];
+                    }
+                    return $item;
+                });
+            }
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Lấy sản phẩm gợi ý thành công',
+                'data'    => [
+                    'products' => $products,
+                    'has_more' => $hasMore,
+                    'total' => $total,
+                    'limit' => $limit,
+                    'offset' => $offset
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => env('APP_DEBUG') ? $e->getMessage() : null
+            ], 500);
+        }
     }
-}
 
+    public function featured(Request $request)
+    {
+        try {
+            // Lấy tham số từ request
+            $limit = (int) $request->get('limit', 12);
+            $offset = (int) $request->get('offset', 0);
 
+            // Sử dụng query builder giống index và suggest
+            $baseQuery = DB::table('products as p')
+                // JOIN ảnh chính
+                ->leftJoin('product_images as pi', function ($join) {
+                    $join->on('pi.product_id', '=', 'p.id')
+                        ->where('pi.is_primary', 1);
+                })
+                // Subquery để lấy product_detail có giá thấp nhất
+                ->leftJoin(DB::raw('(
+                    SELECT 
+                        pd1.*,
+                        ROW_NUMBER() OVER (PARTITION BY pd1.product_id ORDER BY pd1.sale_price ASC) as rn
+                    FROM product_details pd1
+                ) as pd'), function ($join) {
+                    $join->on('pd.product_id', '=', 'p.id')
+                        ->where('pd.rn', '=', 1);
+                })
+                ->where('p.status', 1);
+
+            /* ===== SELECT với DISTINCT ===== */
+            $baseQuery->select([
+                'p.id',
+                'p.name',
+                'p.slug',
+                'p.rating',
+                'p.views',
+                'p.purchase_count',
+                'p.created_at',
+                DB::raw('COALESCE(pi.image_url, "") as image'),
+                DB::raw('pi.image_url as primary_image'),
+                DB::raw('COALESCE(pd.original_price, 0) as original_price'),
+                DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
+                DB::raw('CASE 
+                    WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                        AND pd.original_price > pd.sale_price
+                    THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
+                    ELSE 0 
+                END as discount_percent'),
+                DB::raw('p.purchase_count as total_sold'),
+                DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted')
+            ]);
+
+            // THÊM DISTINCT để không bị trùng sản phẩm
+            $baseQuery->distinct('p.id');
+
+            // Sắp xếp theo: thời gian mới nhất -> lượt mua -> lượt xem -> rating
+            $baseQuery->orderByDesc('p.created_at')
+                ->orderByDesc('p.purchase_count')
+                ->orderByDesc('p.views')
+                ->orderByDesc('p.rating');
+
+            /* ===== LẤY TỔNG SỐ SẢN PHẨM ===== */
+            $totalQuery = clone $baseQuery;
+            $total = DB::table(DB::raw("({$totalQuery->toSql()}) as sub"))
+                ->mergeBindings($totalQuery)
+                ->count();
+
+            /* ===== LẤY DỮ LIỆU VỚI LIMIT VÀ OFFSET ===== */
+            $products = DB::table(DB::raw("({$baseQuery->toSql()}) as sub"))
+                ->mergeBindings($baseQuery)
+                ->offset($offset)
+                ->limit($limit)
+                ->get();
+
+            // Kiểm tra xem còn dữ liệu để load thêm không
+            $hasMore = ($offset + $limit) < $total;
+
+            // Thêm product_types vào kết quả
+            $productIds = $products->pluck('id')->toArray();
+            if (!empty($productIds)) {
+                $productTypes = DB::table('product_details')
+                    ->whereIn('product_id', $productIds)
+                    ->select('product_id', DB::raw('GROUP_CONCAT(DISTINCT product_type) as types'))
+                    ->groupBy('product_id')
+                    ->get()
+                    ->keyBy('product_id');
+
+                $products->transform(function ($item) use ($productTypes) {
+                    if (isset($productTypes[$item->id])) {
+                        $item->product_types = explode(',', $productTypes[$item->id]->types);
+                    } else {
+                        $item->product_types = [];
+                    }
+                    return $item;
+                });
+            }
+
+            // Thêm category_slug vào kết quả
+            if (!empty($productIds)) {
+                $categories = DB::table('categories as c')
+                    ->join('product_categories as pc', 'pc.category_id', '=', 'c.id')
+                    ->whereIn('pc.product_id', $productIds)
+                    ->select('pc.product_id', DB::raw('GROUP_CONCAT(DISTINCT c.slug) as category_slugs'))
+                    ->groupBy('pc.product_id')
+                    ->get()
+                    ->keyBy('product_id');
+
+                $products->transform(function ($item) use ($categories) {
+                    if (isset($categories[$item->id])) {
+                        $item->category_slug = explode(',', $categories[$item->id]->category_slugs);
+                    } else {
+                        $item->category_slug = [];
+                    }
+                    return $item;
+                });
+            }
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Lấy sản phẩm giới thiệu thành công',
+                'data'    => [
+                    'products' => $products,
+                    'has_more' => $hasMore,
+                    'total' => $total,
+                    'limit' => $limit,
+                    'offset' => $offset
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => env('APP_DEBUG') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+    
     // 4. TẠO SẢN PHẨM MỚI
     // Thêm mới sản phẩm
     // ý tưởng: thêm 1 danh sách images, categories vào sản phẩm,
@@ -430,6 +699,47 @@ class ProductController extends Controller
         }
     }
 
+    /**
+     * Tăng lượt xem sản phẩm
+     */
+    public function incrementViews($id)
+    {
+        try {
+            // 1. Kiểm tra tồn tại sản phẩm
+            $product = Product::find($id);
+            if (!$product) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Không tìm thấy sản phẩm'
+                ], 404);
+            }
+
+            // 2. Tăng lượt xem
+            $product->increment('views');
+            
+            // 3. Lấy lượt xem mới
+            $product->refresh(); // Refresh để lấy giá trị mới
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Đã tăng lượt xem thành công',
+                'data' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'views' => $product->views,
+                    'updated_at' => $product->updated_at
+                ]
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Lỗi server',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     // 6. XÓA SẢN PHẨM
     public function destroy($id)
     {
@@ -620,134 +930,102 @@ class ProductController extends Controller
         return $query;
     }
 
-    protected function filterCategory($query, $categorySlug)
+    protected function filterCategory($query, string $categorySlug)
     {
-        if (!$categorySlug) {
+        if (!$categorySlug || $categorySlug === 'all') {
             return $query;
         }
-        
+
+        // Lọc sản phẩm có ít nhất một category trùng slug
         return $query->whereExists(function ($subQuery) use ($categorySlug) {
             $subQuery->select(DB::raw(1))
-                ->from('product_categories as pc')
-                ->join('categories as c', 'c.id', '=', 'pc.category_id')
-                ->whereRaw('pc.product_id = p.id')
-                ->where('c.slug', $categorySlug);
+                    ->from('product_categories as pc')
+                    ->join('categories as c', 'c.id', '=', 'pc.category_id')
+                    ->whereRaw('pc.product_id = p.id')
+                    ->whereIn('c.slug', explode(',', $categorySlug)); // hỗ trợ nhiều slug ngăn cách bởi dấu ,
         });
     }
 
     protected function applyRankingFilter($query, string $ranking)
     {
-        if ($ranking !== 'all') {
-            // Xác định khoảng thời gian
-            $dateRange = match($ranking) {
-                'day' => [now()->startOfDay(), now()->endOfDay()],
-                'week' => [now()->startOfWeek(), now()->endOfWeek()],
-                'month' => [now()->startOfMonth(), now()->endOfMonth()],
-                'year' => [now()->startOfYear(), now()->endOfYear()],
-                default => null
-            };
-
-            // Subquery cho order_items - chỉ lấy đơn hàng đã giao (delivered)
-            $orderItemsSubquery = DB::table('order_items as oi')
-                ->join('orders as o', 'o.id', '=', 'oi.order_id')
-                ->where('o.status', 'delivered')
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('o.created_at', $dateRange);
-                })
-                ->select('oi.product_id', DB::raw('COALESCE(SUM(oi.quantity), 0) as total_sold'))
-                ->groupBy('oi.product_id');
-
-            // Subquery cho reviews - chỉ lấy review từ đơn hàng đã giao
-            $reviewSubquery = DB::table('reviews as r')
-                ->join('order_items as oi_rev', 'oi_rev.id', '=', 'r.order_item_id')
-                ->join('orders as o_rev', 'o_rev.id', '=', 'oi_rev.order_id')
-                ->where('o_rev.status', 'delivered')
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('r.created_at', $dateRange);
-                })
-                ->whereNotNull('r.rating') // Chỉ lấy review có rating
-                ->select('oi_rev.product_id', DB::raw('COALESCE(AVG(r.rating), 0) as avg_rating'))
-                ->groupBy('oi_rev.product_id');
-
-            // Thực hiện join
-            $query->leftJoinSub($orderItemsSubquery, 'oi_stats', function ($join) {
-                $join->on('oi_stats.product_id', '=', 'p.id');
-            })->leftJoinSub($reviewSubquery, 'r_stats', function ($join) {
-                $join->on('r_stats.product_id', '=', 'p.id');
-            });
-
-            // Thêm select - đảm bảo luôn có giá trị mặc định
-            $query->addSelect([
-                DB::raw('COALESCE(oi_stats.total_sold, 0) as total_sold'),
-                DB::raw('COALESCE(r_stats.avg_rating, 0) as avg_rating')
-            ]);
+        // Nếu ranking là all hoặc new → không cần join
+        if (in_array($ranking, ['all', 'new'])) {
+            return $query;
         }
-        
-        return $query;
+
+        // Xác định khoảng thời gian cho day/week/month
+        $dateRange = match ($ranking) {
+            'day'   => [now()->startOfDay(), now()->endOfDay()],
+            'week'  => [now()->startOfWeek(), now()->endOfWeek()],
+            'month' => [now()->startOfMonth(), now()->endOfMonth()],
+            default => null,
+        };
+
+        // Subquery order_items (đơn đã giao)
+        $orderItemsSubquery = DB::table('order_items as oi')
+            ->join('orders as o', 'o.id', '=', 'oi.order_id')
+            ->where('o.status', 'delivered')
+            ->when($dateRange, fn ($q) => $q->whereBetween('o.created_at', $dateRange))
+            ->select('oi.product_id', DB::raw('SUM(oi.quantity) as total_sold'))
+            ->groupBy('oi.product_id');
+
+        // Subquery reviews
+        $reviewSubquery = DB::table('reviews as r')
+            ->join('order_items as oi_rev', 'oi_rev.id', '=', 'r.order_item_id')
+            ->join('orders as o_rev', 'o_rev.id', '=', 'oi_rev.order_id')
+            ->where('o_rev.status', 'delivered')
+            ->when($dateRange, fn ($q) => $q->whereBetween('r.created_at', $dateRange))
+            ->whereNotNull('r.rating')
+            ->select('oi_rev.product_id', DB::raw('AVG(r.rating) as avg_rating'))
+            ->groupBy('oi_rev.product_id');
+
+        return $query
+            ->leftJoinSub($orderItemsSubquery, 'oi_stats', fn ($join) => $join->on('oi_stats.product_id', '=', 'p.id'))
+            ->leftJoinSub($reviewSubquery, 'r_stats', fn ($join) => $join->on('r_stats.product_id', '=', 'p.id'));
     }
 
     public function sort(Request $request)
     {
         try {
+            // Lấy các tham số
+            $productType = $request->get('product_type', $request->get('productType', 'all'));
+            $categorySlug = $request->get('category_slug', $request->get('categorySlug', 'all'));
+            $ranking = $request->get('ranking', 'all');
+            $keyword = $request->get('keyword', $request->get('search', ''));
+            
             $query = DB::table('products as p')
-                ->distinct('p.id') 
+                ->distinct('p.id')
                 ->leftJoin('product_images as pi', function ($join) {
                     $join->on('pi.product_id', '=', 'p.id')
                         ->where('pi.is_primary', 1);
                 })
                 ->leftJoin('product_details as pd', function ($join) {
                     $join->on('pd.product_id', '=', 'p.id')
-                        ->whereRaw(
-                            'pd.sale_price = (
-                                SELECT pd2.sale_price
-                                FROM product_details pd2
-                                WHERE pd2.product_id = p.id
-                                ORDER BY pd2.sale_price ASC
-                                LIMIT 1
-                            )'
-                        );
+                        ->whereRaw('pd.sale_price = (
+                            SELECT pd2.sale_price
+                            FROM product_details pd2
+                            WHERE pd2.product_id = p.id
+                            ORDER BY pd2.sale_price ASC
+                            LIMIT 1
+                        )');
                 })
-                ->leftJoin('product_categories as pc', 'pc.product_id', '=', 'p.id')
-                ->leftJoin('categories as cat', 'cat.id', '=', 'pc.category_id')
                 ->where('p.status', 1);
 
-            /* ===== FILTER THEO PRODUCT_TYPE ===== */
-            $productType = $request->get('product_type', 'all');
-            $query = $this->filterProductType($query, $productType);
-
-            /* ===== FILTER THEO CATEGORY ===== */
-            $categorySlug = $request->get('category_slug');
-            $query = $this->filterCategory($query, $categorySlug);
-
-            /* ===== ÁP DỤNG RANKING FILTER ===== */
-            $ranking = $request->get('ranking', 'all');
-            $query = $this->applyRankingFilter($query, $ranking);
-
-            /* ===== SORT ===== */
-            $sortable = [
-                'id'               => 'p.id',
-                'name'             => 'p.name',
-                'rating'           => 'p.rating',
-                'views'            => 'p.views',
-                'purchase_count'   => 'p.purchase_count',
-                'sale_price'       => 'pd.sale_price',
-                'created_at'       => 'p.created_at',
-            ];
-
-            $sortBy    = $request->get('sort_by', 'p.id');
-            $sortOrder = strtolower($request->get('sort_order')) === 'asc' ? 'asc' : 'desc';
-
-            // Nếu có ranking, sort theo total_sold và avg_rating
-            if ($ranking !== 'all') {
-                $query->orderByDesc('total_sold')
-                    ->orderByDesc('avg_rating')
-                    ->orderByDesc('p.created_at');
+            /* ===== FILTER THEO KEYWORD ===== */
+            if (!empty($keyword)) {
+                $query->where('p.name', 'like', '%' . $keyword . '%');
             } else {
-                // Sort thông thường
-                if (isset($sortable[$sortBy])) {
-                    $query->orderBy($sortable[$sortBy], $sortOrder);
-                } else {
-                    $query->orderBy('p.id', 'desc');
+                /* ===== FILTER THEO PRODUCT_TYPE ===== */
+                $query = $this->filterProductType($query, $productType);
+
+                /* ===== FILTER THEO CATEGORY ===== */
+                $query = $this->filterCategory($query, $categorySlug);
+
+                /* ===== ÁP DỤNG RANKING FILTER ===== */
+                $rankingsWithStats = ['day', 'week', 'month'];
+
+                if (in_array($ranking, $rankingsWithStats)) {
+                    $query = $this->applyRankingFilter($query, $ranking);
                 }
             }
 
@@ -757,6 +1035,7 @@ class ProductController extends Controller
                 'p.name',
                 'p.slug',
                 DB::raw('COALESCE(pi.image_url,"") as image'),
+                DB::raw('COALESCE(pi.image_url,"") as primary_image'), // Thêm primary_image
                 'pd.original_price',
                 'pd.sale_price',
                 'p.rating',
@@ -765,50 +1044,132 @@ class ProductController extends Controller
                 'p.created_at',
             ];
 
-            // Nếu có ranking, thêm các trường ranking
-            if ($ranking !== 'all') {
+            $rankingsWithStats = ['day', 'week', 'month'];
+            if (empty($keyword) && in_array($ranking, $rankingsWithStats)) {
                 $selectFields[] = DB::raw('COALESCE(oi_stats.total_sold, 0) as total_sold');
                 $selectFields[] = DB::raw('COALESCE(r_stats.avg_rating, 0) as avg_rating');
             }
 
             $query->select($selectFields);
 
+            /* ===== SORT ===== */
+            $sortable = [
+                'id'             => 'p.id',
+                'name'           => 'p.name',
+                'rating'         => 'p.rating',
+                'views'          => 'p.views',
+                'purchase_count' => 'p.purchase_count',
+                'sale_price'     => 'pd.sale_price',
+                'created_at'     => 'p.created_at',
+            ];
+
+            $sortBy = $request->get('sort_by', $request->get('sortBy', 'p.id'));
+            $sortOrder = strtolower($request->get('sort_order', $request->get('sortOrder', 'desc'))) === 'asc' ? 'asc' : 'desc';
+
+            if (!empty($keyword)) {
+                $query->orderByDesc('p.created_at');
+            } elseif ($ranking === 'new') {
+                $query->orderByDesc('p.created_at');
+            } elseif (in_array($ranking, $rankingsWithStats)) {
+                $query->orderByDesc('total_sold')
+                    ->orderByDesc('avg_rating');
+            } else {
+                if (isset($sortable[$sortBy])) {
+                    $query->orderBy($sortable[$sortBy], $sortOrder);
+                } else {
+                    $query->orderByDesc('p.id');
+                }
+            }
+
             /* ===== PAGINATION ===== */
-            $perPage  = (int) $request->get('per_page', 20);
+            $perPage = (int) $request->get('per_page', $request->get('perPage', 20));
             $products = $query->paginate($perPage);
 
-            /* ===== LẤY product_types ===== */
-            if ($products->isNotEmpty()) {
-                $productIds = collect($products->items())->pluck('id')->toArray();
+            /* ===== TRẢ VỀ KHÔNG TÌM THẤY NẾU RỖNG ===== */
+            if ($products->isEmpty()) {
+                return response()->json([
+                    'status'       => true,
+                    'message'      => empty($keyword) ? 'Không tìm thấy sản phẩm' : 'Không tìm thấy sản phẩm với từ khóa "' . $keyword . '"',
+                    'data'         => [],
+                    'current_page' => 1,
+                    'per_page'     => $perPage,
+                    'total'        => 0,
+                    'last_page'    => 1,
+                    'filters'      => [
+                        'keyword'       => $keyword,
+                        'product_type'  => $productType,
+                        'ranking'       => $ranking,
+                        'category_slug' => $categorySlug,
+                    ]
+                ], 200);
+            }
 
-                $productTypes = DB::table('product_details')
-                    ->whereIn('product_id', $productIds)
-                    ->select('product_id', 'product_type')
-                    ->get()
-                    ->groupBy('product_id');
+            /* ===== LẤY product_types VÀ category_slug ===== */
+            $productIds = collect($products->items())->pluck('id')->toArray();
 
-                foreach ($products->items() as $product) {
-                    $types = $productTypes->get($product->id, collect())
-                                        ->pluck('product_type')
-                                        ->unique()
-                                        ->values()
-                                        ->toArray();
-                    $product->product_types = $types;
+            // Lấy product_types
+            $productTypes = DB::table('product_details')
+                ->whereIn('product_id', $productIds)
+                ->select('product_id', 'product_type')
+                ->get()
+                ->groupBy('product_id');
+
+            // Lấy categories
+            $productCategories = DB::table('product_categories as pc')
+                ->join('categories as c', 'c.id', '=', 'pc.category_id')
+                ->whereIn('pc.product_id', $productIds)
+                ->select('pc.product_id', 'c.slug')
+                ->get()
+                ->groupBy('product_id');
+
+            foreach ($products->items() as $product) {
+                // gán product_types
+                $types = $productTypes->get($product->id, collect())
+                                    ->pluck('product_type')
+                                    ->unique()
+                                    ->values()
+                                    ->toArray();
+                $product->product_types = $types;
+
+                // gán category_slug
+                $categories = $productCategories->get($product->id, collect())
+                                            ->pluck('slug')
+                                            ->unique()
+                                            ->values()
+                                            ->toArray();
+                $product->category_slug = $categories;
+
+                // Tính discount_percent
+                if ($product->original_price > 0 && $product->sale_price > 0) {
+                    $discount = (($product->original_price - $product->sale_price) / $product->original_price) * 100;
+                    $product->discount_percent = round($discount);
+                } else {
+                    $product->discount_percent = 0;
                 }
+
+                // Format total_sold nếu có
+                if (isset($product->total_sold)) {
+                    $product->total_sold_formatted = number_format($product->total_sold, 0, ',', '.') . ' bán';
+                }
+
+                // image và primary_image giống nhau
+                $product->primary_image = $product->image;
             }
 
             return response()->json([
                 'status'       => true,
-                'message'      => 'Sắp xếp sản phẩm thành công',
+                'message'      => empty($keyword) ? 'Sắp xếp sản phẩm thành công' : 'Tìm kiếm sản phẩm thành công',
                 'data'         => $products->items(),
                 'current_page' => $products->currentPage(),
                 'per_page'     => $products->perPage(),
                 'total'        => $products->total(),
                 'last_page'    => $products->lastPage(),
-                'filters'      => ($productType !== 'all' || $ranking !== 'all') ? [
-                    'product_type' => $productType,
-                    'ranking' => $ranking
-                ] : null
+                'filters'      => [
+                    'keyword'       => $keyword,
+                    'product_type'  => $productType,
+                    'ranking'       => $ranking,
+                    'category_slug' => $categorySlug,
+                ]
             ], 200);
 
         } catch (\Throwable $e) {
@@ -826,83 +1187,81 @@ class ProductController extends Controller
     public function getBestSellers(Request $request)
     {
         try {
-            $query = Product::with(['detail', 'categories', 'images']);
+            $limit = (int) $request->get('limit', 10);
             
-            // Lọc theo trạng thái
-            if ($request->has('status')) {
-                $query->where('status', $request->status);
-            } else {
-                // Mặc định chỉ lấy sản phẩm active
-                $query->where('status', 1);
-            }
+            // Truy vấn con để lấy product_detail có giá thấp nhất cho mỗi sản phẩm
+            $subQuery = DB::table('product_details as pd_sub')
+                ->select('pd_sub.product_id', DB::raw('MIN(pd_sub.sale_price) as min_price'))
+                ->groupBy('pd_sub.product_id');
             
-            // Lọc theo ngôn ngữ
-            if ($request->has('language')) {
-                $query->where('language', $request->language);
-            }
-            
-            // Tìm kiếm theo tên
-            if ($request->has('search')) {
-                $query->where('name', 'like', '%' . $request->search . '%');
-            }
-            
-            // Lọc theo danh mục
-            if ($request->has('category_id')) {
-                $query->whereHas('categories', function ($q) use ($request) {
-                    $q->where('categories.id', $request->category_id);
-                });
-            }
-            
-            // Sắp xếp theo purchase_count (giảm dần) và Views (giảm dần)
-            $query->orderByDesc('purchase_count')
-                ->orderByDesc('Views');
-            
-            // Lấy số lượng sản phẩm
-            $limit = $request->get('limit', 10);
-            
-            // Phân trang nếu có yêu cầu
-            if ($request->has('paginate') && $request->paginate) {
-                $perPage = $request->get('per_page', 20);
-                $bestSellers = $query->paginate($perPage);
-            } else {
-                // Không phân trang, chỉ lấy top
-                $bestSellers = $query->limit($limit)->get();
-            }
-            
-            // Format dữ liệu thêm thông tin
-            $bestSellers->transform(function ($product) {
-                // Tính tỷ lệ giảm giá nếu có
-                if ($product->detail && $product->detail->original_price > 0 && $product->detail->sale_price > 0) {
-                    $product->discount_percent = round(
-                        (($product->detail->original_price - $product->detail->sale_price) / $product->detail->original_price) * 100
-                    );
-                } else {
-                    $product->discount_percent = 0;
-                }
-                
-                // Format số lượng bán
-                $product->total_sold_formatted = number_format($product->purchase_count ?? 0);
-                
-                // Lấy ảnh chính
-                $product->primary_image = $product->images->firstWhere('is_primary', 1) 
-                    ? $product->images->firstWhere('is_primary', 1)->image_url 
-                    : ($product->images->first() ? $product->images->first()->image_url : null);
-                
-                return $product;
-            });
-            
-           return response()->json([
-            'status'  => true,
-            'message' => 'Lấy sản phẩm bán chạy thành công',
-            'data'    => $bestSellers
-        ], 200);
-            
-                } catch (\Exception $e) {
-                return response()->json([
-            'status'  => false,
-            'message' => 'Lỗi server',
-            'error'   => $e->getMessage()
-        ], 500);
+
+            $products = DB::table('products as p')
+                // JOIN ảnh chính
+                ->leftJoin('product_images as pi', function ($join) {
+                    $join->on('pi.product_id', '=', 'p.id')
+                        ->where('pi.is_primary', 1);
+                })
+                // JOIN với truy vấn con để lấy giá thấp nhất
+                ->leftJoinSub($subQuery, 'min_prices', function ($join) {
+                    $join->on('min_prices.product_id', '=', 'p.id');
+                })
+                // JOIN để lấy chi tiết của product_detail có giá thấp nhất
+                ->leftJoin('product_details as pd', function ($join) {
+                    $join->on('pd.product_id', '=', 'p.id')
+                        ->on('pd.sale_price', '=', 'min_prices.min_price');
+                })
+                ->where('p.status', 1)
+                ->select([
+                    // Required fields
+                    'p.id',
+                    'p.name',
+                    'p.slug',
+                    'p.rating',
+                    'p.views',
+                    'p.purchase_count',
+                    'p.created_at',
+                    
+                    // image field
+                    DB::raw('COALESCE(pi.image_url, "") as image'),
+                    
+                    // primary_image field
+                    DB::raw('pi.image_url as primary_image'),
+                    
+                    // Price fields
+                    DB::raw('COALESCE(pd.original_price, 0) as original_price'),
+                    DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
+                    
+                    // discount_percent field
+                    DB::raw('CASE 
+                        WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                            AND pd.original_price > pd.sale_price
+                        THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
+                        ELSE 0 
+                    END as discount_percent'),
+                    
+                    // total_sold and total_sold_formatted
+                    DB::raw('p.purchase_count as total_sold'),
+                    DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted')
+                ])
+                ->distinct('p.id') // Đảm bảo mỗi sản phẩm chỉ xuất hiện 1 lần
+                ->orderByDesc('p.purchase_count')
+                ->orderByDesc('p.views')
+                ->orderByDesc('p.rating')
+                ->limit($limit)
+                ->get();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Lấy sản phẩm bán chạy thành công',
+                'data'    => $products
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi server',
+                'error'   => $e->getMessage()
+            ], 500);
 
         }
     }

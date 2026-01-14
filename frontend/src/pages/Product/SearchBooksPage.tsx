@@ -1,23 +1,32 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Helmet } from "react-helmet";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Breadcrumbs, Link, Typography } from "@mui/material";
+import { AxiosError } from "axios";
 
 import ProductGridSection from "../../components/Product/ProductGridSection";
-import { sampleProducts, categories } from "../../models/Product/product.model";
-import { productSoldMap } from "../../models/Order/order.model";
+import productsApi, { 
+  type Product, 
+  type ProductSortParams
+} from "../../api/produts.api";
+import categoriesApi, { type Category } from "../../api/categories.api";
 
 /* ================= TYPES ================= */
+// Định nghĩa các Union Type cụ thể thay vì string
+// Lưu ý: Các type này cần tương thích với type trong ProductSortParams của file API
+type ProductTypeFilter = 'all' | 'paper' | 'e-book' | 'both';
+type RankingFilter = 'all' | 'day' | 'week' | 'month' | 'new';
+
 type Filters = {
   keyword: string;
-  category: string;
-  productType: string;
-  rank: string;
+  category_slug: string;
+  product_type: ProductTypeFilter;
+  ranking: RankingFilter;
 };
 
 /* ================= UI CONFIG ================= */
-const ranks = [
+// Định nghĩa Array với Type cụ thể để TypeScript có thể infer types chính xác
+const ranks: Array<{ key: RankingFilter; label: string; icon: string }> = [
   { key: "all", label: "Tất cả", icon: "bi-list" },
   { key: "day", label: "Ngày", icon: "bi-calendar-day" },
   { key: "week", label: "Tuần", icon: "bi-calendar-week" },
@@ -25,116 +34,190 @@ const ranks = [
   { key: "new", label: "Mới cập nhật", icon: "bi-star" },
 ];
 
-const productTypes = [
+const productTypes: Array<{ key: ProductTypeFilter; label: string; icon: string }> = [
   { key: "all", label: "Tất cả", icon: "bi-card-list" },
   { key: "paper", label: "Sách giấy", icon: "bi-book-half" },
-  { key: "ebook", label: "Sách điện tử", icon: "bi-tablet-landscape" },
+  { key: "e-book", label: "Sách điện tử", icon: "bi-tablet-landscape" },
   { key: "both", label: "Cả hai", icon: "bi-stack" },
 ];
 
-const DEFAULT_FILTERS: Filters = {
-  keyword: "",
-  category: "all",
-  productType: "all",
-  rank: "all",
-};
-
 const SearchBooksPage = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  // Sử dụng setSearchParams thay vì navigate để update URL query params tối ưu hơn
+  const [searchParams, setSearchParams] = useSearchParams();
+  // const navigate = useNavigate(); // Giữ lại nếu cần chuyển trang khác
 
-  /* ================= FILTER STATE ================= */
-  const [filterState, setFilterState] = useState<Filters>(DEFAULT_FILTERS);
+  /* ================= STATE ================= */
+  // CHỈ lưu trữ dữ liệu server trả về.
+  const [products, setProducts] = useState<Product[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(false);
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
-  /* ================= SYNC URL -> STATE ================= */
+  /* ================= DERIVED STATE (Từ URL) ================= */
+  // Tính toán filters trực tiếp từ URL, sử dụng useMemo để object ổn định
+  // Validate dữ liệu URL để đảm bảo Type Safety tuyệt đối
+  const filters = useMemo((): Filters => {
+    const rawProductType = searchParams.get("product_type");
+    const rawRanking = searchParams.get("ranking");
+
+    // Validate params: Nếu URL chứa giá trị rác, fallback về 'all'
+    const product_type: ProductTypeFilter = 
+      (rawProductType && productTypes.some(p => p.key === rawProductType)) 
+        ? (rawProductType as ProductTypeFilter) 
+        : "all";
+
+    const ranking: RankingFilter = 
+      (rawRanking && ranks.some(r => r.key === rawRanking)) 
+        ? (rawRanking as RankingFilter) 
+        : "all";
+
+    return {
+      keyword: searchParams.get("keyword") || "",
+      category_slug: searchParams.get("category_slug") || "all",
+      product_type,
+      ranking,
+    };
+  }, [searchParams]);
+
+  const currentPage = useMemo(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page) : 1;
+  }, [searchParams]);
+
+  /* ================= FETCH CATEGORIES ================= */
   useEffect(() => {
-    setFilterState({
-      keyword: searchParams.get("keyword") ?? "",
-      category: searchParams.get("category") ?? "all",
-      productType: searchParams.get("productType") ?? "all",
-      rank: searchParams.get("rank") ?? "all",
-    });
-  }, [searchParams]);
-
-  /* ================= UPDATE FILTER (STATE + URL) ================= */
-  const updateFilter = (changes: Partial<Filters>) => {
-    const next = { ...filterState, ...changes };
-    setFilterState(next);
-
-    const params = new URLSearchParams();
-
-    Object.entries(next).forEach(([key, value]) => {
-      if (value && value !== "all") {
-        params.set(key, value);
+    let isMounted = true;
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const response = await categoriesApi.getAll();
+        if (isMounted && response.data && response.data.success && Array.isArray(response.data.data)) {
+          setCategories(response.data.data);
+        }
+      } catch {
+        // Xử lý lỗi category (optional)
+      } finally {
+        if (isMounted) setLoadingCategories(false);
       }
-    });
+    };
 
-    navigate(`/tim-sach${params.toString() ? `?${params}` : ""}`);
-  };
+    fetchCategories();
+    return () => { isMounted = false; };
+  }, []);
 
-  /* ================= FILTER LOGIC ================= */
-  const filteredProducts = useMemo(() => {
-    let result = sampleProducts.filter(p =>
-      p.product.name
-        .toLowerCase()
-        .includes(filterState.keyword.toLowerCase())
-    );
+  /* ================= FETCH PRODUCTS ================= */
+  useEffect(() => {
+    // Flag xử lý Race Condition và Unmount cleanup
+    let isMounted = true;
+    
+    const fetchProducts = async () => {
+      setLoading(true);
+      
+      try {
+        const sortParams: ProductSortParams = {
+          page: currentPage,
+          per_page: 24,
+        };
 
-    if (filterState.category !== "all") {
-      result = result.filter(p =>
-        p.categories.some(c => c.slug === filterState.category)
-      );
-    }
+        // Logic mapping filters vào API params
+        if (filters.keyword.trim()) {
+          sortParams.keyword = filters.keyword;
+        } else {
+          // Type Narrowing: TypeScript sẽ tự hiểu nếu !== 'all' thì nó là các giá trị còn lại
+          // Điều này giúp loại bỏ 'as any'
+          if (filters.product_type !== "all") {
+             sortParams.product_type = filters.product_type; 
+          }
+          if (filters.ranking !== "all") {
+             sortParams.ranking = filters.ranking;
+          }
+          if (filters.category_slug !== "all") {
+             sortParams.category_slug = filters.category_slug;
+          }
+        }
 
-    if (filterState.productType !== "all") {
-      if (filterState.productType === "paper") {
-        result = result.filter(p =>
-          p.details.some(d => d.productType === "Sách giấy")
-        );
-      } else if (filterState.productType === "ebook") {
-        result = result.filter(p =>
-          p.details.some(d => d.productType === "Sách điện tử")
-        );
-      } else if (filterState.productType === "both") {
-        result = result.filter(p =>
-          p.details.some(d => d.productType === "Sách giấy") &&
-          p.details.some(d => d.productType === "Sách điện tử")
-        );
+        const response = await productsApi.sort(sortParams);
+        
+        // Chỉ update state nếu component còn mounted (request mới nhất)
+        if (isMounted) {
+          if (response.data.status) {
+            setProducts(response.data.data || []);
+            setTotalItems(response.data.total || 0);
+          } else {
+            setProducts([]);
+            setTotalItems(0);
+          }
+        }
+      } catch (error) {
+        if (isMounted) {
+          if (error instanceof AxiosError) {
+             // Có thể log lỗi chi tiết từ server nếu cần: error.response?.data
+          }
+          setProducts([]);
+          setTotalItems(0);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    }
+    };
 
-    if (filterState.rank === "new") {
-      result = [...result].sort(
-        (a, b) =>
-          new Date(b.product.createdAt).getTime() -
-          new Date(a.product.createdAt).getTime()
-      );
-    }
+    fetchProducts();
 
-    if (["day", "week", "month"].includes(filterState.rank)) {
-      result = [...result].sort(
-        (a, b) =>
-          (productSoldMap[b.product.id] || 0) -
-          (productSoldMap[a.product.id] || 0)
-      );
-    }
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, filters]); 
 
-    return result;
-  }, [filterState]);
+  /* ================= HANDLERS ================= */
+  // Cập nhật URL -> Trigger useMemo filters -> Trigger useEffect fetchProducts
+  const updateFilter = useCallback((changes: Partial<Filters>) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      
+      Object.entries(changes).forEach(([key, value]) => {
+        if (value && value !== "all") {
+          newParams.set(key, value);
+        } else {
+          newParams.delete(key);
+        }
+      });
 
-  /* ================= ACTIVE CHECK (DIRECTLY FROM SEARCH PARAMS) ================= */
-  // Hoặc cách đơn giản hơn với default value
-  const isActiveSimple = (paramName: string, value: string) => {
-    const currentValue = searchParams.get(paramName) || "all";
-    return currentValue === value;
-  };
+      // Reset về page 1 khi filter thay đổi
+      newParams.delete("page");
+      return newParams;
+    });
+  }, [setSearchParams]);
 
-  /* ================= CATEGORY NAME ================= */
+  const handlePageChange = useCallback((page: number) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (page > 1) {
+        newParams.set("page", page.toString());
+      } else {
+        newParams.delete("page");
+      }
+      return newParams;
+    });
+    
+    // Scroll top nhẹ nhàng
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [setSearchParams]);
+
+  /* ================= HELPERS ================= */
+  // Generic helper để check active state một cách an toàn về Type
+  const isActive = useCallback(<K extends keyof Filters>(paramName: K, value: Filters[K]) => {
+    return filters[paramName] === value;
+  }, [filters]);
+
   const currentCategoryName = useMemo(() => {
-    const category = searchParams.get("category") || "all";
-    if (category === "all") return null;
-    return categories.find(c => c.slug === category)?.name || null;
-  }, [searchParams]);
+    if (filters.category_slug === "all") return null;
+    const category = categories.find(c => c.slug === filters.category_slug);
+    return category?.name || null;
+  }, [filters.category_slug, categories]);
 
   /* ================= RENDER ================= */
   return (
@@ -156,15 +239,15 @@ const SearchBooksPage = () => {
         <h5 className="mb-3 title-section">Celeste Books - Sắp xếp</h5>
 
         <div className="search-bar p-3 border rounded shadow-sm mb-4">
-          {/* Rank - so sánh trực tiếp với searchParams */}
+          {/* Rank buttons */}
           <div className="mb-2 d-flex flex-wrap gap-2">
             {ranks.map(r => (
               <button
                 key={r.key}
                 className={`btn btn-sm rank-btn rank-${r.key} ${
-                  isActiveSimple("rank", r.key) ? "active" : ""
+                  isActive("ranking", r.key) ? "active" : ""
                 }`}
-                onClick={() => updateFilter({ rank: r.key })}
+                onClick={() => updateFilter({ ranking: r.key })}
               >
                 <i className={`bi ${r.icon} me-1`} />
                 {r.label}
@@ -172,15 +255,15 @@ const SearchBooksPage = () => {
             ))}
           </div>
 
-          {/* Product Type - so sánh trực tiếp với searchParams */}
+          {/* Product Type buttons */}
           <div className="mb-2 d-flex flex-wrap gap-2">
             {productTypes.map(p => (
               <button
                 key={p.key}
                 className={`btn btn-sm product-type-btn product-type-${p.key} ${
-                  isActiveSimple("productType", p.key) ? "active" : ""
+                  isActive("product_type", p.key) ? "active" : ""
                 }`}
-                onClick={() => updateFilter({ productType: p.key })}
+                onClick={() => updateFilter({ product_type: p.key })}
               >
                 <i className={`bi ${p.icon} me-1`} />
                 {p.label}
@@ -188,56 +271,95 @@ const SearchBooksPage = () => {
             ))}
           </div>
 
-          {/* Category - so sánh trực tiếp với searchParams */}
+          {/* Category buttons */}
           <div className="d-flex flex-wrap gap-2">
-            {/* Tất cả */}
             <button
               className={`btn btn-sm category-btn category-all ${
-                isActiveSimple("category", "all") ? "active" : "btn-outline-dark"
+                isActive("category_slug", "all") ? "active" : "btn-outline-dark"
               }`}
-              onClick={() => updateFilter({ category: "all" })}
+              onClick={() => updateFilter({ category_slug: "all" })}
             >
               Tất cả
             </button>
 
-            {/* Các category từ model */}
-            {categories.map(c => (
-              <button
-                key={c.id}
-                className={`btn btn-sm category-btn category-${c.slug} ${
-                  isActiveSimple("category", c.slug)
-                    ? "active"
-                    : "btn-outline-dark"
-                }`}
-                onClick={() => updateFilter({ category: c.slug })}
-              >
-                {c.name}
-              </button>
-            ))}
+            {loadingCategories ? (
+              <div className="d-flex align-items-center">
+                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                <span className="small text-muted">Đang tải thể loại...</span>
+              </div>
+            ) : (
+              categories.map(c => (
+                <button
+                  key={c.id}
+                  className={`btn btn-sm category-btn category-${c.slug} ${
+                    isActive("category_slug", c.slug)
+                      ? "active"
+                      : "btn-outline-dark"
+                  }`}
+                  onClick={() => updateFilter({ category_slug: c.slug })}
+                >
+                  {c.name || c.slug}
+                </button>
+              ))
+            )}
           </div>
 
           <div className="small text-muted mt-2">
-            Tìm thấy <b>{filteredProducts.length}</b> sách
-            {currentCategoryName && ` trong thể loại "${currentCategoryName}"`}
+            {loading ? (
+              <div className="d-flex align-items-center">
+                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                Đang tải...
+              </div>
+            ) : (
+              <>
+                Tìm thấy <b>{totalItems}</b> sách
+                {currentCategoryName && ` trong thể loại "${currentCategoryName}"`}
+              </>
+            )}
           </div>
         </div>
 
-        {filteredProducts.length > 0 ? (
-          <ProductGridSection
-            products={filteredProducts}
-            itemsPerPage={24}
-            colMd={2}
-          />
+        {/* Loading state */}
+        {loading && products.length === 0 ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Đang tải...</span>
+            </div>
+            <p className="mt-2 text-muted">Đang tải sản phẩm...</p>
+          </div>
+        ) : products.length > 0 ? (
+          <>
+            <div className="mb-3">
+              <small className="text-muted">
+                Hiển thị {products.length} sản phẩm (trang {currentPage} / {Math.max(1, Math.ceil(totalItems / 24))})
+              </small>
+            </div>
+            <ProductGridSection
+              externalProducts={products}
+              externalTotalItems={totalItems}
+              externalCurrentPage={currentPage}
+              onPageChangeExternal={handlePageChange}
+              itemsPerPage={24}
+              colMd={2}
+              hiddenPagination={false}
+              showRank={false}
+              autoFetch={false} // QUAN TRỌNG: Tắt fetch nội bộ của component con
+            />
+          </>
         ) : (
           <div className="text-center text-muted py-5">
             <i className="bi bi-search fs-1" />
             <p className="mt-2">Không tìm thấy sách phù hợp</p>
-            {searchParams.get("keyword") && (
-              <p className="small">Với từ khóa: <b>"{searchParams.get("keyword")}"</b></p>
-            )}
-            {searchParams.get("category") && searchParams.get("category") !== "all" && (
-              <p className="small">Trong thể loại: <b>"{currentCategoryName || searchParams.get("category")}"</b></p>
-            )}
+            <div className="small">
+              <p>Filters:</p>
+              <ul className="list-unstyled">
+                <li>Keyword: <b>"{filters.keyword || "(none)"}"</b></li>
+                <li>Category: <b>"{currentCategoryName || filters.category_slug}"</b></li>
+                <li>Product Type: <b>"{productTypes.find(p => p.key === filters.product_type)?.label}"</b></li>
+                <li>Rank: <b>"{ranks.find(r => r.key === filters.ranking)?.label}"</b></li>
+                <li>Page: <b>{currentPage}</b></li>
+              </ul>
+            </div>
           </div>
         )}
       </div>

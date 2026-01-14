@@ -1,6 +1,6 @@
-import axiosClient from "./axios";
+import axiosClient, { clearCache } from "./axios";
 
-/* ===================== TYPES ===================== */
+/* ===================== TYPES (Giữ nguyên) ===================== */
 
 export interface RolePermission {
   role_id: string;
@@ -58,45 +58,59 @@ export interface RemovePermissionPayload {
 /* ===================== API ===================== */
 
 export const rolePersApi = {
-  /* ---------- GET LIST + FILTER ---------- */
+  /* ---------- GET LIST + FILTER (CÓ CACHE) ---------- */
   getAll(params?: RolePermissionFilter) {
     return axiosClient.get<RolePermissionListResponse>(
       "/role-permissions",
-      { params }
+      { 
+        params,
+        cache: true // Cache danh sách phân quyền
+      }
     );
   },
 
-  /* ---------- ASSIGN PERMISSION TO ROLE ---------- */
+  /* ---------- ASSIGN PERMISSION (XÓA CACHE) ---------- */
   assign(data: AssignPermissionPayload) {
+    // Gán quyền mới -> Dữ liệu cũ sai -> Xóa cache
+    clearCache("/role-permissions");
     return axiosClient.post("/role-permissions", data);
   },
 
-  /* ---------- UPDATE PERMISSION OF ROLE ---------- */
+  /* ---------- UPDATE PERMISSION (XÓA CACHE) ---------- */
   update(data: UpdateRolePermissionPayload) {
+    // Sửa quyền -> Dữ liệu cũ sai -> Xóa cache
+    clearCache("/role-permissions");
     return axiosClient.put("/role-permissions", data);
   },
 
-  /* ---------- REMOVE PERMISSION FROM ROLE ---------- */
+  /* ---------- REMOVE PERMISSION (XÓA CACHE) ---------- */
   remove(data: RemovePermissionPayload) {
+    // Gỡ quyền -> Dữ liệu cũ sai -> Xóa cache
+    clearCache("/role-permissions");
     return axiosClient.delete("/role-permissions", {
       data,
     });
   },
 
-  /* ---------- GET PERMISSIONS BY ROLE ---------- */
+  /* ---------- GET PERMISSIONS BY ROLE (CÓ CACHE) ---------- */
   getByRole(roleId: string) {
+    // API này thường được gọi để check quyền User -> Cần Cache để load nhanh
     return axiosClient.get<{
       success: boolean;
       data: SimplePermission[];
-    }>(`/role-permissions/role/${roleId}`);
+    }>(`/role-permissions/role/${roleId}`, {
+      cache: true
+    });
   },
 
-  /* ---------- GET ROLES BY PERMISSION ---------- */
+  /* ---------- GET ROLES BY PERMISSION (CÓ CACHE) ---------- */
   getByPermission(perId: number | string) {
     return axiosClient.get<{
       success: boolean;
       data: SimpleRole[];
-    }>(`/role-permissions/permission/${perId}`);
+    }>(`/role-permissions/permission/${perId}`, {
+      cache: true
+    });
   },
 };
 

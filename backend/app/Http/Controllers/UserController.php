@@ -169,7 +169,7 @@ class UserController extends Controller
             }
             
             // Tạo thông báo hệ thống
-            $this->createUserNotification($user->id, 'system', 'Tài khoản được tạo', 'Tài khoản của bạn đã được tạo thành công.');
+            $this->createUserNotification($user->id, 'account', 'Tài khoản được tạo', 'Tài khoản của bạn đã được tạo thành công.');
             
             DB::commit();
             
@@ -352,7 +352,7 @@ public function updateBasicInfo(Request $request, $id)
             }
             
             // Tạo thông báo hệ thống
-            $this->createUserNotification($user->id, 'system', 'Thông tin'+$user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
+            $this->createUserNotification($user->id, 'account', 'Thông tin'+$user->id+'được cập nhật', 'Thông tin tài khoản của bạn đã được cập nhật bởi quản trị viên.');
 
             DB::commit();
             
@@ -405,31 +405,52 @@ public function updateBasicInfo(Request $request, $id)
     /**
      * Đổi mật khẩu (từ nhánh feature/User/UpdateUser)
      */
-    public function changePassword(Request $request, $id)
+   public function changePassword(Request $request, $id)
     {
-        $request->validate([
-            'current_password' => 'required',
-            'new_password' => 'required|min:6|confirmed'
-        ]);
-
+        // 1. Tìm user
         $user = User::find($id);
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        // ✅ CHECK mật khẩu cũ (text vs hash)
-        if (!Hash::check($request->current_password, $user->password_hash)) {
-            return response()->json([
-                'message' => 'Mật khẩu hiện tại không đúng'
-            ], 400);
+        // 2. Kiểm tra xem user có password trong DB không
+        $hasPassword = !empty($user->password_hash);
+
+        // 3. Validate
+        $request->validate([
+            'current_password' => $hasPassword ? 'required' : 'nullable', 
+            'new_password'     => 'required|min:6|confirmed'
+        ]);
+
+        // 4. Check mật khẩu cũ
+        if ($hasPassword) {
+            if (!Hash::check($request->current_password, $user->password_hash)) {
+                return response()->json([
+                    'message' => 'Mật khẩu hiện tại không đúng'
+                ], 400); 
+            }
         }
 
-        // ✅ HASH mật khẩu mới
+        // 5. Lưu mật khẩu mới
         $user->password_hash = Hash::make($request->new_password);
         $user->save();
-        $this->createUserNotification($user->id);
+
+        // 6. Tạo thông báo (Sửa logic tại đây)
+        $title = $hasPassword ? 'Đổi mật khẩu thành công' : 'Thiết lập mật khẩu thành công';
+        $content = $hasPassword 
+            ? 'Mật khẩu tài khoản của bạn đã được thay đổi.' 
+            : 'Bạn đã thiết lập mật khẩu mới cho tài khoản.';
+
+        $this->createUserNotification(
+            $user->id, 
+            'account', 
+            $title,
+            $content
+        );
+
         return response()->json([
-            'message' => 'Đổi mật khẩu thành công'
+            'message' => $title
         ]);
     }
     
@@ -516,7 +537,7 @@ public function updateBasicInfo(Request $request, $id)
         // Tạo thông báo hệ thống
         $this->createUserNotification(
             $user->id, 
-            'system', 
+            'account', 
             $newStatus ? 'Tài khoản '+$user->id+' được kích hoạt' : 'Tài khoản '+$user->id+' bị vô hiệu hóa',
             $newStatus ? 'Tài khoản '+$user->id+ 'đã được kích hoạt.' : 'Tài khoản '+$user->id+' đã bị vô hiệu hóa.'
         );
@@ -576,20 +597,27 @@ public function updateBasicInfo(Request $request, $id)
     /**
      * Tạo thông báo người dùng
      */
-    private function createUserNotification($userId)
+    /**
+     * Tạo thông báo người dùng (Đã cập nhật để nhận tham số tùy chỉnh)
+     */
+    private function createUserNotification($userId, $type = 'account', $title = null, $content = null)
     {
         $last = UserNotification::orderBy('id', 'desc')->first();
         $newId = $last ? $last->id + 1 : 1;
     
+        // Nếu không truyền title/content thì dùng mặc định
+        $title = $title ?? 'Thông tin tài khoản đã được cập nhật';
+        $content = $content ?? 'Thông tin tài khoản của bạn đã có sự thay đổi.';
+
         UserNotification::create([
             'id'         => $newId,
             'user_id'    => $userId,
-            'type'       => 'system',
-          'title'       => 'Thông tin tài khoản ' . $userId . ' đã được cập nhật',
-            'content'     => 'Thông tin tài khoản người dùng ' . $userId . ' đã được cập nhật.',
+            'type'       => $type,
+            'title'      => $title,
+            'content'    => $content,
             'is_read'    => false,
-            'created_at'=> now(),
-            'updated_at'=> now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
     

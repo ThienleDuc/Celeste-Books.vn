@@ -50,7 +50,7 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
     const typeMultiplier = typeFee?.multiplier || 1;
     
     return Math.round(baseFee * weightMultiplier * distanceMultiplier * typeMultiplier);
-  };
+};
 
   const getShippingTypeName = (type: ShippingType): string => {
     switch(type) {

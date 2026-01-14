@@ -65,16 +65,44 @@
   position: relative;
 }
 
-/* Input */
-.auth-card .form-control {
+/* Input - Thiết lập đồng bộ cho tất cả input */
+.auth-card .form-control,
+.auth-card input[type="text"],
+.auth-card input[type="email"],
+.auth-card input[type="password"] {
   border-radius: 8px;
-  padding: 10px 12px;
-  border-color: #e2e8f0;
+  padding: 12px 15px;
+  border: 1px solid #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  height: 46px; /* Đồng bộ chiều cao */
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
 }
 
-.auth-card .form-control:focus {
+/* Input focus */
+.auth-card .form-control:focus,
+.auth-card input:focus {
   border-color: #6366f1;
   box-shadow: 0 0 0 0.15rem rgba(99, 102, 241, 0.25);
+  outline: none;
+}
+
+/* Invalid input */
+.auth-card .form-control.is-invalid {
+  border-color: #dc3545;
+  background-image: none;
+}
+
+.auth-card .form-control.is-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25);
+}
+
+/* Invalid feedback */
+.invalid-feedback {
+  font-size: 0.875rem;
+  margin-top: 4px;
 }
 
 /* Button */
@@ -82,6 +110,13 @@
   border-radius: 8px;
   padding: 10px;
   font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  height: 46px; /* Đồng bộ chiều cao với input */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 /* Link */
@@ -107,7 +142,7 @@
 }
 
 .home-btn:hover {
-  background-color: #c0e0ff; /* sáng hơn khi hover */
+  background-color: #c0e0ff;
   transform: scale(1.1);
   color: #0056b3;
 }
@@ -126,68 +161,35 @@ body, form, h3, input, button, a {
   font-family: 'Inter', sans-serif;
 }
 
-/* Giữ style form cũ */
+/* Form styling */
 .auth-layout form {
   background-color: #ffffff;
   padding: 2rem;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Button */
-.auth-layout form .btn-primary {
-  font-family: 'Inter', sans-serif;
+/* Button primary/success */
+.auth-layout form .btn-primary,
+.auth-layout form .btn-success {
   font-weight: 600;
-}
-
-
-/* Floating label kiểu mới */
-.auth-layout form .form-label {
-  font-weight: 500;
-  color: #495057;
-  transition: all 0.3s ease;
-}
-
-/* Input styles */
-.auth-layout form .form-control {
+  border: none;
   border-radius: 10px;
-  border: 1px solid #ced4da;
-  padding: 12px 15px;
+  color: white;
+  padding: 12px 0;
   transition: all 0.3s ease;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
-}
-
-/* Khi focus input */
-.auth-layout form .form-control:focus {
-  border-color: #4e9af1;
-  box-shadow: 0 0 8px rgba(78,154,241,0.3);
-  outline: none;
-}
-
-/* Cột trái và phải cách nhau */
-.auth-layout form .row.g-3 > .col-md-6 {
-  padding-left: 8px;
-  padding-right: 8px;
 }
 
 .auth-layout form .btn-success {
   background: linear-gradient(90deg, #4e9af1, #6fdbf5); 
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  color: white;
-  padding: 12px 0;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.3s ease;
 }
 
-.auth-layout form .btn-success:hover {
+.auth-layout form .btn-success:hover:not(:disabled) {
   background: linear-gradient(90deg, #1e6ed0, #3ab3e0); 
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(30,110,208,0.4);
 }
 
-/* Nút Google */
+/* Nút Google - CSS từ phiên bản ban đầu */
 .btn-google {
   position: relative;
   display: flex;
@@ -202,6 +204,8 @@ body, form, h3, input, button, a {
   font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
   cursor: pointer;
+  width: 100%;
+  height: 46px;
 }
 
 .btn-google:hover {
@@ -223,11 +227,306 @@ body, form, h3, input, button, a {
   text-align: center;
 }
 
-
-/* Responsive cho mobile */
+/* Responsive cho nút Google */
 @media (max-width: 768px) {
-  .auth-layout form .row.g-3 > .col-md-6 {
+  .btn-google {
+    height: 44px;
+    padding: 10px 0;
+  }
+  
+  .google-icon {
+    font-size: 1.1rem;
+    left: 14px;
+  }
+}
+
+/* OTP Input đặc biệt */
+.auth-card .otp-input {
+  letter-spacing: 8px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  font-family: 'Courier New', monospace, 'Inter';
+  padding: 8px 15px; /* Điều chỉnh padding cho cân đối */
+}
+
+.otp-input::placeholder {
+  letter-spacing: normal;
+  font-size: 1rem;
+  font-weight: normal;
+  color: #6c757d;
+}
+
+/* OTP Button */
+.otp-button {
+  height: 46px; /* Match với input height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid #6366f1;
+  color: #6366f1;
+  background-color: transparent;
+}
+
+.otp-button:hover:not(:disabled) {
+  background-color: #6366f1;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.otp-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  border-color: #ced4da;
+  color: #6c757d;
+}
+
+/* Register Button */
+.register-button {
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.register-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+}
+
+.register-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Alert */
+.alert {
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+/* Form text helper */
+.form-text {
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+/* Responsive OTP và form */
+@media (max-width: 768px) {
+  .auth-card--register {
+    width: 95%;
+  }
+  
+  .otp-input {
+    font-size: 1.3rem;
+    letter-spacing: 6px;
+    height: 44px;
+  }
+  
+  .otp-button {
+    height: 44px;
+    margin-top: 0;
+  }
+  
+  .auth-card-body {
+    padding: 24px;
+  }
+  
+  .auth-layout form {
+    padding: 1.5rem;
+  }
+}
+
+/* Đảm bảo các row và col căn chỉnh đúng */
+.auth-layout form .row.g-3 {
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.auth-layout form .row.g-3 > [class*="col-"] {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+/* Đồng bộ chiều cao cho các input group */
+.input-group {
+  height: 46px;
+}
+
+.input-group .form-control {
+  height: 100%;
+}
+
+.input-group .btn {
+  height: 100%;
+}
+
+/* Spinner cho loading */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+/* Icon trong button */
+.btn i {
+  font-size: 1rem;
+}
+
+/* Căn chỉnh cho các mb-3 trong form */
+.auth-layout form .mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+/* Đồng bộ spacing */
+.auth-layout form .mt-2 {
+  margin-top: 0.5rem !important;
+}
+
+.auth-layout form .mt-3 {
+  margin-top: 1rem !important;
+}
+
+/* Responsive cho mobile small */
+@media (max-width: 576px) {
+  .auth-layout form .row.g-3 {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .auth-layout form .row.g-3 > [class*="col-"] {
     padding-left: 0;
     padding-right: 0;
+  }
+  
+  .register-button {
+    width: 100% !important;
+  }
+}
+
+/* Form Label Styling */
+.form-label {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 8px;
+  display: block;
+  font-size: 0.95rem;
+}
+
+.form-label .text-danger {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.form-label .text-muted {
+  font-weight: normal;
+  font-size: 0.85rem;
+}
+
+/* Invalid feedback styling */
+.invalid-feedback {
+  font-size: 0.875rem;
+  color: #dc3545;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Form control focus with error */
+.form-control.is-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Required field indicator */
+.required-indicator {
+  color: #dc3545;
+  margin-left: 2px;
+}
+
+/* Adjust spacing for form groups */
+.mb-3 {
+  margin-bottom: 1.25rem !important;
+}
+
+/* Make sure all inputs have consistent spacing */
+.form-control {
+  margin-top: 2px;
+}
+
+/* Alert spacing */
+.alert {
+  margin-bottom: 1rem;
+}
+
+/* Button margin */
+.register-button {
+  margin-top: 1.5rem !important;
+}
+
+/* Text muted for helper text */
+.form-text.text-muted {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .form-label {
+    font-size: 0.9rem;
+  }
+  
+  .form-label .text-muted {
+    font-size: 0.8rem;
+  }
+}
+
+/* OTP Input Styling */
+.otp-input {
+  letter-spacing: 8px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+}
+
+.otp-input::placeholder {
+  letter-spacing: normal;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+/* Timer styling */
+.btn-outline-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive OTP */
+@media (max-width: 768px) {
+  .otp-input {
+    font-size: 1.3rem;
+    letter-spacing: 6px;
   }
 }

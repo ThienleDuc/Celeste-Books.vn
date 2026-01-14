@@ -78,6 +78,7 @@ console.log(product_id);
             </div>
           </div>
 
+          {/* STAR */}
           <div className="mb-1">
             {Array(5)
               .fill(0)
@@ -91,9 +92,11 @@ console.log(product_id);
               ))}
           </div>
 
+          {/* TITLE + CONTENT */}
           <h6 className="mb-1">{review.title}</h6>
-          <p>{review.content}</p>
+          <p className="mb-0">{review.content}</p>
 
+          {/* IMAGES */}
           {review.images && review.images.length > 0 && (
             <div className="d-flex gap-2 mt-2">
               {review.images.map((img, idx) => (

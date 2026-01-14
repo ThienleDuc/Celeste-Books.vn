@@ -1,4 +1,6 @@
-import axiosClient from "./axios";
+import axiosClient, { clearCache } from "./axios";
+
+/* ===================== TYPES ===================== */
 
 export interface LoginPayload {
   username?: string;
@@ -8,10 +10,21 @@ export interface LoginPayload {
 
 export interface RegisterPayload {
   username: string;
+  email: string;
   password: string;
   password_confirmation: string;
-  role_id: string;
   full_name: string;
+  otp: string;
+  role_id: string;
+}
+
+export interface SendOtpPayload {
+  email: string;
+}
+
+export interface VerifyOtpPayload {
+  email: string;
+  otp: string;
 }
 
 export interface CheckExistsPayload {
@@ -57,50 +70,106 @@ export interface UserMe {
   token: UserToken | null;
 }
 
+/* ===================== RESPONSE TYPES ===================== */
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message: string;
+  data?: T;
+  errors?: Record<string, string[]>;
+}
+
+export interface SendOtpResponse {
+  expires_at: string;
+}
+
+export interface RegisterResponse {
+  user_id: string;
+  username: string;
+  email: string;
+  role_id: string;
+  full_name: string;
+  gender: string;
+  access_token: string;
+  token_type: string;
+  token_id: string | null;
+  expires_at: string | null;
+  expires_in_days: number | null;
+}
+
+export interface LoginResponse {
+  user_id: string;
+  username: string;
+  email: string;
+  role_id: string;
+  has_profile: boolean;
+  full_name: string | null;
+  access_token: string;
+  token_type: string;
+  expires_at: string | null;
+}
+
+/* ===================== API ===================== */
+
 export const authApi = {
+  /* ---------- SEND OTP ---------- */
+  sendOtp(data: SendOtpPayload) {
+    return axiosClient.post<ApiResponse<SendOtpResponse>>("/auth/send-otp", data);
+  },
+
+  /* ---------- VERIFY OTP (OPTIONAL) ---------- */
+  verifyOtp(data: VerifyOtpPayload) {
+    return axiosClient.post<ApiResponse>("/auth/verify-otp", data);
+  },
+
   /* ---------- REGISTER ---------- */
   register(data: RegisterPayload) {
-    return axiosClient.post("/auth/register", data);
+    return axiosClient.post<ApiResponse<RegisterResponse>>("/auth/register", data);
   },
 
-  /* ---------- LOGIN ---------- */
+  /* ---------- LOGIN (XÓA CACHE CŨ) ---------- */
   login(data: LoginPayload) {
-    return axiosClient.post("/auth/login", data);
+    clearCache(); 
+    return axiosClient.post<ApiResponse<LoginResponse>>("/auth/login", data);
   },
 
-  /* ---------- CURRENT USER ---------- */
+  /* ---------- CURRENT USER (CÓ CACHE) ---------- */
   me() {
-    return axiosClient.get("/auth/me");
+    return axiosClient.get<ApiResponse<UserMe>>("/auth/me", { 
+      cache: true 
+    });
   },
 
-  /* ---------- LOGOUT (current token) ---------- */
+  /* ---------- LOGOUT (XÓA CACHE) ---------- */
   logout() {
-    return axiosClient.post("/auth/logout");
+    clearCache();
+    return axiosClient.post<ApiResponse>("/auth/logout");
   },
 
-  /* ---------- LOGOUT ALL DEVICES ---------- */
+  /* ---------- LOGOUT ALL DEVICES (XÓA CACHE) ---------- */
   logoutAll() {
-    return axiosClient.post("/auth/logout-all");
+    clearCache();
+    return axiosClient.post<ApiResponse>("/auth/logout-all");
   },
 
-  /* ---------- LIST DEVICES ---------- */
+  /* ---------- LIST DEVICES (KHÔNG CACHE) ---------- */
   devices() {
-    return axiosClient.get("/auth/devices");
+    return axiosClient.get<ApiResponse>("/auth/devices");
   },
 
   /* ---------- REVOKE TOKEN ---------- */
   revokeToken(tokenId: number | string) {
-    return axiosClient.delete(`/auth/tokens/${tokenId}`);
+    return axiosClient.delete<ApiResponse>(`/auth/tokens/${tokenId}`);
   },
 
   /* ---------- CHECK USERNAME / EMAIL EXISTS ---------- */
   checkExists(data: CheckExistsPayload) {
-    return axiosClient.post("/auth/check-exists", data);
+    return axiosClient.post<ApiResponse>("/auth/check-exists", data);
   },
 
   /* ---------- SUGGEST ROLE ---------- */
   suggestRole(data: SuggestRolePayload) {
-    return axiosClient.post("/auth/suggest-role", data);
+    return axiosClient.post<ApiResponse>("/auth/suggest-role", data);
   },
 };
 
