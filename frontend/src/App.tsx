@@ -7,6 +7,8 @@ import ProductRoutes from "./routes/ProductRoutes";
 
 const App = () => {
   return (
+
+    
     <Router>
       <Routes>
         {/* Main routes */}
@@ -36,3 +38,5 @@ const App = () => {
 };
 
 export default App;
+
+

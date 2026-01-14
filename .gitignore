@@ -61,7 +61,7 @@ frontend/.env
 node_modules/
 .env
 backend/.env
-*.env
+
 # Laravel Storage & Cache
 backend/storage/framework/cache/data/*
 backend/storage/framework/sessions/*
@@ -69,5 +69,5 @@ backend/storage/framework/views/*
 backend/storage/logs/*
 
 # Environment files
-.env
+
 backend/.env

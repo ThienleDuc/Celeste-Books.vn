@@ -229,3 +229,153 @@
 [2026-01-12 02:36:42] local.DEBUG: Sanctum token received {"raw_token":"3|6Em3QpmOaWpstCrFJDjlWI8WSnNdxdoOhO6RmoIW","id":"3","plain_token_length":40} 
 [2026-01-12 02:37:01] local.DEBUG: Sanctum token received {"raw_token":"3|6Em3QpmOaWpstCrFJDjlWI8WSnNdxdoOhO6RmoIW","id":"3","plain_token_length":40} 
 [2026-01-12 02:37:02] local.DEBUG: Sanctum token received {"raw_token":"3|6Em3QpmOaWpstCrFJDjlWI8WSnNdxdoOhO6RmoIW","id":"3","plain_token_length":40} 
+[2026-01-14 16:29:19] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:19] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:26] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:27] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:42] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:42] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:49] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:49] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:57] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:29:57] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:30:14] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:30:15] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:34:05] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:34:06] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:34:27] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:34:28] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:34:34] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 16:34:35] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 17:34:10] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 17:34:11] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 21:09:32] local.ERROR: Class "App\Http\Controllers\Order" not found {"exception":"[object] (Error(code: 0): Class \"App\\Http\\Controllers\\Order\" not found at G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/app/Http/Controllers/OrderController.php:12)
+[stacktrace]
+#0 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): App/Http/Controllers/OrderController->getOrders(Object(Illuminate/Http/Request))
+#1 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('getOrders', Array)
+#2 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/OrderController), 'getOrders')
+#3 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('G://DANG PHUOC T...')
+#38 {main}
+"} 
+[2026-01-14 21:10:11] local.ERROR: Class "App\Http\Controllers\Order" not found {"exception":"[object] (Error(code: 0): Class \"App\\Http\\Controllers\\Order\" not found at G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/app/Http/Controllers/OrderController.php:12)
+[stacktrace]
+#0 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): App/Http/Controllers/OrderController->getOrders(Object(Illuminate/Http/Request))
+#1 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('getOrders', Array)
+#2 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/OrderController), 'getOrders')
+#3 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('G://DANG PHUOC T...')
+#38 {main}
+"} 
+[2026-01-14 21:10:16] local.ERROR: Class "App\Http\Controllers\Order" not found {"exception":"[object] (Error(code: 0): Class \"App\\Http\\Controllers\\Order\" not found at G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/app/Http/Controllers/OrderController.php:12)
+[stacktrace]
+#0 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): App/Http/Controllers/OrderController->getOrders(Object(Illuminate/Http/Request))
+#1 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('getOrders', Array)
+#2 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/OrderController), 'getOrders')
+#3 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 G:/DANG PHUOC THANH/code/CNN/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('G://DANG PHUOC T...')
+#38 {main}
+"} 
+[2026-01-14 22:24:29] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 22:24:29] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 22:25:10] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 
+[2026-01-14 22:25:10] local.DEBUG: Sanctum token received {"raw_token":"4|EXC3qB1Y8WLxfro5gePQ5W8mfMqvGc4Iuqq9jYBM","id":"4","plain_token_length":40} 

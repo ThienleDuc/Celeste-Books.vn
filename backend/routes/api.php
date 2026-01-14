@@ -294,10 +294,14 @@ Route::prefix('review-image')->group(function () {
     //delete message
     Route::delete('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'deleteReviewImage']);
 });
+//============PRODUCT IMAGE ROUTES=========
+Route::prefix('/product-images')->group(function() {
+    Route::get('{productId}', [\App\Http\Controllers\ProductImageController::class, 'getProductImageByProductId']);
+});
 
-
-Route::prefix('oders')->group(function() {
-    Route::get('/all-purchases', [OrderController::class, 'getAllPurchasedProducts']);
+Route::prefix('orders')->group(function() {
+    Route::get('/', [OrderController::class, 'getOrders']);
+    Route::put('/{id}', [OrderController::class, 'updateStatus']);
 });
 
 Route::prefix('auth')->group(function () {
