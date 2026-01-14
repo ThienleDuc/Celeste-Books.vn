@@ -9,12 +9,33 @@ use Illuminate\Support\Str;
 class ProductDetailController extends Controller
 {
     protected $notificationController;
-    
+
     public function __construct()
     {
         $this->notificationController = new \App\Http\Controllers\ProductNotificationController();
     }
-    
+
+    // Helper xử lý upload ebook
+    private function handleEbookUpload(Request $request)
+    {
+        // 1. Nếu có file upload -> Lưu và trả về đường dẫn
+        if ($request->hasFile('ebook_file')) {
+            $file = $request->file('ebook_file');
+            $fileName = time() . '_ebook_' . $file->getClientOriginalName();
+            // Lưu vào public/ebooks
+            $file->move(public_path('ebooks'), $fileName);
+            // Trả về URL đầy đủ (ví dụ: http://localhost:8000/ebooks/filename.pdf)
+            return asset('ebooks/' . $fileName);
+        }
+
+        // 2. Nếu không có file nhưng có text URL -> Trả về URL đó
+        if ($request->filled('file_url')) {
+            return $request->input('file_url');
+        }
+
+        return null;
+    }
+
 
     // Danh sách chi tiết sản phẩm
     public function index(Request $request)
@@ -75,6 +96,16 @@ class ProductDetailController extends Controller
             'file_url'       => 'nullable|url|max:500',
         ]);
 
+
+        $sku = $request->input('sku');
+        // Nếu không có SKU, tự sinh
+        if (empty($sku)) {
+            $sku = 'SKU-' . time() . '-' . rand(100, 999);
+        }
+
+        // Lấy URL từ file upload HOẶC text input
+        $fileUrl = $this->handleEbookUpload($request);
+
         // check trùng product_type
         $existsType = DB::table('product_details')
             ->where('product_id', $request->product_id)
@@ -102,7 +133,7 @@ class ProductDetailController extends Controller
                 'length'         => $request->length,
                 'width'          => $request->width,
                 'height'         => $request->height,
-                'file_url'       => $request->file_url,
+                'file_url'       => $fileUrl,
                 'created_at'     => now(),
             ]);
 
@@ -177,6 +208,9 @@ class ProductDetailController extends Controller
         }
 
         try {
+
+            $newFileUrl = $this->handleEbookUpload($request);
+
             $data = $request->only([
                 'product_type',
                 'original_price',
@@ -189,7 +223,11 @@ class ProductDetailController extends Controller
                 'file_url'
             ]);
 
-            if (!$request->has('file_url')) {
+            if ($newFileUrl) {
+                $data['file_url'] = $newFileUrl;
+            }
+            // 4. Nếu KHÔNG có file mới và KHÔNG nhập file_url → giữ nguyên
+            else if (!$request->has('file_url')) {
                 unset($data['file_url']);
             }
 
@@ -218,7 +256,7 @@ class ProductDetailController extends Controller
                     $current->product_type
                 ),
             ]));
-            
+
             return response()->json([
                 'status'  => true,
                 'message' => 'Cập nhật chi tiết sản phẩm thành công',
