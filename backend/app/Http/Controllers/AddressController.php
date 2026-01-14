@@ -44,6 +44,7 @@ class AddressController extends Controller
         }
     }
     
+
     // 2. Thêm method getByUser()
     public function getByUser($userId)
     {
@@ -319,5 +320,4 @@ class AddressController extends Controller
             ], 500);
         }
     }
-
 }

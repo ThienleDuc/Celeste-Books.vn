@@ -70,7 +70,9 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $item['product_id'],
                     'product_details_id' => $item['product_details_id'],
-'product_type' => $item['product_type'], // 'Sách giấy' hoặc 'Sách điện tử'
+
+                    'product_type' => $item['product_type'], // 'Sách giấy' hoặc 'Sách điện tử'
+
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'total_price' => $item['price'] * $item['quantity'],
@@ -116,6 +118,7 @@ class OrderController extends Controller
                 ->with(['items.product',
                  'items.productDetail',
                  'shippingAddress.commune.province'])
+
                 ->orderBy('created_at', 'desc');
 
             // Filter theo status
@@ -152,7 +155,8 @@ class OrderController extends Controller
         try {
             $order = Order::where('order_code', $orderCode)
                 ->with([
-'items.product',
+
+                    'items.product',
                     'items.productDetail',
                     'shippingAddress.commune.province',
                     'user.profile'
@@ -243,7 +247,7 @@ class OrderController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-'message' => 'Hủy đơn hàng thất bại',
+                'message' => 'Hủy đơn hàng thất bại',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -318,7 +322,8 @@ class OrderController extends Controller
                             'name' => $item->product->name ?? 'N/A',
                             'quantity' => $item->quantity,
                             'price' => $item->price_at_time,
-'total' => $item->price_at_time * $item->quantity,
+
+                            'total' => $item->price_at_time * $item->quantity,
                             'stock' => $item->productDetail->stock
                         ];
                     })
@@ -405,7 +410,9 @@ class OrderController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-'success' => false,
+
+                'success' => false,
+
                 'message' => 'Lỗi server',
                 'error' => $e->getMessage()
             ], 500);
@@ -492,7 +499,9 @@ class OrderController extends Controller
             'is_read' => false,
         ]);
     }
+
 // Lấy thông tin thanh toán
+
     private function getPaymentInfo($order)
     {
         $info = [
@@ -557,3 +566,4 @@ public function getOrderDetails($orderId)
     }
 }
 }
+

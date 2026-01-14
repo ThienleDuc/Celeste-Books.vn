@@ -1194,6 +1194,7 @@ class ProductController extends Controller
                 ->select('pd_sub.product_id', DB::raw('MIN(pd_sub.sale_price) as min_price'))
                 ->groupBy('pd_sub.product_id');
             
+
             $products = DB::table('products as p')
                 // JOIN ảnh chính
                 ->leftJoin('product_images as pi', function ($join) {
@@ -1261,6 +1262,7 @@ class ProductController extends Controller
                 'message' => 'Lỗi server',
                 'error'   => $e->getMessage()
             ], 500);
+
         }
     }
 

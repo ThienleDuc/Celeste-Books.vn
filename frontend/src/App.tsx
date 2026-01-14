@@ -6,6 +6,7 @@ import ProfileRoutes from "./routes/ProfileRoutes";
 import AuthRoutes from "./routes/AuthRoutes";
 import ProductRoutes from "./routes/ProductRoutes";
 
+
 const App = () => {
   return (
     <Router>

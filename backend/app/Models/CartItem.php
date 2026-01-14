@@ -34,6 +34,8 @@ class CartItem extends Model
     public $incrementing = false;
     protected $keyType = 'int';
 
+    public $timestamps = false;
+    
     protected $fillable = [
         'id',
         'cart_id',

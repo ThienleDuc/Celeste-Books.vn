@@ -35,4 +35,9 @@ class ShoppingCart extends Model
         'status',
         'updated_at',
     ];
+
+    // Relationships with CartItem
+    public function items() {
+        return $this->hasMany(CartItem::class, 'cart_id', 'id');
+    }
 }

@@ -12,7 +12,7 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
-export type PaymentMethod = "cod" | "momo" | "bank_transfer" | "credit_card";
+export type PaymentMethod = "cod" | "momo" | "VnPay "| "bank_transfer" | "credit_card";
 export type PaymentStatus = "unpaid" | "paid" | "refunded";
 
 export interface Order {
