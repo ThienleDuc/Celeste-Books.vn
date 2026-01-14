@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough; // <--- QUAN TRỌNG: Thêm dòng này
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Product extends Model
@@ -15,11 +17,9 @@ class Product extends Model
 
     protected $primaryKey = 'id';
 
-    // BIGINT AUTO_INCREMENT
     public $incrementing = true;
-    protected $keyType = 'int'; // Laravel dùng int cho BIGINT vẫn OK
+    protected $keyType = 'int';
 
-    // Có created_at nhưng KHÔNG có updated_at
     public $timestamps = false;
     const UPDATED_AT = null;
 
@@ -45,15 +45,15 @@ class Product extends Model
         'created_at'      => 'datetime',
     ];
 
-      // 1. Product có nhiều images
-    public function images()
+    // 1. Product có nhiều images
+    public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class, 'product_id', 'id')
-                    ->orderBy('sort_order');
+                    ->orderBy('sort_order', 'asc');
     }
 
-    // 2. Product thuộc nhiều categories (qua bảng trung gian)
-    public function categories()
+    // 2. Product thuộc nhiều categories
+    public function categories(): BelongsToMany
     {
         return $this->belongsToMany(
             Category::class,
@@ -63,9 +63,16 @@ class Product extends Model
         );
     }    
 
+    // 3. Chi tiết đại diện (Lấy 1 cái để hiện giá ở trang danh sách)
     public function detail(): HasOne
     {
         return $this->hasOne(ProductDetail::class, 'product_id', 'id');
+    }
+    
+    // 4. (Khuyên dùng) Lấy TOÀN BỘ chi tiết (Ví dụ: Sách giấy + Ebook)
+    public function productDetails(): HasMany
+    {
+        return $this->hasMany(ProductDetail::class, 'product_id', 'id');
     }
     
     public function orderItems(): HasMany
@@ -73,9 +80,20 @@ class Product extends Model
         return $this->hasMany(OrderItem::class, 'product_id', 'id');
     }
     
-    public function reviews(): HasMany
+    // =================================================================
+    // SỬA ĐỔI QUAN TRỌNG Ở ĐÂY
+    // =================================================================
+    // Vì Reviews liên kết qua bảng OrderItems, ta dùng HasManyThrough
+    public function reviews(): HasManyThrough
     {
-        return $this->hasMany(Review::class, 'product_id', 'id');
+        return $this->hasManyThrough(
+            Review::class,      // Model Đích (Review)
+            OrderItem::class,   // Model Trung Gian (OrderItem)
+            'product_id',       // Khóa ngoại trên bảng trung gian (order_items.product_id)
+            'order_item_id',    // Khóa ngoại trên bảng đích (reviews.order_item_id)
+            'id',               // Khóa chính bảng hiện tại (products.id)
+            'id'                // Khóa chính bảng trung gian (order_items.id)
+        );
     }
     
     public function scopeActive($query)
@@ -86,7 +104,7 @@ class Product extends Model
     public function scopeSearch($query, $search)
     {
         return $query->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('author', 'like', '%' . $search . '%')
-                    ->orWhere('publisher', 'like', '%' . $search . '%');
+                     ->orWhere('author', 'like', '%' . $search . '%')
+                     ->orWhere('publisher', 'like', '%' . $search . '%');
     }
 }

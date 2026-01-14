@@ -38,6 +38,17 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'created_at' => 'datetime',
     ];
+    // 1. Thêm 'has_password' vào mảng $appends
+protected $appends = [
+    'has_password',
+];
+
+// 2. Định nghĩa logic cho thuộc tính này
+public function getHasPasswordAttribute()
+{
+    // Trả về true nếu password_hash không rỗng
+    return !empty($this->password_hash);
+}
 
     public $timestamps = false;
 

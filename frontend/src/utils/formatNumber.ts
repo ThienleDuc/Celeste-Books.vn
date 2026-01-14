@@ -9,3 +9,7 @@ export function formatNumber(num: number): string {
     return num.toString();
   }
 }
+
+export function formatNumber1(num: number): string {
+  return num.toLocaleString("vi-VN");
+}

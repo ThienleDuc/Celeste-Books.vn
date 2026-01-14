@@ -283,6 +283,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'username' => $user->username,
                 'email' => $user->email,
+                'has_password' => $user->has_password,// để làm đổi mk bên gg á
                 'role' => [
                     'id' => $user->role_id,
                     'name' => $user->role->name ?? $user->role_id,

@@ -122,7 +122,7 @@ const UserDropdown = () => {
               <i 
                 className="bi bi-caret-down-fill"
                 style={{
-                  fontSize: '0.8rem',
+                  fontSize: '0.8rem',                                                                                                                   
                   color: '#6c757d'
                 }}
               ></i>

@@ -1,55 +1,64 @@
-import React from "react";
-import type { UserReview } from "../../models/Order/userReviews.model";
-import { sampleProducts } from "../../models/Product/product.model";
-
-interface ReviewProductSectionProps {
-  reviews: UserReview[];
+interface Review {
+  id: number;
+  user_id: string;
+  rating: number;
+  title: string;
+  content: string;
+  images: string[] | null;
+  created_at: string;
 }
 
-const ReviewProductSection: React.FC<ReviewProductSectionProps> = ({ reviews }) => {
-  if (!reviews.length) return <p>Chưa có đánh giá nào.</p>;
+const ReviewProductSection = ({ reviews }: { reviews: Review[] }) => {
+  if (!reviews.length) {
+    return <p className="text-muted">Chưa có đánh giá nào.</p>;
+  }
 
   return (
-    <div className="user-reviews mt-4">
-      {reviews.map(review => (
-        <div key={review.id} className="border p-3 mb-3 rounded user-review">
-          <div className="d-flex align-items-center mb-2">
-            <img
-              src={review.avatar}
-              alt={review.name}
-              className="rounded-circle me-2"
-              width={50}
-              height={50}
-            />
-            <div>
-              <strong>{review.name}</strong>
-              <div className="text-muted" style={{ fontSize: "0.8rem" }}>
-                {review.date} - {sampleProducts.find(p => p.product.id === review.productId)?.product.name}
-              </div>
+    <div
+      className="user-reviews mt-4 pe-2"
+      style={{
+        height: "250px",        // 👈 chiều cao tối đa (bạn chỉnh tùy)
+        overflowY: "auto",         // 👈 bật scroll dọc
+      }}
+    >
+      {reviews.map((review) => (
+        <div key={review.id} className="border p-3 mb-3 rounded">
+          {/* USER */}
+          <div className="mb-2">
+            <strong>User {review.user_id}</strong>
+            <div className="text-muted" style={{ fontSize: "0.8rem" }}>
+              {review.created_at}
             </div>
           </div>
 
+          {/* STAR */}
           <div className="mb-1">
-            {Array(5).fill(0).map((_, idx) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <i
-                key={idx}
-                className={`bi bi-star${idx < review.rating ? "-fill" : ""} text-warning me-1`}
-              ></i>
+                key={i}
+                className={`bi bi-star${i < review.rating ? "-fill" : ""} text-warning me-1`}
+              />
             ))}
           </div>
 
+          {/* TITLE + CONTENT */}
           <h6 className="mb-1">{review.title}</h6>
-          <p>{review.content}</p>
+          <p className="mb-0">{review.content}</p>
 
-          {review.images.length > 0 && (
+          {/* IMAGES */}
+          {review.images && review.images.length > 0 && (
             <div className="d-flex gap-2 mt-2">
               {review.images.map((img, idx) => (
                 <img
                   key={idx}
                   src={img}
-                  alt={`review-${idx}`}
-                  className="img-fluid"
-                  style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "4px" }}
+                  alt="review"
+                  style={{
+                    width: 80,
+                    height: 80,
+                    objectFit: "cover",
+                    borderRadius: 4,
+                  }}
                 />
               ))}
             </div>

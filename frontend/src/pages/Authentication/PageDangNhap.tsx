@@ -1,42 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AxiosError } from "axios";
+
 import authApi from "../../api/auth.api";
+import axiosClient from "../../api/axios"; // ✅ Import thêm axiosClient
 import { getRedirectPath } from "../../utils/redirect";
 
 const Login = () => {
   const navigate = useNavigate();
-
+  const location = useLocation();
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // --- HÀM HỖ TRỢ: Lấy thông tin user và cache ---
+  const fetchAndCacheUserInfo = async (userId: string) => {
+    try {
+      const res = await axiosClient.get(`/users/${userId}`);
+      if (res.data && res.data.data) {
+        localStorage.setItem("user_info", JSON.stringify(res.data.data));
+      }
+    } catch (e) {
+      console.warn("Không cache kịp user info, sidebar sẽ tự load lại sau.");
+    }
+  };
+
+  // --- XỬ LÝ LOGIN GOOGLE ---
+  useEffect(() => {
+    const checkGoogleToken = async () => {
+      const params = new URLSearchParams(location.search);
+      const token = params.get("token");
+
+      if (token) {
+        setLoading(true);
+        try {
+          // 1. Lưu token
+          localStorage.setItem("access_token", token);
+
+          // 2. Lấy role và ID
+          const res = await authApi.me();
+          
+          if (res.data && res.data.data) {
+            const { role, id } = res.data.data;
+            const roleId = role?.id;
+
+            // ✅ 3. Cache thông tin user ngay lập tức
+            await fetchAndCacheUserInfo(id);
+
+            // 4. Redirect
+            const redirectTo = getRedirectPath("afterLogin", roleId);
+            navigate(redirectTo);
+          }
+        } catch (err) {
+          console.error("Lỗi login Google:", err);
+          setError("Đăng nhập Google thất bại. Vui lòng thử lại.");
+          setLoading(false);
+        }
+      }
+    };
+
+    checkGoogleToken();
+  }, [location, navigate]);
+
+  // --- XỬ LÝ LOGIN THƯỜNG ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      // Login bằng username hoặc email
-      const payload =
-        login.includes("@")
-          ? { email: login, password }
-          : { username: login, password };
+      const payload = login.includes("@")
+        ? { email: login, password }
+        : { username: login, password };
 
       const res = await authApi.login(payload);
 
       if (res.data.success) {
-        const {
-          access_token,
-          role_id,
-        } = res.data.data;
+        const { access_token, role_id } = res.data.data;
 
         // 1. Lưu token
         localStorage.setItem("access_token", access_token);
 
-        // 2. Redirect theo role
+        // ✅ 2. Gọi thêm API lấy ID user để cache thông tin (Vì login response của bạn chưa có ID)
+        try {
+            const meRes = await authApi.me();
+            if(meRes.data && meRes.data.data) {
+                await fetchAndCacheUserInfo(meRes.data.data.id);
+            }
+        } catch (ignore) {
+            // Nếu lỗi đoạn này thì thôi, Sidebar tự lo
+        }
+
+        // 3. Redirect
         const redirectTo = getRedirectPath("afterLogin", role_id);
         navigate(redirectTo);
       } else {
@@ -44,10 +101,8 @@ const Login = () => {
       }
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
-
       setError(
-        error.response?.data?.message ||
-        "Không thể kết nối máy chủ"
+        error.response?.data?.message || "Không thể kết nối máy chủ"
       );
     } finally {
       setLoading(false);
@@ -75,9 +130,7 @@ const Login = () => {
         </h3>
       </div>
 
-      {/* 👉 chỉ thêm onSubmit */}
       <form onSubmit={handleLogin}>
-        {/* ERROR */}
         {error && (
           <div className="alert alert-danger text-center mb-3">
             {error}
@@ -127,13 +180,13 @@ const Login = () => {
           className="btn btn-success w-100 mb-3"
           disabled={loading}
         >
-          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          {loading ? "Đang xử lý..." : "Đăng nhập"}
         </button>
 
-        <button type="button" className="btn btn-google w-100">
+        <a href="http://localhost:8000/auth/google" className="btn btn-google w-100">
           <i className="bi bi-google google-icon"></i>
           <span className="google-text">Đăng nhập với Google</span>
-        </button>
+        </a>
       </form>
 
       <div className="text-center mt-3">
