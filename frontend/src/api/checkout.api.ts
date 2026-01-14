@@ -1,3 +1,4 @@
+//checkout.api.ts
 import axiosClient from "./axios";
 
 // 1. Định nghĩa kiểu cho sản phẩm trong giỏ hàng (Frontend/State)
@@ -40,12 +41,32 @@ export interface CreateOrderRequest {
   items: CreateOrderItem[];
 }
 
+export interface ShippingFeeConfig {
+  base_fee: number;
+  weight_fees: Array<{ min_weight: number; max_weight: number; base_price: number }>;
+  distance_fees: Array<{ min_distance: number; max_distance: number; multiplier: number }>;
+  type_fees: Array<{ id: number; shipping_type: 'standard' | 'express'; multiplier: number }>;
+}
+
+export interface CalculatedShipping {
+  weightFee: number;
+  distanceMultiplier: number;
+  typeMultiplier: number;
+  total: number;
+}
+
 // 4. Các hàm API
 export const checkoutApi = {
   getOrderById: (orderId: number) => axiosClient.get(`/orders/${orderId}`),
+  getProductDiscounts: () => axiosClient.get('/order-product-discounts'),
+  getShippingDiscounts: () => axiosClient.get('/order-shipping-discounts'),
+  getShippingFeeDetails: () => axiosClient.get('/order-shipping-fee-details'),
+  getWeightFees: () => axiosClient.get('/shipping-config/weight-fees'),
   getUserAddresses: (userId: string) => {
     return axiosClient.get(`/addresses/user/${userId}`);
   },
+
+  
   getProductsDetails: (productIds: number[]) => {
     return axiosClient.get(`/products`, { params: { ids: productIds } });
   },

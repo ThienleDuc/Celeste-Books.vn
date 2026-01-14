@@ -52,6 +52,9 @@ const CheckoutPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [productDiscounts, setProductDiscounts] = useState<OrderProductDiscount[]>([]);
+    const [shippingDiscounts, setShippingDiscounts] = useState<OrderShippingDiscount[]>([]);
+    const [shippingFeeConfig, setShippingFeeConfig] = useState<any>(null);
     
     // State với proper types
     const [selectedAddress, setSelectedAddress] = useState<AddressFull | null>(null);
@@ -320,6 +323,25 @@ useEffect(() => {
     loadInitialData();
 }, [userId]);
 
+useEffect(() => {
+    const fetchDiscountAndShippingData = async () => {
+        try {
+            const [prodRes, shipRes, feeRes] = await Promise.all([
+                checkoutApi.getProductDiscounts(),
+                checkoutApi.getShippingDiscounts(),
+                checkoutApi.getShippingFeeDetails()
+            ]);
+
+            if (prodRes.data.success) setProductDiscounts(prodRes.data.data);
+            if (shipRes.data.success) setShippingDiscounts(shipRes.data.data);
+            if (feeRes.data.success) setShippingFeeConfig(feeRes.data.data);
+        } catch (error) {
+            console.error("Lỗi khi tải cấu hình giảm giá và phí ship:", error);
+        }
+    };
+    fetchDiscountAndShippingData();
+}, []);
+
     // Debug shipping type changes
     useEffect(() => {
         console.log('Shipping type changed to:', selectedShippingType);
@@ -380,17 +402,14 @@ useEffect(() => {
 
     // Tính phí vận chuyển dựa trên loại đã chọn
     const calculateShippingFee = (): number => {
-        const baseFee = 20000; // Phí cơ sở
+        const baseFee = 20000;
+        
         const totalWeight = calculateTotalWeight();
-        const distance = 15; // Khoảng cách mặc định 15km
-        
-        // Tìm hệ số cho loại vận chuyển đã chọn
-        const typeFee = sampleShippingTypeFees.find(
-            fee => fee.shipping_type === selectedShippingType
-        );
-        
-        const weightMultiplier = calculateWeightFee(totalWeight);
+        const distance = 15; 
+        const weightMultiplier = calculateWeightFee(totalWeight); 
         const distanceMultiplier = calculateDistanceFee(distance);
+        
+        const typeFee = sampleShippingTypeFees.find(f => f.shipping_type === selectedShippingType);
         const typeMultiplier = typeFee?.multiplier || 1;
         
         return Math.round(baseFee * weightMultiplier * distanceMultiplier * typeMultiplier);
@@ -542,21 +561,22 @@ useEffect(() => {
     };
     
     // Tính tổng discount
-    const calculateTotalDiscount = (): number => {
-        let total = 0;
-        
-        if (selectedProductDiscountId) {
-            const discount = sampleOrderProductDiscounts.find(d => d.id === selectedProductDiscountId);
-            if (discount) total += discount.amount;
-        }
-        
-        if (selectedShippingDiscountId) {
-            const discount = sampleOrderShippingDiscounts.find(d => d.id === selectedShippingDiscountId);
-            if (discount) total += discount.amount;
-        }
-        
-        return total;
-    };
+const calculateTotalDiscount = (): number => {
+    let total = 0;
+    
+    // Tìm trong danh sách dữ liệu THẬT từ API
+    if (selectedProductDiscountId) {
+        const discount = productDiscounts.find(d => d.id === selectedProductDiscountId);
+        if (discount) total += Number(discount.amount);
+    }
+    
+    if (selectedShippingDiscountId) {
+        const discount = shippingDiscounts.find(d => d.id === selectedShippingDiscountId);
+        if (discount) total += Number(discount.amount);
+    }
+    
+    return total;
+};
     
     // Discount handlers
     const handleSelectProductDiscount = (discount: OrderProductDiscount | null) => {
@@ -623,23 +643,22 @@ const calculateSubtotal = (): number => {
                         selectedShippingType={selectedShippingType}
                         onSelect={setSelectedShippingType}
                         totalWeight={calculateTotalWeight()}
-                        distance={15}
-                        baseFee={20000}
+                        distance={15} 
+                        baseFee={20000} 
                     />
                 );
                 
-            case 3:
-                return (
-                    <DiscountSelector
-                        productDiscounts={sampleOrderProductDiscounts}
-                        shippingDiscounts={sampleOrderShippingDiscounts}
-                        selectedProductDiscountId={selectedProductDiscountId}
-                        selectedShippingDiscountId={selectedShippingDiscountId}
-                        onSelectProductDiscount={handleSelectProductDiscount}
-                        onSelectShippingDiscount={handleSelectShippingDiscount}
-                    />
-                );
-                
+                case 3:
+                    return (
+                        <DiscountSelector
+                            productDiscounts={productDiscounts} // Dữ liệu thật từ state
+                            shippingDiscounts={shippingDiscounts} // Dữ liệu thật từ state
+                            selectedProductDiscountId={selectedProductDiscountId}
+                            selectedShippingDiscountId={selectedShippingDiscountId}
+                            onSelectProductDiscount={handleSelectProductDiscount}
+                            onSelectShippingDiscount={handleSelectShippingDiscount}
+                        />
+                    );
             case 4:
                 return (
                     <PaymentStep

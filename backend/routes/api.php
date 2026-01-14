@@ -18,6 +18,10 @@ use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\ShoppingCartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\VnPayController;
+use App\Http\Controllers\OrderProductDiscountController;
+use App\Http\Controllers\OrderShippingDiscountController;
+use App\Http\Controllers\OrderShippingFeeDetailController;
+use App\Http\Controllers\WeightFeeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -348,4 +352,13 @@ Route::prefix('orders')->group(function () {
 Route::prefix('vnpay')->group(function () {
     Route::post('/create-payment', [VnPayController::class, 'createPayment']);
     Route::get('/return', [VnPayController::class, 'vnpayReturn']);
+});
+
+Route::get('/order-product-discounts', [OrderProductDiscountController::class, 'index']);
+Route::get('/order-shipping-discounts', [OrderShippingDiscountController::class, 'index']);
+Route::get('/order-shipping-fee-details', [OrderShippingFeeDetailController::class, 'index']);
+
+Route::prefix('shipping-config')->group(function () {
+    Route::get('/weight-fees', [WeightFeeController::class, 'index']);
+    Route::post('/weight-fees', [WeightFeeController::class, 'store']);
 });
