@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\UserNotification;
 use App\Models\User;
+use App\Models\OrderNotification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class UserNotificationController extends Controller
@@ -339,4 +341,184 @@ class UserNotificationController extends Controller
             'data' => $notifications
         ]);
     }
+
+
+
+
+    /**
+ * Hiển thị tất cả thông báo (user + order) theo user_id
+ */
+public function index_tato_notifications(Request $request)
+{
+    /**
+     * 1. Query user_notifications
+     */
+    $userQuery = UserNotification::query()
+        ->select([
+            'id',
+            'user_id',
+            DB::raw('NULL as order_id'),
+            'type',
+            'title',
+            'content',
+            'is_read',
+            'created_at',
+            DB::raw("'user' as source"),
+        ]);
+
+    /**
+     * 2. Query order_notifications
+     */
+    $orderQuery = OrderNotification::query()
+        ->select([
+            'id',
+            'user_id',
+            'order_id',
+            'type',
+            'title',
+            'content',
+            'is_read',
+            'created_at',
+            DB::raw("'order' as source"),
+        ]);
+
+    /**
+     * 3. UNION 2 bảng
+     */
+    $unionQuery = $userQuery->unionAll($orderQuery);
+
+    /**
+     * 4. Bọc UNION để tiếp tục filter
+     */
+    $query = DB::query()->fromSub($unionQuery, 'notifications');
+
+    /**
+     * ======================
+     * FILTER
+     * ======================
+     */
+
+    // Lọc theo user_id
+    if ($request->filled('user_id')) {
+        $query->where('user_id', $request->user_id);
+    }
+
+    // Lọc theo type
+    if ($request->filled('type')) {
+        $query->where('type', $request->type);
+    }
+
+    // Lọc theo trạng thái đọc
+    if ($request->filled('is_read')) {
+        $query->where('is_read', $request->is_read);
+    }
+
+    // Lọc theo order_id (chỉ áp dụng cho order_notifications)
+    if ($request->filled('order_id')) {
+        $query->where('order_id', $request->order_id);
+    }
+
+    // Tìm kiếm
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+              ->orWhere('content', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * ======================
+     * SORT
+     * ======================
+     */
+    $sortField = $request->get('sort_field', 'created_at');
+    $sortOrder = $request->get('sort_order', 'desc');
+
+    // Chỉ cho phép sort các field hợp lệ
+    $allowedSortFields = [
+        'id', 'created_at', 'type', 'is_read'
+    ];
+
+    if (!in_array($sortField, $allowedSortFields)) {
+        $sortField = 'created_at';
+    }
+
+    $query->orderBy($sortField, $sortOrder);
+
+    /**
+     * ======================
+     * PAGINATE
+     * ======================
+     */
+    $perPage = $request->get('per_page', 20);
+    $notifications = $query->paginate($perPage);
+
+    return response()->json([
+        'success' => true,
+        'data' => $notifications
+    ]);
+}
+// app/Http/Controllers/UserNotificationController.php
+
+public function markMixedAsRead(Request $request)
+{
+    // Validate dữ liệu đầu vào
+    $request->validate([
+        'id' => 'required|integer',
+        'source' => 'required|in:user,order' // Bắt buộc phải là 'user' hoặc 'order'
+    ]);
+
+    $id = $request->id;
+    $source = $request->source;
+    $userId = auth()->id(); // Hoặc $request->user_id nếu test không cần token
+    
+    $notification = null;
+
+    // Tìm bản ghi dựa trên source
+    if ($source === 'user') {
+        $notification = UserNotification::find($id);
+    } elseif ($source === 'order') {
+        $notification = OrderNotification::find($id);
+    }
+
+    // 1. Kiểm tra tồn tại
+    if (!$notification) {
+        return response()->json([
+            'success' => false, 
+            'message' => 'Thông báo không tồn tại'
+        ], 404);
+    }
+
+    // 2. Kiểm tra quyền (Chỉ chủ sở hữu hoặc Admin R01 mới được đọc)
+    // Lưu ý: Cả 2 bảng đều phải có cột user_id
+    $currentUser = auth()->user();
+    // Nếu bạn đang test không cần login thì comment đoạn check quyền này lại
+    if ($currentUser && $currentUser->role_id !== 'R01' && $notification->user_id != $userId) {
+        return response()->json([
+            'success' => false, 
+            'message' => 'Không có quyền truy cập thông báo này'
+        ], 403);
+    }
+
+    // 3. Cập nhật trạng thái
+    $notification->is_read = true;
+    
+    // OrderNotification dùng timestamps (created_at, updated_at) mặc định
+    // UserNotification trong code cũ của bạn set timestamps = false, nên cần check
+    if ($source === 'order') {
+        $notification->save();
+    } else {
+        // Nếu UserNotification tắt timestamps tự động
+        $notification->updated_at = now();
+        $notification->save();
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Đã đánh dấu đã đọc',
+        'data' => $notification
+    ]);
+}
+
 }

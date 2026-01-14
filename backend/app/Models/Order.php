@@ -59,4 +59,22 @@ class Order extends Model
         'created_at',
         'updated_at',
     ];
+    
+    // ✔️ Đơn hàng có nhiều sản phẩm
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class, 'order_id');
+    }
+
+    // ✔️ Người đặt hàng
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // ✔️ Địa chỉ giao hàng
+    public function shippingAddress()
+    {
+        return $this->belongsTo(Address::class, 'shipping_address_id');
+    }
 }

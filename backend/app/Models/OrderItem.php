@@ -47,4 +47,21 @@ class OrderItem extends Model
         'total_price',
         'created_at',
     ];
+    // ✔️ Sản phẩm
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    // ✔️ Chi tiết sản phẩm
+    public function productDetail()
+    {
+        return $this->belongsTo(ProductDetail::class, 'product_details_id');
+    }
+
+    // ✔️ Thuộc đơn hàng
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }

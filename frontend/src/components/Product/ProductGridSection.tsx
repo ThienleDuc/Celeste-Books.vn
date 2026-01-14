@@ -5,6 +5,7 @@ import productsApi, { type ProductListParams, type Product } from "../../api/pro
 import { formatDecimal } from "../../utils/formatDecimal";
 import { useNavigate } from "react-router-dom";
 
+
 // --- INTERFACES ---
 interface ProductGridSectionProps {
   itemsPerPage?: number;

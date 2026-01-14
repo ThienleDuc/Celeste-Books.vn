@@ -169,6 +169,9 @@ Route::prefix('notifications')->group(function () {
     Route::get('/count-unread', [UserNotificationController::class, 'countUnread']);
     Route::put('/mark-all-read', [UserNotificationController::class, 'markAllAsRead']);
     
+    Route::get('/all', [UserNotificationController::class, 'index_tato_notifications']);
+    Route::put('/mark-read', [UserNotificationController::class, 'markMixedAsRead']);
+
     Route::prefix('{id}')->group(function () {
         Route::put('/mark-read', [UserNotificationController::class, 'markAsRead'])
             ->where('id', '[0-9]+');
@@ -227,12 +230,14 @@ Route::prefix('products')->group(function () {
     // Sắp xếp sản phẩm theo các tiêu chí
     Route::get('/sort', [ProductController::class, 'sort']);
 
+
     // POST: Tăng lượt views sản phẩm
     Route::post('/{id}/views', [ProductController::class, 'incrementViews'])
         ->where('id', '[0-9]+');
 
     // routes/api.php
     Route::get('/featured', [ProductController::class, 'featured']);
+
 });
 
 // ================= PRODUCT DETAILS ROUTES =================
@@ -251,9 +256,11 @@ Route::prefix('product-details')->group(function () {
     Route::delete('/{id}', [ProductDetailController::class, 'destroy'])
         ->where('id', '[0-9]+');
     Route::get('/best-sellers', [ProductController::class, 'getBestSellers']);
-        // Lấy chi tiết sản phẩm theo ID
-    Route::get('/{id}', [ProductController::class, 'show']);
-        
+
+        Route::get('/{id}/images', [ProductDetailController::class, 'getImages']);
+
+          Route::get('/{id}/description-content', [ProductDetailController::class, 'extractDescriptionContent']);
+
 });
 
 // ==================== ADDRESS ROUTES ====================
@@ -308,6 +315,11 @@ Route::prefix('review-image')->group(function () {
 
 Route::prefix('oders')->group(function() {
     Route::get('/all-purchases', [OrderController::class, 'getAllPurchasedProducts']);
+});
+Route::prefix('oders')->group(function() {
+    Route::get('/user/{userId}', [OrderController::class, 'getUserOrders']);
+    Route::get('/{id}', [OrderController::class, 'getOrderDetails']);
+    
 });
 
 Route::prefix('auth')->group(function () {

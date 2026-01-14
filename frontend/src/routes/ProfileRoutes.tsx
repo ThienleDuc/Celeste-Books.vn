@@ -1,16 +1,50 @@
 import ProfileLayout from "../layouts/_ProfileLayout";
 import PageThayDoiThongTin from "../pages/Profile/PageThayDoiThongTin";
 import PageThongTinTaiKhoan from "../pages/Profile/PageThongTinTaiKhoan";
-import ThongBaoNguoiDung from "../pages/Profile/PageThongBaoNguoiDung";
 import PageDoiMatKhau from "../pages/Profile/PageDoiMatKhau";
-import ThongBaoHeThong from "../pages/Profile/PageThongBaoHeThong";
+import PageDonHangCuaToi from "../pages/Profile/PageDonHangCuaToi";
+import PageThongBaoNguoiDung from "../pages/Profile/PageThongBaoNguoiDung";
+// 👇 Đã sửa dòng import này
+import PageChiTietDonHang from "../pages/Profile/PageChiTietDonHang"; 
 
 const ProfileRoutes = [
-  { path: "/thong-tin-tai-khoan", element: <ProfileLayout><PageThongTinTaiKhoan /></ProfileLayout> },
-  { path: "/thay-doi-thong-tin", element: <ProfileLayout><PageThayDoiThongTin /></ProfileLayout> },
-  { path: "/thong-bao/he-thong", element: <ProfileLayout><ThongBaoHeThong /></ProfileLayout> },
-  { path: "/thong-bao/nguoi-dung", element: <ProfileLayout><ThongBaoNguoiDung /></ProfileLayout> },
-  { path: "/doi-mat-khau", element: <ProfileLayout><PageDoiMatKhau /></ProfileLayout> },
+  { 
+    path: "/thong-tin-tai-khoan", 
+    element: <ProfileLayout><PageThongTinTaiKhoan /></ProfileLayout> 
+  },
+  { 
+    path: "/thay-doi-thong-tin", 
+    element: <ProfileLayout><PageThayDoiThongTin /></ProfileLayout> 
+  },
+  { 
+    path: "/doi-mat-khau", 
+    element: <ProfileLayout><PageDoiMatKhau /></ProfileLayout> 
+  },
+  {
+    path: "/don-hang-cua-toi",
+    element: (
+      <ProfileLayout>
+        <PageDonHangCuaToi />
+      </ProfileLayout>
+    ),
+  },
+  // 👇 Đã thêm route chi tiết đơn hàng
+  {
+    path: "/don-hang/:id",
+    element: (
+      <ProfileLayout>
+        <PageChiTietDonHang />
+      </ProfileLayout>
+    ),
+  },
+  {
+    path: "/thong-bao/nguoi-dung",
+    element: (
+      <ProfileLayout>
+        <PageThongBaoNguoiDung />
+      </ProfileLayout>
+    ),
+  },
 ];
 
 export default ProfileRoutes;
