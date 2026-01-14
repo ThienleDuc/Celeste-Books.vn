@@ -32,6 +32,7 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [isAdding, setIsAdding] = useState(false);
 
   const leftRef = useRef<HTMLDivElement>(null);
   const [leftHeight, setLeftHeight] = useState<number>();
@@ -164,19 +165,78 @@ const ProductDetailPage = () => {
     navigate(`/thanh-toan/${effectiveUserId}?${queryParams.toString()}`, { state: checkoutData });
   };
 
-  const handleAddToCart = () => {
-    if (!product || !selectedDetail) return;
-    
-    // Logic thêm vào giỏ hàng
-    console.log("Thêm vào giỏ:", {
-      productId: product.id,
-      detail: selectedDetail,
-      quantity
-    });
-    
-    // Có thể thêm toast notification ở đây
-    alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
+/* ================= HANDLER: ADD TO CART (ĐÃ SỬA LỖI) ================= */
+  const handleAddToCart = async () => {
+    // 1. Kiểm tra biến 'product' (state chính của trang)
+    if (!product || !product.id) {
+      alert("Đang tải thông tin sản phẩm, vui lòng chờ...");
+      return;
+    }
+
+    // 2. Kiểm tra biến 'selectedDetail' (biến thể đang chọn: Sách giấy/Ebook)
+    // Thay vì dùng biến 'details' (mảng), ta dùng 'selectedDetail' (object)
+    if (!selectedDetail || !selectedDetail.id) {
+      alert("Vui lòng chọn loại sản phẩm (Sách giấy/Sách điện tử).");
+      return;
+    }
+
+    // 3. Kiểm tra đăng nhập
+    const userInfoStr = localStorage.getItem("user_info");
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+
+    if (!userInfo || !userInfo.id) {
+      const confirmLogin = window.confirm("Vui lòng đăng nhập để mua hàng. Đi đến trang đăng nhập ngay?");
+      if (confirmLogin) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    const userId = userInfo.id;
+    setIsAdding(true);
+
+    // 4. Tạo Payload từ các state đã có dữ liệu
+    const payload = {
+      user_id: userId,
+      product_id: product.id,           // Lấy ID từ state product
+      product_details_id: selectedDetail.id, // Lấy ID từ state selectedDetail
+      quantity: quantity,               // Lấy số lượng từ state quantity
+    };
+
+    console.log("=== ADD TO CART PAYLOAD ===", payload);
+
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/shopping-carts/add",
+        payload
+      );
+
+      if (response.data.success) {
+        const confirmGoToCart = window.confirm(
+          "Đã thêm vào giỏ thành công! Bạn có muốn đến giỏ hàng ngay không?"
+        );
+        if (confirmGoToCart) {
+          navigate(`/gio-hang/${userId}`);
+        }
+      } else {
+        alert("Có lỗi xảy ra: " + response.data.message);
+      }
+    } catch (error: any) {
+      console.error("Lỗi thêm giỏ hàng:", error);
+      
+      const msg = error.response?.data?.message || "Lỗi kết nối đến server";
+      
+      // Xử lý lỗi tồn kho (nếu backend trả về mã 400)
+      if (error.response?.status === 400 && error.response?.data?.data?.stock) {
+         alert(`Không thể thêm. Kho chỉ còn ${error.response.data.data.stock} sản phẩm.`);
+      } else {
+         alert(msg);
+      }
+    } finally {
+      setIsAdding(false);
+    }
   };
+
 
   /* ================= RENDER ================= */
   if (loading) {
@@ -249,14 +309,20 @@ const ProductDetailPage = () => {
                   visibleCount={6} 
                 />
 
-                <div className="d-flex gap-2 mt-3">
-                  <button className="btn-add-cart" onClick={handleAddToCart}>
-                    <i className="bi bi-cart-plus me-1" /> Thêm vào giỏ hàng
-                  </button>
+              <div className="d-flex gap-2 mt-3">
+                <button 
+                  className="btn-add-cart" 
+                  onClick={handleAddToCart}
+                  disabled={isAdding}
+                  style={{ opacity: isAdding ? 0.7 : 1 }}
+                >
+                  <i className={`bi ${isAdding ? 'bi-hourglass-split' : 'bi-cart-plus'} me-1`} />
+                  {isAdding ? "Đang xử lý..." : "Thêm vào giỏ hàng"}
+                </button>
                   <button className="btn-buy-now" onClick={handleBuyNow}>
                     <i className="bi bi-bag-check me-1" /> Mua ngay
                   </button>
-                </div>
+              </div>
               </div>
             </div>
           </div>

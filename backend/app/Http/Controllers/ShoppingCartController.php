@@ -117,4 +117,80 @@ class ShoppingCartController extends Controller
             return $this->jsonResponse([], 'Lỗi hệ thống: ' . $e->getMessage(), 500);
         }
     }
+
+    // 2. LẤY GIỎ HÀNG (GET CART)
+    public function getCart($userId)
+    {
+        try {
+            // Eager load: Lấy item, thông tin sản phẩm (để lấy tên), chi tiết (để lấy loại, stock), và ảnh
+            $cart = ShoppingCart::with([
+                'items.product.images',
+                'items.productDetail'
+            ])
+            ->where('user_id', $userId)
+            ->where('status', 'active') //
+            ->first();
+
+            if (!$cart) {
+                return $this->jsonResponse([], 'Giỏ hàng trống');
+            }
+
+            return $this->jsonResponse($cart, 'Lấy giỏ hàng thành công');
+        } catch (\Exception $e) {
+            return $this->jsonResponse([], 'Lỗi server: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // 3. CẬP NHẬT SỐ LƯỢNG (UPDATE QUANTITY)
+    public function updateCartItem(Request $request, $itemId)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        try {
+            $cartItem = CartItem::find($itemId); //
+
+            if (!$cartItem) {
+                return $this->jsonResponse([], 'Sản phẩm không tồn tại trong giỏ', 404);
+            }
+
+            // Kiểm tra tồn kho từ bảng product_details
+            $productDetail = ProductDetail::find($cartItem->product_details_id);
+
+            if ($request->quantity > $productDetail->stock) {
+                 return $this->jsonResponse(['stock' => $productDetail->stock], 'Số lượng vượt quá tồn kho', 400);
+            }
+
+            $cartItem->update([
+                'quantity' => $request->quantity,
+                'updated_at' => now()
+            ]);
+
+            // Cập nhật lại thời gian giỏ hàng
+            ShoppingCart::where('id', $cartItem->cart_id)->update(['updated_at' => now()]);
+
+            return $this->jsonResponse($cartItem, 'Cập nhật thành công');
+        } catch (\Exception $e) {
+            return $this->jsonResponse([], 'Lỗi server', 500);
+        }
+    }
+
+    // 4. XÓA SẢN PHẨM KHỎI GIỎ (REMOVE ITEM)
+    public function removeCartItem($itemId)
+    {
+        try {
+            $cartItem = CartItem::find($itemId);
+            if ($cartItem) {
+                $cartId = $cartItem->cart_id;
+                $cartItem->delete();
+
+                // Cập nhật thời gian giỏ hàng
+                ShoppingCart::where('id', $cartId)->update(['updated_at' => now()]);
+            }
+            return $this->jsonResponse([], 'Đã xóa sản phẩm');
+        } catch (\Exception $e) {
+            return $this->jsonResponse([], 'Lỗi server', 500);
+        }
+    }
 }

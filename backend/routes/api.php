@@ -156,7 +156,7 @@ Route::prefix('users')->group(function () {
 
     Route::prefix('{id}')->group(function () {
         Route::get('/', [UserController::class, 'show']);
-          
+
         Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
         Route::get('/', [UserController::class, 'show']);
         Route::put('/', [UserController::class, 'updateBasicInfo']);
@@ -178,7 +178,7 @@ Route::prefix('notifications')->group(function () {
     Route::get('/', [UserNotificationController::class, 'index']);
     Route::get('/my', [UserNotificationController::class, 'myNotifications']);
     Route::get('/count-unread', [UserNotificationController::class, 'countUnread']);
-    Route::put('/mark-all-read', [UserNotificationController::class, 'markAllAsRead']);    
+    Route::put('/mark-all-read', [UserNotificationController::class, 'markAllAsRead']);
     Route::get('/all', [UserNotificationController::class, 'index_tato_notifications']);
     Route::put('/mark-read', [UserNotificationController::class, 'markMixedAsRead']);
 
@@ -223,11 +223,14 @@ Route::prefix('products')->group(function () {
     // Tăng lượt xem sản phẩm
     Route::post('/{id}/increment-views', [ProductController::class, 'incrementViews'])
         ->where('id', '[0-9]+');
-    
+
+    // Lấy chi tiết sản phẩm theo ID
+    Route::get('/{id}', [ProductController::class, 'show']);
+
     // Lấy sản phẩm gợi ý
     Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
         ->where('id', '[0-9]+');
-    
+
 
     Route::get('/', [ProductController::class, 'index']);
 
@@ -340,7 +343,7 @@ Route::prefix('oders')->group(function() {
 Route::prefix('oders')->group(function() {
     Route::get('/user/{userId}', [OrderController::class, 'getUserOrders']);
     Route::get('/{id}', [OrderController::class, 'getOrderDetails']);
-    
+
 });
 
 Route::prefix('auth')->group(function () {
@@ -359,15 +362,25 @@ Route::prefix('auth')->group(function () {
 });
 // ==================== STATISTICS ROUTES ====================
 Route::prefix('statistics')->group(function () {
-    // Route xử lý cả tổng quan và chi tiết
-    Route::get('/', [StatisticsController::class, 'index']);
-    // Route xuất báo cáo
-    Route::get('/export', [StatisticsController::class, 'export']);
+// Thống kê Bán Ra
+    Route::get('/sales', [StatisticsController::class, 'sales']);
+    Route::get('/sales/export', [StatisticsController::class, 'exportSales']);
+
+    // Thống kê Nhập Vào / Kho
+    Route::get('/inventory', [StatisticsController::class, 'inventory']);
+    Route::get('/inventory/export', [StatisticsController::class, 'exportInventory']);
 });
+
 // ==================== SHOPPING CART ROUTES ====================
 Route::prefix('shopping-carts')->group(function () {
     // Thêm sản phẩm vào giỏ hàng
     Route::post('/add', [ShoppingCartController::class, 'addToCart']);
+    // Lấy giỏ hàng của người dùng
+    Route::get('/{userId}', [ShoppingCartController::class, 'getCart']);
+    // Cập nhật số lượng sản phẩm trong giỏ hàng
+    Route::put('/item/{itemId}', [ShoppingCartController::class, 'updateCartItem']);
+    // Xóa sản phẩm khỏi giỏ hàng
+    Route::delete('/item/{itemId}', [ShoppingCartController::class, 'removeCartItem']);
 });
 
 // Lấy giỏ hàng của người dùng

@@ -17,12 +17,32 @@ use Illuminate\Support\Facades\Cache;
 class ProductDetailController extends Controller
 {
     protected $notificationController;
-    
+
     public function __construct()
     {
         $this->notificationController = new \App\Http\Controllers\ProductNotificationController();
     }
-    
+
+    // Helper xử lý upload ebook
+    private function handleEbookUpload(Request $request)
+    {
+        // 1. Nếu có file upload -> Lưu và trả về đường dẫn
+        if ($request->hasFile('ebook_file')) {
+            $file = $request->file('ebook_file');
+            $fileName = time() . '_ebook_' . $file->getClientOriginalName();
+            // Lưu vào public/ebooks
+            $file->move(public_path('ebooks'), $fileName);
+            // Trả về URL đầy đủ (ví dụ: http://localhost:8000/ebooks/filename.pdf)
+            return asset('ebooks/' . $fileName);
+        }
+
+        // 2. Nếu không có file nhưng có text URL -> Trả về URL đó
+        if ($request->filled('file_url')) {
+            return $request->input('file_url');
+        }
+
+        return null;
+    }
 
    // Nhớ import Model ở đầu file controller
 
@@ -36,9 +56,9 @@ public function index(Request $request)
             // 2. Query cơ bản với Eager Loading
             $query = Product::with([
                 // Lấy detail (HasOne) để hiển thị giá đại diện
-                'detail', 
+                'detail',
                 // Lấy tất cả variants (HasMany) phòng khi muốn chọn loại sách
-                'productDetails', 
+                'productDetails',
                 // Lấy ảnh
                 'images' => function($q) {
                     $q->orderBy('sort_order', 'asc');
@@ -56,7 +76,7 @@ public function index(Request $request)
                 $product = $query->with(['reviews' => function($q) {
                     $q->orderBy('created_at', 'desc')
                       ->select('reviews.*'); // Đảm bảo chỉ lấy cột của reviews
-                    
+
                     // Nếu bạn có Model User và quan hệ trong Review, hãy thêm: .with('user')
                     // Giả sử Model Review có: public function user() { return $this->belongsTo(User::class); }
                 }])->where('slug', $slug)->first();
@@ -81,7 +101,7 @@ public function index(Request $request)
             // ============================================================
             // TRƯỜNG HỢP 2: KHÔNG CÓ SLUG -> LẤY DANH SÁCH (SHOP/HOME)
             // ============================================================
-            
+
             // Tìm kiếm
             if ($request->filled('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
@@ -97,7 +117,7 @@ public function index(Request $request)
             // Sắp xếp
             $sortBy = $request->get('sort_by', 'created_at'); // mặc định mới nhất
             $sortDir = $request->get('sort_dir', 'desc');
-            
+
             // Nếu sort theo giá, phải join với bảng details, ở đây làm đơn giản sort theo bảng products
             $query->orderBy($sortBy, $sortDir);
 
@@ -112,7 +132,7 @@ public function index(Request $request)
 
         } catch (\Throwable $e) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => 'Lỗi server: ' . $e->getMessage()
             ], 500);
         }
@@ -132,6 +152,17 @@ public function index(Request $request)
             'height'         => 'nullable|numeric|min:0',
             'file_url'       => 'nullable|url|max:500',
         ]);
+
+        $sku = $request->input('sku');
+        // Nếu không có SKU, tự sinh
+        if (empty($sku)) {
+            $sku = 'SKU-' . time() . '-' . rand(100, 999);
+        }
+
+        // Lấy URL từ file upload HOẶC text input
+        $fileUrl = $this->handleEbookUpload($request);
+
+
 
         // check trùng product_type
         $existsType = DB::table('product_details')
@@ -160,7 +191,7 @@ public function index(Request $request)
                 'length'         => $request->length,
                 'width'          => $request->width,
                 'height'         => $request->height,
-                'file_url'       => $request->file_url,
+                'file_url'       => $fileUrl,
                 'created_at'     => now(),
             ]);
 
@@ -198,7 +229,7 @@ public function index(Request $request)
     {
         // Kiểm tra xem product_id có tồn tại trong bảng products không (tùy chọn)
         $exists = DB::table('products')->where('id', $product_id)->exists();
-        
+
         if (!$exists) {
             return response()->json([
                 'status' => false,
@@ -207,7 +238,7 @@ public function index(Request $request)
         }
 
         try {
-            // LƯU Ý: Thay 'product_images' bằng tên bảng thực tế trong database của bạn 
+            // LƯU Ý: Thay 'product_images' bằng tên bảng thực tế trong database của bạn
             // (ví dụ: 'images' hoặc 'product_images')
             $images = DB::table('product_images')
                 ->where('product_id', $product_id)
@@ -269,6 +300,9 @@ public function index(Request $request)
         }
 
         try {
+
+        $newFileUrl = $this->handleEbookUpload($request);
+
             $data = $request->only([
                 'product_type',
                 'original_price',
@@ -281,7 +315,11 @@ public function index(Request $request)
                 'file_url'
             ]);
 
-            if (!$request->has('file_url')) {
+            if ($newFileUrl) {
+                $data['file_url'] = $newFileUrl;
+            }
+            // 4. Nếu KHÔNG có file mới và KHÔNG nhập file_url → giữ nguyên
+            else if (!$request->has('file_url')) {
                 unset($data['file_url']);
             }
 
@@ -310,7 +348,7 @@ public function index(Request $request)
                     $current->product_type
                 ),
             ]));
-            
+
             return response()->json([
                 'status'  => true,
                 'message' => 'Cập nhật chi tiết sản phẩm thành công',
@@ -399,13 +437,13 @@ public function extractDescriptionContent($id)
             $cacheKey = 'product_desc_parsed_' . $id;
 
             $finalContent = Cache::remember($cacheKey, 86400, function () use ($id, $currentDesc, $isUrl) {
-                
+
                 // 1. Tìm Link file (Ưu tiên trong chi tiết, nếu ko có thì lấy ở description)
                 $detail = DB::table('product_details')
                             ->where('product_id', $id)
-                            ->whereIn('product_type', ['Sách điện tử', 'Ebook', 'ebook']) 
+                            ->whereIn('product_type', ['Sách điện tử', 'Ebook', 'ebook'])
                             ->first();
-                
+
                 $pathOrUrl = '';
                 if ($detail && !empty($detail->file_url)) {
                     $pathOrUrl = $detail->file_url;
@@ -483,22 +521,22 @@ public function extractDescriptionContent($id)
             $text .= $element->getText() . " ";
         } elseif ($element instanceof TextRun) {
             foreach ($element->getElements() as $child) {
-                $text .= $this->extractTextFromElement($child); 
+                $text .= $this->extractTextFromElement($child);
             }
-            $text .= "\n"; 
+            $text .= "\n";
         } elseif ($element instanceof Table) {
             foreach ($element->getRows() as $row) {
                 foreach ($row->getCells() as $cell) {
                     foreach ($cell->getElements() as $cellElement) {
-                        $text .= $this->extractTextFromElement($cellElement); 
+                        $text .= $this->extractTextFromElement($cellElement);
                     }
-                    $text .= " | "; 
+                    $text .= " | ";
                 }
-                $text .= "\n"; 
+                $text .= "\n";
             }
         }
         return $text;
     }
-    
-    
+
+
 }

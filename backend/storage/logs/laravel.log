@@ -3,3 +3,399 @@
 [2026-01-14 23:06:19] local.INFO: User logged out {"user_id":"C01","username":"customer1","token_id":null} 
 [2026-01-14 23:07:45] local.DEBUG: Sanctum token received {"raw_token":"2|dx1aO9jp1HEiBV6E9xyZSsIlDrf8eyHk4wNky6p8","id":"2","plain_token_length":40} 
 [2026-01-14 23:07:46] local.DEBUG: Sanctum token received {"raw_token":"2|dx1aO9jp1HEiBV6E9xyZSsIlDrf8eyHk4wNky6p8","id":"2","plain_token_length":40} 
+[2026-01-14 16:57:27] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [] is not defined. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:212)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(137): Illuminate/Log/LogManager->resolve(NULL, NULL)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(124): Illuminate/Log/LogManager->get(NULL)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Log/LogManager.php(681): Illuminate/Log/LogManager->driver()
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(317): Illuminate/Log/LogManager->error('Class \"Pdo//Mysq...', Array)
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(278): Illuminate/Foundation/Exceptions/Handler->reportThrowable(Object(Error))
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(523): Illuminate/Foundation/Exceptions/Handler->report(Object(Error))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(203): Illuminate/Foundation/Console/Kernel->reportException(Object(Error))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/artisan(35): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#8 {main}
+"} 
+[2026-01-14 16:57:27] laravel.ERROR: Class "Pdo\Mysql" not found {"exception":"[object] (Error(code: 0): Class \"Pdo\\Mysql\" not found at D:/Downloads/Final/Celeste-Books.vn/backend/config/database.php:62)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/LoadConfiguration.php(70): require()
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/LoadConfiguration.php(39): Illuminate/Foundation/Bootstrap/LoadConfiguration->loadConfigurationFiles(Object(Illuminate/Foundation/Application), Object(Illuminate/Config/Repository))
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(286): Illuminate/Foundation/Bootstrap/LoadConfiguration->bootstrap(Object(Illuminate/Foundation/Application))
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(447): Illuminate/Foundation/Application->bootstrapWith(Array)
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(199): Illuminate/Foundation/Console/Kernel->bootstrap()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/artisan(35): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#6 {main}
+"} 
+[2026-01-15 00:04:28] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 810743c939773721ad061c64211dad9715d8576100071716a5384329064d0126, [\"*\"], 2026-01-22 00:04:28, C01, App\\Models\\User, 2026-01-15 00:04:28, 2026-01-15 00:04:28))"} 
+[2026-01-15 00:05:11] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 9a1125fb4c4190646edf8850c1a712298a8629e71b4078b6fa19e8571d256309, [\"*\"], 2026-01-22 00:05:11, C01, App\\Models\\User, 2026-01-15 00:05:11, 2026-01-15 00:05:11))"} 
+[2026-01-15 00:07:07] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 39fe1f22ed18ca520fbbdf282fe6e384ecd4623f818ff57885d0b5b65a7c6213, [\"*\"], 2026-01-22 00:07:07, C01, App\\Models\\User, 2026-01-15 00:07:07, 2026-01-15 00:07:07))"} 
+[2026-01-15 00:08:29] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, b511395803b0ef5bd90bac65f9b98b33740c41cfc12cb5d211d3b3e7a98f742c, [\"*\"], 2026-01-22 00:08:29, C01, App\\Models\\User, 2026-01-15 00:08:29, 2026-01-15 00:08:29))"} 
+[2026-01-15 00:08:36] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 1ac3b1998f18fe98e65deb3047b155490350e60e234fdffcfdd5abecb76e88d6, [\"*\"], 2026-01-22 00:08:36, C01, App\\Models\\User, 2026-01-15 00:08:36, 2026-01-15 00:08:36))"} 
+[2026-01-15 00:23:51] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 0db39eda3b2dccf91f45fcd796aad74cda9e9b74f972d6d58d51700254f7dfed, [\"*\"], 2026-01-22 00:23:51, C01, App\\Models\\User, 2026-01-15 00:23:51, 2026-01-15 00:23:51))"} 
+[2026-01-15 00:23:57] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 15aee514018392ae70b5b9d32b77191437a2a6088988a868836ace413993b85f, [\"*\"], 2026-01-22 00:23:57, C01, App\\Models\\User, 2026-01-15 00:23:57, 2026-01-15 00:23:57))"} 
+[2026-01-15 00:25:30] local.ERROR: Login error {"error":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.personal_access_tokens' doesn't exist (Connection: mysql, SQL: insert into `personal_access_tokens` (`name`, `token`, `abilities`, `expires_at`, `tokenable_id`, `tokenable_type`, `updated_at`, `created_at`) values (auth_token, 5d1bda26c081a1a66e9dd3cc064b926328de4612248d53b6ecdaf1a3bba0bcfe, [\"*\"], 2026-01-22 00:25:30, C01, App\\Models\\User, 2026-01-15 00:25:30, 2026-01-15 00:25:30))"} 
+[2026-01-15 00:26:44] local.ERROR: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.otp_verifications' doesn't exist (Connection: mysql, SQL: delete from `otp_verifications` where `email` = thtnv9876@gmail.com and `purpose` = register) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.otp_verifications' doesn't exist (Connection: mysql, SQL: delete from `otp_verifications` where `email` = thtnv9876@gmail.com and `purpose` = register) at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:829)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(783): Illuminate/Database/Connection->runQueryCallback('delete from `ot...', Array, Object(Closure))
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(600): Illuminate/Database/Connection->run('delete from `ot...', Array, Object(Closure))
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(564): Illuminate/Database/Connection->affectingStatement('delete from `ot...', Array)
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3796): Illuminate/Database/Connection->delete('delete from `ot...', Array)
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1273): Illuminate/Database/Query/Builder->delete()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/app/Services/EmailService.php(21): Illuminate/Database/Eloquent/Builder->delete()
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/app/Http/Controllers/AuthController.php(62): App/Services/EmailService->sendOtp('thtnv9876@gmail...', 'register')
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): App/Http/Controllers/AuthController->sendOtp(Object(Illuminate/Http/Request))
+#8 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('sendOtp', Array)
+#9 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/AuthController), 'sendOtp')
+#10 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#11 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#12 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#13 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#14 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#15 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#16 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#17 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#18 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#19 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#21 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#22 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#23 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#24 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#25 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#26 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#27 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#28 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#32 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#33 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#34 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#35 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#36 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#37 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#38 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#39 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#40 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#41 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#42 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#43 D:/Downloads/Final/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#44 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://Downloads//Fi...')
+#45 {main}
+
+[previous exception] [object] (PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'book_store_db_2.otp_verifications' doesn't exist at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:608)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(608): PDO->prepare('delete from `ot...')
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(816): Illuminate/Database/Connection->Illuminate/Database/{closure}('delete from `ot...', Array)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(783): Illuminate/Database/Connection->runQueryCallback('delete from `ot...', Array, Object(Closure))
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(600): Illuminate/Database/Connection->run('delete from `ot...', Array, Object(Closure))
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(564): Illuminate/Database/Connection->affectingStatement('delete from `ot...', Array)
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3796): Illuminate/Database/Connection->delete('delete from `ot...', Array)
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(1273): Illuminate/Database/Query/Builder->delete()
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/app/Services/EmailService.php(21): Illuminate/Database/Eloquent/Builder->delete()
+#8 D:/Downloads/Final/Celeste-Books.vn/backend/app/Http/Controllers/AuthController.php(62): App/Services/EmailService->sendOtp('thtnv9876@gmail...', 'register')
+#9 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): App/Http/Controllers/AuthController->sendOtp(Object(Illuminate/Http/Request))
+#10 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('sendOtp', Array)
+#11 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/AuthController), 'sendOtp')
+#12 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#13 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#14 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#15 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#16 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#17 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#18 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#19 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#20 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#21 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#22 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#23 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#24 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#25 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#26 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#27 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#28 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#29 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#30 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#34 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#35 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#36 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#37 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#38 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#39 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#40 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#41 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#42 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#43 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#44 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#45 D:/Downloads/Final/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#46 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://Downloads//Fi...')
+#47 {main}
+"} 
+[2026-01-15 00:28:16] local.DEBUG: Sanctum token received {"raw_token":"1|AOMq5MowO2yF9UHNSmfrNc2w4DqkPDpu95oG18LM","id":"1","plain_token_length":40} 
+[2026-01-15 00:35:38] local.DEBUG: Sanctum token received {"raw_token":"1|AOMq5MowO2yF9UHNSmfrNc2w4DqkPDpu95oG18LM","id":"1","plain_token_length":40} 
+[2026-01-15 00:35:40] local.DEBUG: Sanctum token received {"raw_token":"1|AOMq5MowO2yF9UHNSmfrNc2w4DqkPDpu95oG18LM","id":"1","plain_token_length":40} 
+[2026-01-15 00:36:19] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:36:20] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:37:26] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:37:27] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:39:06] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:39:06] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:41:51] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:41:51] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:42:50] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:42:51] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:45:22] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:45:26] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:45:29] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:45:31] local.DEBUG: Sanctum token received {"raw_token":"2|FHCLZkpJslMpgEXiAzz10v7QK0nnsdpJ9gODSamc","id":"2","plain_token_length":40} 
+[2026-01-15 00:45:57] local.DEBUG: Sanctum token received {"raw_token":"3|Wd069aiHTKLkHFnDjzCcLgRyxmV68RlDtbDKKSY9","id":"3","plain_token_length":40} 
+[2026-01-15 00:48:42] local.DEBUG: Sanctum token received {"raw_token":"3|Wd069aiHTKLkHFnDjzCcLgRyxmV68RlDtbDKKSY9","id":"3","plain_token_length":40} 
+[2026-01-15 00:48:43] local.DEBUG: Sanctum token received {"raw_token":"3|Wd069aiHTKLkHFnDjzCcLgRyxmV68RlDtbDKKSY9","id":"3","plain_token_length":40} 
+[2026-01-15 00:51:52] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 00:51:54] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:07:53] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:07:58] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:08:15] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:08:17] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:24:01] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:27:14] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:34:37] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:34:39] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:36:04] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:36:07] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:36:09] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:36:11] local.DEBUG: Sanctum token received {"raw_token":"4|wHpDHgX4yhhtj7T7B9n8qzmlNev9hXgNvZsnCsiq","id":"4","plain_token_length":40} 
+[2026-01-15 01:38:33] local.DEBUG: Sanctum token received {"raw_token":"5|3Pm7LDpdHGOz5fLHel0Z2NNZhKOOCAwgBvwfjfxk","id":"5","plain_token_length":40} 
+[2026-01-15 01:38:35] local.DEBUG: Sanctum token received {"raw_token":"5|3Pm7LDpdHGOz5fLHel0Z2NNZhKOOCAwgBvwfjfxk","id":"5","plain_token_length":40} 
+[2026-01-15 01:39:04] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:39:05] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:39:50] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:39:51] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:39:52] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:39:52] local.ERROR: Method App\Http\Controllers\ProductController::index does not exist. {"exception":"[object] (BadMethodCallException(code: 0): Method App\\Http\\Controllers\\ProductController::index does not exist. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php:68)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): Illuminate/Routing/Controller->__call('index', Array)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('index', Array)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/ProductController), 'index')
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 D:/Downloads/Final/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://Downloads//Fi...')
+#38 {main}
+"} 
+[2026-01-15 01:39:53] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:40:06] local.ERROR: Method App\Http\Controllers\ProductController::index does not exist. {"exception":"[object] (BadMethodCallException(code: 0): Method App\\Http\\Controllers\\ProductController::index does not exist. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php:68)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): Illuminate/Routing/Controller->__call('index', Array)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('index', Array)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/ProductController), 'index')
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 D:/Downloads/Final/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://Downloads//Fi...')
+#38 {main}
+"} 
+[2026-01-15 01:40:57] local.ERROR: Method App\Http\Controllers\ProductController::index does not exist. {"exception":"[object] (BadMethodCallException(code: 0): Method App\\Http\\Controllers\\ProductController::index does not exist. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php:68)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): Illuminate/Routing/Controller->__call('index', Array)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('index', Array)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/ProductController), 'index')
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 D:/Downloads/Final/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://Downloads//Fi...')
+#38 {main}
+"} 
+[2026-01-15 01:43:45] local.ERROR: Method App\Http\Controllers\ProductController::index does not exist. {"exception":"[object] (BadMethodCallException(code: 0): Method App\\Http\\Controllers\\ProductController::index does not exist. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php:68)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): Illuminate/Routing/Controller->__call('index', Array)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('index', Array)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/ProductController), 'index')
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 D:/Downloads/Final/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://Downloads//Fi...')
+#38 {main}
+"} 
+[2026-01-15 01:43:52] local.ERROR: Method App\Http\Controllers\ProductController::index does not exist. {"exception":"[object] (BadMethodCallException(code: 0): Method App\\Http\\Controllers\\ProductController::index does not exist. at D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php:68)
+[stacktrace]
+#0 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(54): Illuminate/Routing/Controller->__call('index', Array)
+#1 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(43): Illuminate/Routing/Controller->callAction('index', Array)
+#2 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(259): Illuminate/Routing/ControllerDispatcher->dispatch(Object(Illuminate/Routing/Route), Object(App/Http/Controllers/ProductController), 'index')
+#3 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(205): Illuminate/Routing/Route->runController()
+#4 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(806): Illuminate/Routing/Route->run()
+#5 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Routing/Router->Illuminate/Routing/{closure}(Object(Illuminate/Http/Request))
+#6 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#7 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/SubstituteBindings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#8 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(159): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#9 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(125): Illuminate/Routing/Middleware/ThrottleRequests->handleRequest(Object(Illuminate/Http/Request), Object(Closure), Array)
+#10 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/ThrottleRequests.php(87): Illuminate/Routing/Middleware/ThrottleRequests->handleRequestUsingNamedLimiter(Object(Illuminate/Http/Request), Object(Closure), 'api', Object(Closure))
+#11 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Routing/Middleware/ThrottleRequests->handle(Object(Illuminate/Http/Request), Object(Closure), 'api')
+#12 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#13 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(805): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#14 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(784): Illuminate/Routing/Router->runRouteWithinStack(Object(Illuminate/Routing/Route), Object(Illuminate/Http/Request))
+#15 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(748): Illuminate/Routing/Router->runRoute(Object(Illuminate/Http/Request), Object(Illuminate/Routing/Route))
+#16 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(737): Illuminate/Routing/Router->dispatchToRoute(Object(Illuminate/Http/Request))
+#17 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate/Routing/Router->dispatch(Object(Illuminate/Http/Request))
+#18 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(144): Illuminate/Foundation/Http/Kernel->Illuminate/Foundation/Http/{closure}(Object(Illuminate/Http/Request))
+#19 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#20 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#21 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull->handle(Object(Illuminate/Http/Request), Object(Closure))
+#22 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#23 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(40): Illuminate/Foundation/Http/Middleware/TransformsRequest->handle(Object(Illuminate/Http/Request), Object(Closure))
+#24 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/TrimStrings->handle(Object(Illuminate/Http/Request), Object(Closure))
+#25 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ValidatePostSize.php(27): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#26 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/ValidatePostSize->handle(Object(Illuminate/Http/Request), Object(Closure))
+#27 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(99): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#28 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance->handle(Object(Illuminate/Http/Request), Object(Closure))
+#29 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#30 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/HandleCors->handle(Object(Illuminate/Http/Request), Object(Closure))
+#31 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(39): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#32 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(183): Illuminate/Http/Middleware/TrustProxies->handle(Object(Illuminate/Http/Request), Object(Closure))
+#33 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(119): Illuminate/Pipeline/Pipeline->Illuminate/Pipeline/{closure}(Object(Illuminate/Http/Request))
+#34 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate/Pipeline/Pipeline->then(Object(Closure))
+#35 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate/Foundation/Http/Kernel->sendRequestThroughRouter(Object(Illuminate/Http/Request))
+#36 D:/Downloads/Final/Celeste-Books.vn/backend/public/index.php(51): Illuminate/Foundation/Http/Kernel->handle(Object(Illuminate/Http/Request))
+#37 D:/Downloads/Final/Celeste-Books.vn/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(16): require_once('D://Downloads//Fi...')
+#38 {main}
+"} 
+[2026-01-15 01:48:37] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:48:38] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:54:22] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:54:24] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:55:42] local.DEBUG: Sanctum token received {"raw_token":"6|Fk1HPYaFKcAC6i5FlW4qkfbQmrvGKiDoinujIJJV","id":"6","plain_token_length":40} 
+[2026-01-15 01:55:42] local.INFO: User logged out {"user_id":"C01","username":"customer1","token_id":null} 
+[2026-01-15 01:56:51] local.DEBUG: Sanctum token received {"raw_token":"7|if4ddG276qCMP1rw4xLoLfsbBSVrU5KWX5CsdMgb","id":"7","plain_token_length":40} 
+[2026-01-15 01:56:59] local.DEBUG: Sanctum token received {"raw_token":"7|if4ddG276qCMP1rw4xLoLfsbBSVrU5KWX5CsdMgb","id":"7","plain_token_length":40} 
+[2026-01-15 01:56:59] local.INFO: User logged out {"user_id":"C01","username":"customer1","token_id":null} 
+[2026-01-15 01:57:51] local.DEBUG: Sanctum token received {"raw_token":"8|jTVRh7y2YKchOjC8yPecpIHObh2uqCtIxDRKWezF","id":"8","plain_token_length":40} 
+[2026-01-15 01:58:30] local.DEBUG: Sanctum token received {"raw_token":"8|jTVRh7y2YKchOjC8yPecpIHObh2uqCtIxDRKWezF","id":"8","plain_token_length":40} 
+[2026-01-15 01:58:32] local.DEBUG: Sanctum token received {"raw_token":"8|jTVRh7y2YKchOjC8yPecpIHObh2uqCtIxDRKWezF","id":"8","plain_token_length":40} 
+[2026-01-15 01:58:43] local.DEBUG: Sanctum token received {"raw_token":"8|jTVRh7y2YKchOjC8yPecpIHObh2uqCtIxDRKWezF","id":"8","plain_token_length":40} 
+[2026-01-15 01:58:44] local.DEBUG: Sanctum token received {"raw_token":"8|jTVRh7y2YKchOjC8yPecpIHObh2uqCtIxDRKWezF","id":"8","plain_token_length":40} 
