@@ -1,25 +1,87 @@
 import { useState, useRef, useEffect } from "react";
-import { AxiosError } from "axios";
 import Swal from "sweetalert2";
-import authApi from "../../api/auth.api";
-import type { UserMe } from "../../api/auth.api";
 import { useNavigate, Link } from "react-router-dom";
+
+// Import API
+import authApi from "../../api/auth.api";
+import axiosClient from "../../api/axios"; // ✅ Cần import cái này để gọi chi tiết user
 import { getRedirectPath } from "../../utils/redirect";
-
-const DEFAULT_AVATAR = "69ac12ab-e056-47b3-b0f1-e27966d80ce0.jpg";
-
-/* Helper xử lý avatar */
-const getAvatarSrc = (avatar?: string | null) => {
-  if (!avatar) return `/img/${DEFAULT_AVATAR}`;
-  if (avatar.startsWith("http")) return avatar; // phòng khi API trả full URL
-  return `/img/${avatar}`;
-};
 
 const UserDropdown = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<UserMe | null>(null);
   const dropdownRef = useRef<HTMLLIElement | null>(null);
+
+  // --- CẤU HÌNH ---
+  const BACKEND_URL = "http://127.0.0.1:8000";
+  const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+  // ✅ 1. KHỞI TẠO STATE TỪ LOCALSTORAGE (Load ảnh tức thì, không đợi API)
+  const [user, setUser] = useState<any>(() => {
+    try {
+      const savedUser = localStorage.getItem("user_info");
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // ✅ 2. HÀM GỌI API LẤY CHI TIẾT USER (Giống SidebarProfile)
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      // B1: Lấy ID từ me()
+      const meRes = await authApi.me();
+      if (meRes.data && meRes.data.data) {
+        const userId = meRes.data.data.id;
+
+        // B2: Lấy chi tiết profile từ ID
+        const res = await axiosClient.get(`/users/${userId}`);
+        
+        if (res.data && res.data.data) {
+          const userData = res.data.data;
+          // Lưu ngược vào cache và cập nhật state
+          localStorage.setItem("user_info", JSON.stringify(userData));
+          setUser(userData);
+        }
+      }
+    } catch (error) {
+      // Nếu lỗi token (hết hạn), có thể set user null
+      // console.error("Lỗi cập nhật dropdown:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Gọi API khi component mount
+    fetchUserData();
+
+    // Lắng nghe sự kiện update từ trang Profile (để đổi ảnh ngay lập tức)
+    const handleUpdateSignal = () => {
+      fetchUserData();
+    };
+
+    window.addEventListener("user-profile-updated", handleUpdateSignal);
+    return () => {
+      window.removeEventListener("user-profile-updated", handleUpdateSignal);
+    };
+  }, []);
+
+  // ✅ 3. XỬ LÝ URL ẢNH (Logic chuẩn)
+  const getAvatarSrc = () => {
+    const url = user?.profile?.avatar_url;
+    
+    // Nếu không có url -> Trả về ảnh mặc định
+    if (!url) return DEFAULT_AVATAR;
+
+    // Nếu là ảnh Google (bắt đầu bằng http) -> Dùng nguyên link
+    if (url.startsWith("http")) return url;
+
+    // Nếu là ảnh server local -> Nối domain
+    const cleanPath = url.replace(/^\//, "");
+    return `${BACKEND_URL}/storage/${cleanPath}`;
+  };
 
   /* ---------------- CLICK OUTSIDE ---------------- */
   useEffect(() => {
@@ -28,23 +90,8 @@ const UserDropdown = () => {
         setOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  /* ---------------- FETCH CURRENT USER ---------------- */
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await authApi.me();
-        setUser(res.data.data);
-      } catch {
-        setUser(null);
-      }
-    };
-
-    if (localStorage.getItem("access_token")) fetchMe();
   }, []);
 
   /* ---------------- LOGOUT ---------------- */
@@ -60,27 +107,23 @@ const UserDropdown = () => {
 
     if (!result.isConfirmed) return;
 
-    let logoutError: string | null = null;
-
     try {
       await authApi.logout();
     } catch (err) {
-      const axiosError = err as AxiosError<{ message?: string }>;
-      logoutError =
-        axiosError.response?.data?.message ||
-        "Không thể đăng xuất khỏi máy chủ, bạn đã được đăng xuất cục bộ.";
+       // Lỗi cũng cứ cho đăng xuất local
     }
 
+    // Xóa sạch token và thông tin user
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_info"); // Xóa cache user
     setUser(null);
 
     const redirectTo = getRedirectPath("afterRegister", user?.role?.id);
     navigate(redirectTo);
 
     Swal.fire({
-      icon: logoutError ? "warning" : "success",
-      title: logoutError ? "Đăng xuất chưa hoàn tất" : "Đã đăng xuất",
-      text: logoutError ?? "Bạn đã đăng xuất thành công",
+      icon: "success",
+      title: "Đã đăng xuất",
       timer: 1500,
       showConfirmButton: false,
     });
@@ -89,7 +132,7 @@ const UserDropdown = () => {
   return (
     <ul className="navbar-nav ms-3">
       <li className="nav-item dropdown user-dropdown" ref={dropdownRef}>
-        {/* TOGGLE */}
+        {/* TOGGLE BUTTON */}
         <button
           type="button"
           className="dropdown-toggle nav-link p-0 border-0 bg-transparent d-flex align-items-center gap-1"
@@ -99,11 +142,12 @@ const UserDropdown = () => {
           {user ? (
             <>
               <img
-                src={getAvatarSrc(user.profile?.avatar_url)}
+                src={getAvatarSrc()} // ✅ Dùng hàm mới
                 alt="Avatar"
                 className="user-avatar"
+                style={{ width: "35px", height: "35px", objectFit: "cover", borderRadius: "50%" }}
                 onError={(e) => {
-                  e.currentTarget.src = `/img/${DEFAULT_AVATAR}`;
+                  e.currentTarget.src = DEFAULT_AVATAR;
                 }}
               />
             </>
@@ -122,49 +166,56 @@ const UserDropdown = () => {
                 className="bi bi-caret-down-fill"
                 style={{ fontSize: "0.8rem", color: "#6c757d" }}
               />
-
             </>
           )}
         </button>
 
         {/* MENU - ĐÃ LOGIN */}
         {open && user && (
-          <div className="dropdown-menu user-dropdown-menu show">
-            <div className="dropdown-header user-header">
+          <div className="dropdown-menu user-dropdown-menu show" style={{ right: 0, left: "auto" }}>
+            <div className="dropdown-header user-header d-flex align-items-center gap-2 p-3">
               <img
-                src={getAvatarSrc(user.profile?.avatar_url)}
+                src={getAvatarSrc()} // ✅ Dùng hàm mới
                 alt="Avatar"
                 className="user-avatar-sm"
+                style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "50%" }}
+                onError={(e) => {
+                  e.currentTarget.src = DEFAULT_AVATAR;
+                }}
               />
-              <div>
-                <div className="fw-semibold">
-                  {user.profile?.full_name || user.username}
+              <div style={{ overflow: "hidden" }}>
+                <div className="fw-semibold text-truncate" style={{maxWidth: "150px"}}>
+                  {user.profile?.full_name || user.username || "User"}
                 </div>
-                <small>{user.email || "Chưa thêm email"}</small>
+                <small className="text-muted d-block text-truncate" style={{maxWidth: "150px"}}>
+                  {user.email || "Chưa thêm email"}
+                </small>
               </div>
             </div>
 
+            <div className="dropdown-divider" />
+
             <Link to="/thong-tin-tai-khoan" className="dropdown-item">
-              <i className="bi bi-person-vcard" /> Tài khoản
+              <i className="bi bi-person-vcard me-2" /> Tài khoản
             </Link>
 
             <div className="dropdown-divider" />
 
-            <button className="dropdown-item danger" onClick={handleLogout}>
-              <i className="bi bi-box-arrow-right" /> Đăng xuất
+            <button className="dropdown-item text-danger" onClick={handleLogout}>
+              <i className="bi bi-box-arrow-right me-2" /> Đăng xuất
             </button>
           </div>
         )}
 
         {/* MENU - CHƯA LOGIN */}
         {open && !user && (
-          <div className="dropdown-menu user-dropdown-menu no-login show">
+          <div className="dropdown-menu user-dropdown-menu no-login show" style={{ right: 0, left: "auto" }}>
             <Link to="/dang-nhap" className="dropdown-item">
-              <i className="bi bi-box-arrow-in-right" /> Đăng nhập
+              <i className="bi bi-box-arrow-in-right me-2" /> Đăng nhập
             </Link>
 
             <Link to="/dang-ky" className="dropdown-item">
-              <i className="bi bi-person-plus" /> Đăng ký
+              <i className="bi bi-person-plus me-2" /> Đăng ký
             </Link>
           </div>
         )}
