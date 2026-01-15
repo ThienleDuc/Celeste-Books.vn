@@ -1,10 +1,24 @@
-import React, { useMemo } from 'react';
-import type { UserReview } from "../../models/Order/userReviews.model";
-import { sampleProducts } from "../../models/Product/product.model";
-import { sampleUserReviews } from "../../models/Order/userReviews.model";
-import { useParams } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from 'react';
+import axios from 'axios';
 
-// Component con hiển thị danh sách reviews
+// 1. Định nghĩa Interface cho dữ liệu Review (khớp với dữ liệu trả về từ API của bạn)
+export interface UserReview {
+  id: number;
+  productId: number;
+  name: string;       // Tên người review
+  avatar: string;     // URL ảnh đại diện
+  rating: number;     // Số sao
+  title?: string;     // Tiêu đề (optional)
+  content: string;    // Nội dung comment
+  date: string;       // Ngày đánh giá
+  images?: string[];  // Ảnh đính kèm (optional)
+}
+
+interface ReviewProductSectionProps {
+  productId: number; 
+}
+
+// 2. Component con hiển thị danh sách từng review
 const ReviewList: React.FC<{ reviews: UserReview[] }> = ({ reviews }) => {
   if (!reviews.length) return <p className="text-muted">Chưa có đánh giá nào.</p>;
 
@@ -13,21 +27,26 @@ const ReviewList: React.FC<{ reviews: UserReview[] }> = ({ reviews }) => {
       {reviews.map((review) => (
         <div key={review.id} className="border p-3 mb-3 rounded user-review">
           <div className="d-flex align-items-center mb-2">
+            {/* Avatar người dùng */}
             <img
-              src={review.avatar}
+              src="https://tse3.mm.bing.net/th/id/OIP.3l3TG-7-DK9UXuah4MrSzgAAAA?w=300&h=300&rs=1&pid=ImgDetMain&o=7&rm=3"
               alt={review.name}
               className="rounded-circle me-2"
               width={50}
               height={50}
+              style={{ objectFit: 'cover' }}
             />
             <div>
+              {/* Tên người dùng */}
               <strong>{review.name}</strong>
               <div className="text-muted" style={{ fontSize: "0.8rem" }}>
-                {review.date} - {sampleProducts.find(p => p.product.id === review.productId)?.product.name}
+                {/* Ngày đánh giá */}
+                {review.date}
               </div>
             </div>
           </div>
 
+          {/* Số sao của comment này */}
           <div className="mb-1">
             {Array(5).fill(0).map((_, idx) => (
               <i
@@ -37,16 +56,18 @@ const ReviewList: React.FC<{ reviews: UserReview[] }> = ({ reviews }) => {
             ))}
           </div>
 
-          <h6 className="mb-1">{review.title}</h6>
+          {/* Nội dung đánh giá */}
+          {review.title && <h6 className="mb-1">{review.title}</h6>}
           <p className="mb-2">{review.content}</p>
 
+          {/* Ảnh đánh giá (nếu có) */}
           {review.images && review.images.length > 0 && (
             <div className="d-flex gap-2 mt-2 flex-wrap">
               {review.images.map((img, idx) => (
                 <img
                   key={idx}
                   src={img}
-                  alt={`review-${idx}`}
+                  alt={`review-img-${idx}`}
                   className="img-fluid"
                   style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "4px" }}
                 />
@@ -59,40 +80,38 @@ const ReviewList: React.FC<{ reviews: UserReview[] }> = ({ reviews }) => {
   );
 };
 
-const ProductReviewsSection: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const productId = Number(id);
+// 3. Component chính
+const ProductReviewsSection: React.FC<ReviewProductSectionProps> = ({ productId }) => {
+  const [reviews, setReviews] = useState<UserReview[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Lọc reviews theo productId
-  const userReviews: UserReview[] = useMemo(() => {
-    return sampleUserReviews.filter(
-      (r) => r.productId === productId
-    );
+  // Fetch dữ liệu từ API
+  useEffect(() => {
+    if (!productId) return;
+    
+    const fetchReviews = async () => {
+      try {
+        setLoading(true);
+        // Lưu ý: Đảm bảo URL API đúng với Backend của bạn
+        const response = await axios.get(`http://localhost:8000/api/review/${productId}`);
+        
+        if (response.data && response.data.data) {
+          // Map dữ liệu từ API sang chuẩn Interface của Frontend (nếu cần thiết)
+          // Ví dụ dưới đây giả định API trả về đúng key, nếu khác bạn cần map lại
+          setReviews(response.data.data);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy dữ liệu review:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
   }, [productId]);
 
-  // Hàm tính percent dựa trên khoảng rating
-  const calculatePercentByRatingRange = (rating: number): number => {
-    if (rating <= 0) return 0;
-    if (rating >= 5) return 100;
-    
-    const ranges = [
-      { min: 0, max: 0.5, percent: 0 },
-      { min: 0.5, max: 1, percent: 10 },
-      { min: 1, max: 1.5, percent: 20 },
-      { min: 1.5, max: 2, percent: 30 },
-      { min: 2, max: 2.5, percent: 40 },
-      { min: 2.5, max: 3, percent: 50 },
-      { min: 3, max: 3.5, percent: 60 },
-      { min: 3.5, max: 4, percent: 70 },
-      { min: 4, max: 4.5, percent: 80 },
-      { min: 4.5, max: 5, percent: 90 }
-    ];
-    
-    const range = ranges.find(r => rating >= r.min && rating < r.max);
-    return range ? range.percent : 100;
-  };
+  
 
-  // Hàm hiển thị sao với nửa sao
   const renderStars = (rating: number, showDecimal: boolean = true) => {
     const fullStars = Math.floor(rating);
     const halfStar = rating % 1 >= 0.5;
@@ -103,69 +122,41 @@ const ProductReviewsSection: React.FC = () => {
         {[...Array(fullStars)].map((_, i) => (
           <i key={`full-${i}`} className="bi bi-star-fill text-warning me-1"></i>
         ))}
-        {halfStar && (
-          <i className="bi bi-star-half text-warning me-1"></i>
-        )}
+        {halfStar && <i className="bi bi-star-half text-warning me-1"></i>}
         {[...Array(emptyStars)].map((_, i) => (
           <i key={`empty-${i}`} className="bi bi-star text-warning me-1"></i>
         ))}
-        {showDecimal && (
-          <span className="ms-2 fw-bold">{rating.toFixed(1)}</span>
-        )}
+        {showDecimal && <span className="ms-2 fw-bold">{rating.toFixed(1)}</span>}
       </div>
     );
   };
 
-  // Tạo ratingData từ reviews
+  // Tính toán thống kê sao
   const ratingData = useMemo(() => {
-    const ratings = userReviews.map(review => review.rating);
-    
-    // Nhóm ratings theo số sao
-    const starCategories: Record<string, number> = {
-      '5': 0, '4.5': 0, '4': 0, '3.5': 0, '3': 0, '2.5': 0, '2': 0, '1.5': 0, '1': 0, '0.5': 0
-    };
-    
-    ratings.forEach(rating => {
-      const roundedRating = Math.round(rating * 2) / 2;
-      const key = roundedRating.toString();
-      if (starCategories[key] !== undefined) {
-        starCategories[key]++;
-      }
+    const totalReviews = reviews.length;
+    if (totalReviews === 0) return [5, 4, 3, 2, 1].map(stars => ({ stars, percent: 0 }));
+
+    // Đếm số lượng từng loại sao (làm tròn)
+    const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    reviews.forEach(r => {
+      const rounded = Math.round(r.rating);
+      if (counts[rounded] !== undefined) counts[rounded]++;
     });
-    
-    // Gom nhóm thành 5, 4, 3, 2, 1 sao cho thanh progress
-    const starCounts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    const starSum: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    
-    Object.entries(starCategories).forEach(([key, count]) => {
-      const starValue = parseFloat(key);
-      const starGroup = Math.round(starValue);
-      if (starGroup >= 1 && starGroup <= 5) {
-        starCounts[starGroup] += count;
-        starSum[starGroup] += starValue * count;
-      }
-    });
-    
-    // Tính percent cho mỗi số sao
-    return [5, 4, 3, 2, 1].map(stars => {
-      const count = starCounts[stars];
-      if (count === 0) {
-        return { stars, percent: 0 };
-      }
-      
-      const avgRatingForStar = starSum[stars] / count;
-      const percent = calculatePercentByRatingRange(avgRatingForStar);
-      
-      return { stars, percent };
-    });
-  }, [userReviews]);
+
+    return [5, 4, 3, 2, 1].map(stars => ({
+      stars,
+      percent: (counts[stars] / totalReviews) * 100
+    }));
+  }, [reviews]);
 
   // Tính rating trung bình
   const averageRating = useMemo(() => {
-    if (userReviews.length === 0) return 0;
-    const total = userReviews.reduce((sum, review) => sum + review.rating, 0);
-    return total / userReviews.length;
-  }, [userReviews]);
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum, r) => sum + Number(r.rating), 0);
+    return total / reviews.length;
+  }, [reviews]);
+
+  if (loading) return <p>Đang tải đánh giá...</p>;
 
   return (
     <>
@@ -173,24 +164,18 @@ const ProductReviewsSection: React.FC = () => {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="row">
+            {/* Cột Trái: Thống kê sao */}
             <div className="col-12 col-md-4 border-end">
               <div className="text-center mb-3">
                 <div className="d-flex justify-content-center align-items-center mb-2">
                   {renderStars(averageRating)}
                 </div>
-                <p className="text-muted mb-0">
-                  {userReviews.length} đánh giá
-                </p>
+                <p className="text-muted mb-0">{reviews.length} đánh giá</p>
               </div>
 
               {ratingData.map((r) => (
-                <div
-                  key={r.stars}
-                  className="d-flex align-items-center gap-2 mb-2"
-                >
-                  <span style={{ width: 100 }}>
-                    {renderStars(r.stars, false)}
-                  </span>
+                <div key={r.stars} className="d-flex align-items-center gap-2 mb-2">
+                  <span style={{ width: 100 }}>{renderStars(r.stars, false)}</span>
                   <div className="progress flex-grow-1" style={{ height: 8 }}>
                     <div
                       className="progress-bar bg-warning"
@@ -198,14 +183,16 @@ const ProductReviewsSection: React.FC = () => {
                     />
                   </div>
                   <span className="text-muted" style={{ minWidth: '40px' }}>
-                    {r.percent}%
+                    {Math.round(r.percent)}%
                   </span>
                 </div>
               ))}
             </div>
 
+            {/* Cột Phải: Danh sách Review chi tiết */}
             <div className="col-12 col-md-8 ps-md-4">
-              <ReviewList reviews={userReviews} />
+                {/* Truyền dữ liệu state vào component con */}
+                <ReviewList reviews={reviews} />
             </div>
           </div>
         </div>

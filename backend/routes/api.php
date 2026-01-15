@@ -337,10 +337,7 @@ Route::prefix('/product-images')->group(function() {
     Route::get('{productId}', [\App\Http\Controllers\ProductImageController::class, 'getProductImageByProductId']);
 });
 
-Route::prefix('orders')->group(function() {
-    Route::get('/', [OrderController::class, 'getOrders']);
-    Route::put('/{id}', [OrderController::class, 'updateStatus']);
-});
+
 Route::prefix('oders')->group(function() {
     Route::get('/user/{userId}', [OrderController::class, 'getUserOrders']);
     Route::get('/{id}', [OrderController::class, 'getOrderDetails']);
@@ -388,6 +385,9 @@ Route::prefix('orders')->group(function () {
     Route::put('/{orderId}/status', [OrderController::class, 'updateOrderStatus']);
     Route::get('/status/{status}', [OrderController::class, 'getOrdersByStatus']);
     Route::get('/search', [OrderController::class, 'searchOrders']);
+
+    Route::get('/', [OrderController::class, 'getOrders']);
+    Route::put('/{id}', [OrderController::class, 'updateStatus']);
 });
 
 // VNPay routes với prefix 'vnpay'

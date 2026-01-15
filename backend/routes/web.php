@@ -15,7 +15,7 @@ use App\Http\Controllers\GoogleAuthController;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return 'Celeste Books Backend is Running!';
 });
 // Google OAuth routes
 Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.login');
