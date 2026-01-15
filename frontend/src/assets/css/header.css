@@ -1,0 +1,413 @@
+:root {
+  /* ===== Brand & Primary ===== */
+  --color-primary: #0d6efd;
+  --color-success: #198754;
+  --color-danger: #dc3545;
+  --color-warning: #f59e0b;
+  --color-purple: #6f42c1;
+
+  /* ===== Text ===== */
+  --color-text: #212529;
+  --color-text-muted: #6c757d;
+  --color-white: #ffffff;
+  --color-border: #ccc;
+
+  /* ===== Background ===== */
+  --bg-light: #f8f9fa;
+  --bg-lighter: #f0f8ff;
+  --bg-divider: #f1f1f1;
+
+  /* ===== Border ===== */
+  --border-light: #e9ecef;
+
+  /* ===== Shadow ===== */
+  --shadow-dropdown: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --shadow-badge: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.sb-topnav-product .sb-topnav-container {
+  max-width: 1200px;
+  margin: 0 auto; /* căn giữa */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Khi collapsed */
+.sb-topnav-product.collapsed {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Ẩn navbar chính khi collapsed */
+.sb-topnav-product .sb-topnav-container .sb-topnav-main.d-none {
+  display: none !important;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 1.2rem;
+  padding-left: .5rem;
+}
+
+.brand-icon {
+  font-size: 1.5rem;
+  margin-right: 8px;
+}
+
+.brand-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive: màn hình nhỏ hơn 992px */
+@media (max-width: 992px) {
+  .brand-header {
+    padding-left: 0;
+  }
+}
+
+/* Wrapper: bọc nav để dễ style flex-column */
+.product-nav-wrapper {
+  display: flex;
+  flex-direction: column; /* xếp nav theo cột */
+  width: 100%;
+}
+
+/* Nav chính cho menu sản phẩm */
+.product-nav {
+  padding: .5rem 0;
+}
+
+/* Danh sách */
+.product-nav-list {
+  display: flex;
+  justify-content: start; /* căn giữa menu */
+  gap: 1.5rem; /* khoảng cách giữa item */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap; /* responsive: xuống dòng nếu cần */
+}
+
+/* Item
+.product-nav-item {} */
+
+/* Link */
+.product-nav-link {
+  color: var(--color-text); /* xám đậm hơn */
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.product-nav-link:hover {
+  color: var(--color-primary); /* xanh đậm hơn */
+}
+
+.product-nav-link.active {
+  color: var(--color-primary); /* active màu xanh đậm */
+}
+
+/* Responsive nhỏ hơn 768px */
+@media (max-width: 768px) {
+  .product-nav-list {
+    gap: 1rem;
+  }
+  .product-nav-link {
+    font-size: 0.95rem;
+  }
+}
+
+/* ======================= Phần chung cho tất cả dropdown ======================= */
+
+/* Container chung */
+.dropdown {
+  position: relative;
+}
+
+/* Toggle button chung */
+.dropdown > button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  font-size: 1.25rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Ẩn mũi tên Bootstrap */
+.dropdown-toggle::after {
+  display: none;
+}
+
+/* Dropdown menu chung */
+.dropdown-menu {
+  position: absolute;
+  top: 120%;
+  min-width: 260px;
+  max-width: 350px;
+  right: 0;
+  background: var(--bg-light);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  padding: 8px 0;
+  z-index: 1000;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all 0.2s ease;
+}
+
+
+/* Show menu */
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Item chung */
+.dropdown-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  background-color: tra;
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+}
+
+.dropdown-item:hover {
+  background: var(--bg-light);
+  color: var(--color-primary);
+}
+
+.dropdown-item.active {
+  background: var(--bg-light);
+  color: var(--color-primary);
+}
+
+/* Divider */
+.dropdown-divider {
+  height: 1px;
+  background: var(--bg-divider);
+  margin: 6px 0;
+}
+
+/* Item màu đỏ */
+.dropdown-item.danger {
+  color: var(--color-danger);
+}
+
+/* Wrapper: bọc nav để dễ style flex-column */
+.product-nav-wrapper {
+  display: flex;
+  flex-direction: column; /* xếp nav theo cột */
+  width: 100%;
+}
+
+/* Dropdown 2 cột */
+.dropdown-menu.two-col {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 8px;
+}
+
+.dropdown-item i {
+  margin-right: 8px;
+  font-size: 1.05rem;
+  vertical-align: middle;
+}
+
+/* ======================= NotificationDropdown ======================= */
+.notification-dropdown .notification-icon {
+  font-size: 1.5rem;
+}
+
+/* Badge hình tròn */
+.notification-dropdown .notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  transform: translate(32%, -50%);
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 50%;
+  background-color: var(--color-danger);
+  color: var(--color-white);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.notification-dropdown .dropdown-header {
+  font-weight: 600;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--bg-divider);
+}
+
+.notification-dropdown .dropdown-item.text-center {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.notification-dropdown .dropdown-item.text-center:hover {
+  background: var(--bg-lighter);
+}
+
+.notification-info .text-truncate {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ======================= UserDropdown ======================= */
+.user-dropdown .user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-light);
+  cursor: pointer;
+}
+
+.user-dropdown .user-avatar-sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.user-dropdown .dropdown-header.user-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--bg-divider);
+}
+
+/* ======================= CartDropdown ======================= */
+.cart-dropdown .cart-icon {
+  font-size: 1.5rem;
+}
+
+.cart-dropdown .dropdown-header.cart-header {
+  font-weight: 600;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--bg-divider);
+}
+
+/* Nếu muốn badge riêng cho cart */
+.cart-dropdown .notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  transform: translate(32%, -50%);
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 50%;
+  background-color: var(--color-success); /* màu xanh lá cho cart */
+  color: var(--color-white);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.cart-dropdown-menu {
+  max-width: 300px;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.cart-dropdown-menu .item-info span {
+  display: block;           
+  max-width: 180px;         
+  white-space: nowrap;      
+  overflow: hidden;         
+  text-overflow: ellipsis;  
+}
+
+/* ======================= Thể loại và xếp hạng ======================= */
+.dropdown-menu.rank {
+  min-width: 300px;
+}
+
+.dropdown-menu.productType {
+  min-width: 300px;
+}
+
+/* Dropdown menu category với wrap và 2 columns */
+.dropdown-menu.category {
+  min-width: 280px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Mỗi li chiếm 50% trừ đi gap */
+.dropdown-menu.category li {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Style cho link bên trong */
+.dropdown-menu.category li a {
+  display: block;
+  width: 100%;
+}
+
+/* Ẩn mũi tên Bootstrap */
+.product-nav-link.dropdown-toggle::after {
+  display: inline-block;
+}
+
+/* Mỗi item chiếm 50% */
+.dropdown-menu.two-col li {
+  width: 50%;
+  box-sizing: border-box;
+}
+
+.dropdown-item.all:hover, .icon-all { color: var(--color-warning);}
+.dropdown-item.day:hover, .icon-day { color: var(--color-primary);}
+.dropdown-item.week:hover, .icon-week { color: var(--color-success);}
+.dropdown-item.month:hover, .icon-month { color: var(--color-danger);}
+.dropdown-item.new:hover, .icon-new { color: var(--color-purple);}
+
+
+.dropdown-item.all:hover, .icon-all {
+  color: var(--color-warning);
+}
+
+.dropdown-item.paper:hover, .icon-paper {
+  color: var(--color-danger);
+}
+
+.dropdown-item.ebook:hover, .icon-ebook {
+  color: var(--color-primary);
+}
+
+.dropdown-item.both:hover, .icon-both {
+  color: var(--color-purple);
+}
