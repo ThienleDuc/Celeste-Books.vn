@@ -44,25 +44,52 @@ class ReviewImageController extends Controller
         }
     }
     //create reivew image
-    public function createReviewImage(ReviewImageRequest $request)
-    {
-        try {
-            $createReviewImageInput = $request->validated();
-            $createReviewImage = ReviewImage::create($createReviewImageInput);
-            return response()->json([
-                'status' => 'success',
-                'data' => $createReviewImage,
-            ], 200);
+    public function createReviewImage(Request $request) 
+{
+    // BƯỚC 1: Validate đầu vào phải là ẢNH (File), không được là string
+    $request->validate([
+        'review_id' => 'required|integer',
+        // Dòng này quan trọng: phải check là image, không được check là string
+        'image_url' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', 
+    ]);
 
+    try {
+        $urlToSave = '';
 
-        } catch (\Throwable $th) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to retrieve review image',
-                'error' => $th->getMessage()
-            ], 500);
+        // BƯỚC 2: Kiểm tra và Upload file
+        if ($request->hasFile('image_url')) {
+            $file = $request->file('image_url');
+            
+            // Cách 1: Tạo tên file ngẫu nhiên để không trùng
+            $filename = time() . '_' . $file->getClientOriginalName();
+            
+            // Upload vào thư mục public/uploads/reviews
+            $file->move(public_path('uploads/reviews'), $filename);
+            
+            // BƯỚC 3: Tạo đường dẫn URL đầy đủ (String)
+            // Kết quả sẽ dạng: http://localhost:8000/uploads/reviews/12345_anh.jpg
+            $urlToSave = url('uploads/reviews/' . $filename);
         }
+
+        // BƯỚC 4: Lưu chuỗi URL đó vào Database
+        $reviewImage = ReviewImage::create([
+            'review_id' => $request->review_id,
+            'image_url' => $urlToSave, // <-- Đây chính là String URL bạn muốn
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Upload thành công',
+            'data' => $reviewImage
+        ], 201);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Lỗi upload: ' . $e->getMessage()
+        ], 500);
     }
+}
     //update review image 
     public function updateReviewImage(ReviewImageRequest $request, $id)
     {

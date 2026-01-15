@@ -311,6 +311,8 @@ Route::prefix('addresses')->group(function () {
 Route::prefix('review')->group(function () {
     //show contact list of messages
     Route::get('/', [\App\Http\Controllers\ReviewController::class, 'getReviews']);
+    //check reviewed - PHẢI ĐẶT TRƯỚC /{id} VÀ CÓ AUTH MIDDLEWARE
+    Route::middleware('auth:sanctum')->get('/check-reviewed', [\App\Http\Controllers\ReviewController::class, 'checkReviewed']);
     //show detail messages
     Route::get('/{id}', [\App\Http\Controllers\ReviewController::class, 'getReviewByProductId']);
     //create message

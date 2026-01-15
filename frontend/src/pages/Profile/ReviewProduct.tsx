@@ -26,6 +26,8 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, productId,or
   const [detailedProduct, setDetailedProduct] = useState<any>(null);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [userLogged, setUserLogged] = useState<User | null>(null);
+//kiểm tra đã đánh giá chưa 
+
 
   // --- 1. LẤY USER TỪ TOKEN KHI MỞ MODAL ---
   useEffect(() => {
@@ -93,19 +95,37 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ isOpen, onClose, productId,or
   };
 
   const handleInsertReviewImage = async (reviewId: any, imageFile: File) => {
+    // 1. Lấy token lại (vì biến token ở scope khác không dùng được ở đây)
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        console.error("Thiếu token khi upload ảnh");
+        return;
+    }
+
     try {
       const formData = new FormData();
-      formData.append('review_id', reviewId); 
-      formData.append('image_url', imageFile); 
-      
+      formData.append('review_id', reviewId);
+      formData.append('image_url', imageFile); // Key này phải khớp với validation bên Laravel
 
-      // API upload ảnh thường cũng cần Token, bạn nên thêm vào nếu backend yêu cầu
-      await fetch(`http://localhost:8000/api/review-image`, {
+      const response = await fetch('http://localhost:8000/api/review-image', {
         method: 'POST',
-        body: formData, 
+        headers: {
+          'Accept': 'application/json',        // BẮT BUỘC để tránh lỗi Redirect/CORS
+          'Authorization': `Bearer ${token}`,  // BẮT BUỘC
+          // KHÔNG thêm Content-Type: multipart/form-data thủ công
+        },
+        body: formData 
       });
+
+      if (!response.ok) {
+         const errorData = await response.json();
+         console.error("Lỗi server upload ảnh:", errorData);
+      } else {
+         console.log("Upload ảnh thành công cho review:", reviewId);
+      }
+
     } catch (error) {
-      console.error('Lỗi upload ảnh:', error);
+      console.error('Lỗi kết nối khi upload ảnh:', error);
     }
   };
 

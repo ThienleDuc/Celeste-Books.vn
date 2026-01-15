@@ -55,4 +55,14 @@ class Review extends Model
         // Liên kết với bảng users qua khóa ngoại user_id
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+    public function images()
+    {
+        // 'review_id' là khóa ngoại trong bảng review_images
+        // 'id' là khóa chính của bảng reviews
+        return $this->hasMany(ReviewImage::class, 'review_id', 'id');
+    }
+    public function orderItem()
+    {
+        return $this->belongsTo(OrderItem::class, 'order_item_id', 'id');
+    }
 }
