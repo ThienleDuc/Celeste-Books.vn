@@ -40,6 +40,7 @@ interface LocalStorageCartData {
     totalPrice: number;
     totalQuantity: number;
     timestamp: string;
+    checkoutType: 'cart' | 'buy_now';
 }
 // import type { LocalStorageCartData } from '../../models/Checkout/checkout.model';
 import { sampleAddresses, getAddressFull } from '../../models/User/address.model';
@@ -71,6 +72,7 @@ const CheckoutPage: React.FC = () => {
 
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
+    const checkoutTypeFromUrl = queryParams.get('checkoutType');
     const urlAmount = parseFloat(queryParams.get('amount') || '0');
 
     // Hàm lấy dữ liệu từ localStorage
@@ -268,60 +270,113 @@ const CheckoutPage: React.FC = () => {
 useEffect(() => {
     const loadInitialData = async () => {
         setIsLoading(true);
+        // Reset state cũ để tránh lặp dữ liệu khi chuyển mode
+        setCartItems([]); 
+        
         try {
-            const effectiveUserId = String(userId || 'A01');
-            const [addressRes, cartRes] = await Promise.all([
-                checkoutApi.getUserAddresses(effectiveUserId),
-                checkoutApi.getUserCart(effectiveUserId)
-            ]);
+            const effectiveUserId = String(userId || 'C01');
+            const queryParams = new URLSearchParams(location.search);
+            
+            const storageKey = `checkout_${effectiveUserId}`;
+            const storageData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            const currentCheckoutType = queryParams.get('checkoutType') || storageData.checkoutType || 'cart';
 
-            // 1. Xử lý Địa chỉ
+            // 1. Lấy địa chỉ
+            const addressRes = await checkoutApi.getUserAddresses(effectiveUserId);
             const addrList = addressRes.data?.data || [];
             setAddresses(addrList);
             setSelectedAddress(addrList.find((a: any) => a.is_default === 1) || addrList[0]);
 
-            // 2. Xử lý Giỏ hàng (Fix lặp dữ liệu và Type Error)
-            if (cartRes.data?.success && cartRes.data.data) {
-                const apiItems = cartRes.data.data.items;
-
-                // Lọc trùng sản phẩm dựa trên product_detail_id
-                const uniqueItems = apiItems.reduce((acc: any[], current: any) => {
-                    const isExist = acc.find((item: any) => item.product_detail_id === current.product_detail_id);
-                    if (!isExist) return acc.concat([current]);
-                    return acc;
-                }, []);
-
-                setCartItems(uniqueItems);
-
-                const manualSubtotal = uniqueItems.reduce((sum: number, item: any) => {
-                    return sum + (parseFloat(item.price_at_time || 0) * Number(item.quantity || 0));
-                }, 0);
+            // 2. Xử lý phân luồng
+            if (currentCheckoutType === 'buy_now') {
+                const latestRes = await checkoutApi.getLatestCartItem(effectiveUserId);
                 
-                const totalQty = uniqueItems.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
-                
-                setCartData({
-                    userId: String(effectiveUserId),
-                    products: uniqueItems.map((item: any): CheckoutProduct => ({
-                        id: item.cart_item_id,
+                if (latestRes.data?.success && latestRes.data.data) {
+                    const item = latestRes.data.data;
+                    const mappedItem: any = {
+                        id: item.cart_item_id,        // Mapping cart_item_id -> id
+                        cartId: 0,                   // Giá trị giả lập nếu model yêu cầu
                         productId: item.product_id,
-                        product_detail_id: item.product_detail_id,
-                        productType: item.product_type,
-                        quantity: Number(item.quantity),
-                        priceAtTime: parseFloat(item.price_at_time)
-                    })),
-                    totalPrice: manualSubtotal,
-                    totalQuantity: totalQty,    
-                    timestamp: Date.now().toString()
-                });
+                        productDetailtId: item.product_detail_id,
+                        quantity: item.quantity,
+                        priceAtTime: Number(item.price_at_time),
+                        // Giữ lại các trường snake_case để các component hiển thị dùng được
+                        product_name: item.product_name,
+                        primary_image: item.primary_image,
+                        product_type: item.product_type,
+                        item_total: Number(item.item_total)
+                    };
+            
+                    setCartItems([mappedItem]); 
+                    setCartData({
+                        userId: effectiveUserId,
+                        checkoutType: 'buy_now',
+                        products: [{
+                            id: item.cart_item_id,
+                            productId: item.product_id,
+                            product_detail_id: item.product_detail_id,
+                            productType: item.product_type,
+                            quantity: item.quantity,
+                            priceAtTime: Number(item.price_at_time)
+                        }],
+                        totalPrice: Number(item.item_total),
+                        totalQuantity: item.quantity,
+                        timestamp: Date.now().toString()
+                    });
+                }
+            }else {
+               /* --- TRƯỜNG HỢP GIỎ HÀNG (cart) --- */
+const cartRes = await checkoutApi.getUserCart(effectiveUserId);
+
+if (cartRes.data?.success && cartRes.data.data) {
+    const rawItems = cartRes.data.data.items;
+    
+    // 1. Lọc trùng bằng Map để đảm bảo mỗi cart_item_id chỉ xuất hiện 1 lần
+    const uniqueMap = new Map();
+    rawItems.forEach((item: any) => {
+        // Sử dụng cart_item_id làm khóa duy nhất
+        const key = item.cart_item_id;
+        if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, item);
+        }
+    });
+
+    const finalItems = Array.from(uniqueMap.values());
+
+    // 2. Tính toán lại Tổng số lượng và Tổng tiền để tránh lỗi từ Backend/Nối chuỗi
+    const totalQty = finalItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const totalPrice = finalItems.reduce((sum, item) => {
+        const price = parseFloat(item.price_at_time || item.sale_price || 0);
+        return sum + (price * Number(item.quantity || 0));
+    }, 0);
+    setCartItems(finalItems);
+    setCartData({
+        userId: effectiveUserId,
+        checkoutType: 'cart',
+        products: finalItems.map((item: any) => ({
+            id: item.cart_item_id,
+            productId: item.product_id,
+            product_detail_id: item.product_detail_id,
+            productType: item.product_type,
+            quantity: Number(item.quantity),
+            priceAtTime: parseFloat(item.price_at_time || item.sale_price || 0)
+        })),
+        totalPrice: totalPrice,
+        totalQuantity: totalQty,
+        timestamp: Date.now().toString()
+    });
+}
             }
         } catch (error) {
-            setErrorMessage("Không thể tải dữ liệu giỏ hàng.");
+            console.error("Lỗi checkout:", error);
+            setErrorMessage("Không thể tải dữ liệu.");
         } finally {
             setIsLoading(false);
         }
     };
+
     loadInitialData();
-}, [userId]);
+}, [userId, location.search]); // location.search giúp trigger lại khi đổi URL
 
 useEffect(() => {
     const fetchDiscountAndShippingData = async () => {

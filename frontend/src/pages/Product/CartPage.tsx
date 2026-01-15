@@ -168,6 +168,8 @@ const CartPage = () => {
   /* =========================================================
      CHECKOUT HANDLER
      ========================================================= */
+    
+
     const handleCheckout = () => {
     if (selectedItems.length === 0) return;
 
@@ -188,6 +190,7 @@ const CartPage = () => {
       products: checkoutProducts,
       totalQuantity,
       totalPrice,
+      checkoutType: "cart",
       timestamp: new Date().toISOString()
     };
 
@@ -209,6 +212,7 @@ const CartPage = () => {
       products: productIds, // Chỉ IDs, không phải toàn bộ JSON
       count: totalQuantity.toString(),
       amount: totalPrice.toString(),
+      checkoutType: "cart",
     });
 
     // 3. Sử dụng router state cho toàn bộ dữ liệu

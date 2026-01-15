@@ -2,13 +2,10 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-Use App\Models\UserNotification;
-use App\Models\UserNotification as ModelsUserNotification;
 
 class User extends Authenticatable
 {
@@ -83,7 +80,7 @@ public function getHasPasswordAttribute()
     // 🔗 1 - N Notification
     public function notifications()
     {
-        return $this->hasMany(ModelsUserNotification::class, 'user_id', 'id');
+        return $this->hasMany(\App\Models\UserNotification::class, 'user_id', 'id');
     }
   
 
