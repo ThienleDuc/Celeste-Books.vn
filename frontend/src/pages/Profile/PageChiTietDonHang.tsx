@@ -104,7 +104,7 @@ const PageChiTietDonHang = () => {
         if(err.response && err.response.status === 404) {
             alert("Đơn hàng không tồn tại hoặc đã bị xóa.");
         } else {
-            alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
+alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
         }
         navigate("/don-hang-cua-toi");
       } finally {
@@ -185,7 +185,7 @@ const PageChiTietDonHang = () => {
               <h6 className="mb-0 fw-bold">Danh sách sản phẩm</h6>
             </div>
             <div className="card-body p-0">
-              <div className="table-responsive">
+<div className="table-responsive">
                 <table className="table table-hover mb-0">
                   <thead className="bg-light">
                     <tr>
@@ -237,7 +237,7 @@ const PageChiTietDonHang = () => {
                 </table>
               </div>
             </div>
-          </div>
+</div>
 
           {/* TỔNG TIỀN */}
           <div className="card border-0 shadow-sm mt-3">
@@ -253,12 +253,11 @@ const PageChiTietDonHang = () => {
                     <span className="text-muted">Phí vận chuyển:</span>
                     <span className="fw-medium">{Number(order.shipping_fee).toLocaleString()}₫</span>
                   </div>
-                  {Number(order.discount) > 0 && (
-                    <div className="d-flex justify-content-between mb-2">
-                      <span className="text-muted">Giảm giá:</span>
-                      <span className="fw-medium text-success">-{Number(order.discount).toLocaleString()}₫</span>
-                    </div>
-                  )}
+                  {/* Sửa ở đây - luôn hiển thị dòng giảm giá */}
+        <div className="d-flex justify-content-between mb-2">
+          <span className="text-muted">Giảm giá:</span>
+          <span className="fw-medium text-success">-{Number(order.discount).toLocaleString()}₫</span>
+          </div>
                 </div>
                 <div className="col-6">
                   <div className="bg-light rounded p-3">
@@ -300,7 +299,7 @@ const PageChiTietDonHang = () => {
                 <div className="text-muted small">Không có thông tin địa chỉ</div>
               )}
             </div>
-          </div>
+</div>
 
           {/* THÔNG TIN THANH TOÁN */}
           <div className="card border-0 shadow-sm mt-3">

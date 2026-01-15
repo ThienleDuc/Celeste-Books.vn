@@ -404,3 +404,5 @@ Route::prefix('shipping-config')->group(function () {
     Route::get('/weight-fees', [WeightFeeController::class, 'index']);
     Route::post('/weight-fees', [WeightFeeController::class, 'store']);
 });
+
+Route::get('/cart/latest/{userId}', [CartItemController::class, 'getLatestCartItem']);

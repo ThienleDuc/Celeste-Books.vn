@@ -61,11 +61,9 @@ const CartSummaryStep: React.FC<CartSummaryStepProps> = ({
 
   // Lấy danh sách sản phẩm để hiển thị - DI CHUYỂN LÊN TRÊN
   const getDisplayItems = (): any[] => {
-    // Ưu tiên dùng cartItems vì nó chứa đầy đủ thông tin tên, ảnh từ API
     if (cartItems && cartItems.length > 0) {
       return cartItems;
     }
-    // Nếu không có cartItems mới dùng tới storage
     if (cartDataFromStorage) {
       return cartDataFromStorage.products;
     }
@@ -76,34 +74,50 @@ const CartSummaryStep: React.FC<CartSummaryStepProps> = ({
 const getProductInfo = (item: any): ProductInfo | null => {
   if (!item) return null;
 
-  // Lấy giá thực tế từ API (Postman trả về sale_price hoặc price_at_time)
-  const currentPrice = parseFloat(item.price_at_time || item.sale_price || 0);
-  const oldPrice = parseFloat(item.original_price || currentPrice);
+  // Lấy giá bán hiện tại (thử tất cả các key có thể có)
+  const currentPrice = parseFloat(
+    item.sale_price || 
+    item.price_at_time || 
+    item.priceAtTime || 
+    0
+  );
+
+  const oldPrice = parseFloat(
+    item.original_price || 
+    item.originalPrice || 
+    currentPrice
+  );
+
+  const qty = Number(item.quantity || 1);
 
   return {
-    id: item.cart_item_id || item.id,
-    name: item.product_name || "Sách không tên", // Đảm bảo đúng key product_name
-    imageUrl: item.primary_image || '/img/no-image.png', // Đúng key primary_image
+    id: item.cart_item_id || item.id || Math.random(),
+    name: item.product_name || item.name || item.productName || "Sách đang tải...",
+    imageUrl: item.primary_image || item.image || item.imageUrl || '/img/no-image.png',
     price: currentPrice,
     originalPrice: oldPrice,
-    productType: item.product_type || 'Sách giấy',
-    quantity: item.quantity || 1,
-    hasPriceChange: false, // Tắt cảnh báo màu vàng nếu bạn muốn giao diện sạch
-    productId: item.product_id,
-    total: currentPrice * (item.quantity || 1)
+    productType: item.product_type || item.productType || 'Sách giấy',
+    quantity: qty,
+    hasPriceChange: false, 
+    productId: item.product_id || item.productId,
+    total: currentPrice * qty
   };
 };
 
   // Tính tổng tiền với giá hiện tại
   const calculateTotal = (): number => {
-    return displayItems.reduce((total, item) => {
-      return total + (parseFloat(item.sale_price || item.price_at_time || 0) * (item.quantity || 1));
+    const items = getDisplayItems();
+    return items.reduce((total, item) => {
+      const info = getProductInfo(item);
+      return total + (info ? info.total : 0);
     }, 0);
   };
 
   const calculateOriginalTotal = (): number => {
-    return displayItems.reduce((total, item) => {
-      return total + (parseFloat(item.original_price || item.sale_price || 0) * (item.quantity || 1));
+    const items = getDisplayItems();
+    return items.reduce((total, item) => {
+      const info = getProductInfo(item);
+      return total + (info ? (info.originalPrice * info.quantity) : 0);
     }, 0);
   };
 
