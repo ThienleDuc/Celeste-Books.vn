@@ -1,5 +1,7 @@
 // ../Cart/cart.model.ts
 
+import type { Product, ProductDetail } from "../Product/product.model";
+
 /* =======================
    SHOPPING_CARTS TABLE
    ======================= */
@@ -29,6 +31,8 @@ export interface CartItem {
   priceAtTime: number;     // DECIMAL(12,2)
   createdAt: string;       // TIMESTAMP
   updatedAt: string;       // TIMESTAMP
+  product?:   Product;
+  product_detail?: ProductDetail;
 }
 
 /* =========================================================

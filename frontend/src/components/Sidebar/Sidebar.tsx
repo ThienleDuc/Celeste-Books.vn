@@ -12,12 +12,12 @@ const Sidebar = () => {
           {/* ===== THỐNG KÊ ===== */}
           <div className="sb-sidenav-menu-heading">Thống kê</div>
 
-          <NavLink to="/thong-ke/nhap-kho" className={linkClass}>
+          <NavLink to="/admin/statistics/inventory" className={linkClass}>
             <i className="bi bi-box-arrow-in-down me-2"></i>
             Sản phẩm nhập vào
           </NavLink>
 
-          <NavLink to="/thong-ke/ban-ra" className={linkClass}>
+          <NavLink to="/admin/statistics/sales" className={linkClass}>
             <i className="bi bi-graph-up-arrow me-2"></i>
             Sản phẩm bán ra
           </NavLink>
@@ -38,7 +38,7 @@ const Sidebar = () => {
           {/* ===== QUẢN LÝ SẢN PHẨM ===== */}
           <div className="sb-sidenav-menu-heading">Quản lý sản phẩm</div>
 
-          <NavLink to="/san-pham" className={linkClass}>
+          <NavLink to="/admin/products" className={linkClass}>
             <i className="bi bi-box-seam me-2"></i>
             Sản phẩm
           </NavLink>

@@ -16,10 +16,41 @@ use Illuminate\Support\Facades\Storage;
 class ProductController extends Controller
 {
     protected $notificationController;
-    
+
     public function __construct()
     {
         $this->notificationController = new \App\Http\Controllers\ProductNotificationController();
+    }
+
+        // Helper function để xử lý upload ảnh (Thêm vào trong Class ProductController)
+    private function processImageUploads(Request $request)
+    {
+        $finalImages = [];
+
+        // 1. Lấy các URL ảnh cũ/online (dạng string)
+        if ($request->filled('images')) {
+            $finalImages = $request->input('images'); // Đã là mảng URL
+        }
+
+        // 2. Xử lý file ảnh upload mới (dạng binary)
+        if ($request->hasFile('image_uploads')) {
+            foreach ($request->file('image_uploads') as $file) {
+                // Tạo tên file duy nhất
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                // Di chuyển file vào thư mục public/uploads/products
+                $file->move(public_path('uploads/products'), $fileName);
+
+                // Tạo URL đầy đủ để client truy cập
+                // Lưu ý: Đảm bảo APP_URL trong .env đúng (ví dụ: http://127.0.0.1:8000)
+                $url = asset('uploads/products/' . $fileName);
+
+                // Thêm vào danh sách ảnh cuối cùng
+                $finalImages[] = $url;
+            }
+        }
+
+        return $finalImages;
     }
 
     // 1. LẤY DANH SÁCH SẢN PHẨM
@@ -35,7 +66,7 @@ class ProductController extends Controller
                 })
                 // Subquery để lấy product_detail có giá thấp nhất
                 ->leftJoin(DB::raw('(
-                    SELECT 
+                    SELECT
                         pd1.*,
                         ROW_NUMBER() OVER (PARTITION BY pd1.product_id ORDER BY pd1.sale_price ASC) as rn
                     FROM product_details pd1
@@ -48,7 +79,7 @@ class ProductController extends Controller
             /* ===== SORT ===== */
             $sortBy = $request->get('sort_by', 'p.id');
             $sortOrder = strtolower($request->get('sort_order')) === 'asc' ? 'asc' : 'desc';
-            
+
             $sortable = [
                 'id' => 'p.id',
                 'name' => 'p.name',
@@ -78,11 +109,11 @@ class ProductController extends Controller
                 DB::raw('pi.image_url as primary_image'),
                 DB::raw('COALESCE(pd.original_price, 0) as original_price'),
                 DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
-                DB::raw('CASE 
-                    WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                DB::raw('CASE
+                    WHEN pd.original_price > 0 AND pd.sale_price > 0
                         AND pd.original_price > pd.sale_price
                     THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
-                    ELSE 0 
+                    ELSE 0
                 END as discount_percent'),
                 DB::raw('p.purchase_count as total_sold'),
                 DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted')
@@ -93,17 +124,17 @@ class ProductController extends Controller
 
             /* ===== PAGINATION với DISTINCT ===== */
             $perPage = (int) $request->get('per_page', 20);
-            
+
             // Lấy tổng số sản phẩm phân biệt
             $totalQuery = clone $baseQuery;
             $total = DB::table(DB::raw("({$totalQuery->toSql()}) as sub"))
                 ->mergeBindings($totalQuery)
                 ->count();
-            
+
             // Lấy dữ liệu trang hiện tại
             $page = $request->get('page', 1);
             $offset = ($page - 1) * $perPage;
-            
+
             $products = DB::table(DB::raw("({$baseQuery->toSql()}) as sub"))
                 ->mergeBindings($baseQuery)
                 ->offset($offset)
@@ -217,7 +248,7 @@ class ProductController extends Controller
                 })
                 // Subquery để lấy product_detail có giá thấp nhất
                 ->leftJoin(DB::raw('(
-                    SELECT 
+                    SELECT
                         pd1.*,
                         ROW_NUMBER() OVER (PARTITION BY pd1.product_id ORDER BY pd1.sale_price ASC) as rn
                     FROM product_details pd1
@@ -246,11 +277,11 @@ class ProductController extends Controller
                 DB::raw('pi.image_url as primary_image'),
                 DB::raw('COALESCE(pd.original_price, 0) as original_price'),
                 DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
-                DB::raw('CASE 
-                    WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                DB::raw('CASE
+                    WHEN pd.original_price > 0 AND pd.sale_price > 0
                         AND pd.original_price > pd.sale_price
                     THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
-                    ELSE 0 
+                    ELSE 0
                 END as discount_percent'),
                 DB::raw('p.purchase_count as total_sold'),
                 DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted'),
@@ -276,7 +307,7 @@ class ProductController extends Controller
             /* ===== LẤY DỮ LIỆU VỚI LIMIT VÀ OFFSET ===== */
             $limit = (int) $request->get('limit', 6);
             $offset = (int) $request->get('offset', 0);
-            
+
             // Lấy dữ liệu với limit và offset
             $products = DB::table(DB::raw("({$baseQuery->toSql()}) as sub"))
                 ->mergeBindings($baseQuery)
@@ -364,7 +395,7 @@ class ProductController extends Controller
                 })
                 // Subquery để lấy product_detail có giá thấp nhất
                 ->leftJoin(DB::raw('(
-                    SELECT 
+                    SELECT
                         pd1.*,
                         ROW_NUMBER() OVER (PARTITION BY pd1.product_id ORDER BY pd1.sale_price ASC) as rn
                     FROM product_details pd1
@@ -387,11 +418,11 @@ class ProductController extends Controller
                 DB::raw('pi.image_url as primary_image'),
                 DB::raw('COALESCE(pd.original_price, 0) as original_price'),
                 DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
-                DB::raw('CASE 
-                    WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                DB::raw('CASE
+                    WHEN pd.original_price > 0 AND pd.sale_price > 0
                         AND pd.original_price > pd.sale_price
                     THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
-                    ELSE 0 
+                    ELSE 0
                 END as discount_percent'),
                 DB::raw('p.purchase_count as total_sold'),
                 DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted')
@@ -482,7 +513,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
-    
+
     // 4. TẠO SẢN PHẨM MỚI
     // Thêm mới sản phẩm
     // ý tưởng: thêm 1 danh sách images, categories vào sản phẩm,
@@ -501,6 +532,8 @@ class ProductController extends Controller
             'images.*'          => 'required|url|max:500',
             'categories'        => 'nullable|array',
             'categories.*'      => 'integer|exists:categories,id',
+            'image_uploads'   => 'nullable|array',
+            'image_uploads.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         // ===== CHECK TÊN SÁCH TRÙNG =====
@@ -517,16 +550,26 @@ class ProductController extends Controller
         $descriptionPath = null;
 
         try {
+
+            // 1. Ưu tiên lấy nội dung text từ frontend gửi lên
+                $descriptionContent = $request->description;
+
+            // 2. Xử lý file nếu có (Logic dự phòng nếu sau này bạn muốn upload file)
             if ($request->hasFile('description_file')) {
                 $file = $request->file('description_file');
                 $fileName = time() . '_' . $file->getClientOriginalName();
                 $descriptionPath = $file->storeAs('store', $fileName, 'public');
             }
 
+             // Nếu frontend không gửi text, mới dùng đường dẫn file
+                if (empty($descriptionContent)) {
+                    $descriptionContent = $descriptionPath;
+                }
+
             $product = Product::create([
                 'name'              => $request->name,
                 'slug'              => $slug,
-                'description'       => $descriptionPath,
+                'description'       => $descriptionContent,
                 'author'            => $request->author,
                 'publisher'         => $request->publisher,
                 'publication_year'  => $request->publication_year,
@@ -537,8 +580,11 @@ class ProductController extends Controller
                 'rating'            => 5.0,
             ]);
 
-            if ($request->filled('images')) {
-                ProductImage::syncImages($product->id, $request->images);
+            // [THAY ĐỔI] Xử lý ảnh (Gộp cả URL cũ và File mới)
+            $allImages = $this->processImageUploads($request);
+
+            if (!empty($allImages)) {
+                ProductImage::syncImages($product->id, $allImages);
             }
 
             if ($request->filled('categories')) {
@@ -605,6 +651,8 @@ class ProductController extends Controller
             'images.*'          => 'required|url|max:500',
             'categories'        => 'nullable|array',
             'categories.*'      => 'integer|exists:categories,id',
+            'image_uploads'   => 'nullable|array',
+            'image_uploads.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -644,7 +692,7 @@ class ProductController extends Controller
             }
 
             // 5. Update các trường khác
-            $fields = ['author','publisher','publication_year','language','status'];
+            $fields = ['author','publisher','publication_year','language','status', 'description'];
             foreach ($fields as $field) {
                 if ($request->filled($field)) {
                     $product->$field = $request->$field;
@@ -653,9 +701,9 @@ class ProductController extends Controller
 
             $product->save();
 
-            // 6. Update images nếu có
-            if ($request->filled('images')) {
-                ProductImage::syncImages($product->id, $request->images);
+            if ($request->filled('images') || $request->hasFile('image_uploads')) {
+                $allImages = $this->processImageUploads($request);
+                ProductImage::syncImages($product->id, $allImages);
             }
 
             // 7. Update categories nếu có
@@ -716,7 +764,7 @@ class ProductController extends Controller
 
             // 2. Tăng lượt xem
             $product->increment('views');
-            
+
             // 3. Lấy lượt xem mới
             $product->refresh(); // Refresh để lấy giá trị mới
 
@@ -807,9 +855,9 @@ class ProductController extends Controller
     {
         try {
             $keyword = trim($request->name);
-            
+
             $query = DB::table('products as p')
-                ->distinct('p.id') 
+                ->distinct('p.id')
                 ->leftJoin('product_images as pi', function ($join) {
                     $join->on('pi.product_id', '=', 'p.id')
                         ->where('pi.is_primary', 1);
@@ -992,7 +1040,7 @@ class ProductController extends Controller
             $categorySlug = $request->get('category_slug', $request->get('categorySlug', 'all'));
             $ranking = $request->get('ranking', 'all');
             $keyword = $request->get('keyword', $request->get('search', ''));
-            
+
             $query = DB::table('products as p')
                 ->distinct('p.id')
                 ->leftJoin('product_images as pi', function ($join) {
@@ -1188,12 +1236,12 @@ class ProductController extends Controller
     {
         try {
             $limit = (int) $request->get('limit', 10);
-            
+
             // Truy vấn con để lấy product_detail có giá thấp nhất cho mỗi sản phẩm
             $subQuery = DB::table('product_details as pd_sub')
                 ->select('pd_sub.product_id', DB::raw('MIN(pd_sub.sale_price) as min_price'))
                 ->groupBy('pd_sub.product_id');
-            
+
 
             $products = DB::table('products as p')
                 // JOIN ảnh chính
@@ -1220,25 +1268,25 @@ class ProductController extends Controller
                     'p.views',
                     'p.purchase_count',
                     'p.created_at',
-                    
+
                     // image field
                     DB::raw('COALESCE(pi.image_url, "") as image'),
-                    
+
                     // primary_image field
                     DB::raw('pi.image_url as primary_image'),
-                    
+
                     // Price fields
                     DB::raw('COALESCE(pd.original_price, 0) as original_price'),
                     DB::raw('COALESCE(pd.sale_price, 0) as sale_price'),
-                    
+
                     // discount_percent field
-                    DB::raw('CASE 
-                        WHEN pd.original_price > 0 AND pd.sale_price > 0 
+                    DB::raw('CASE
+                        WHEN pd.original_price > 0 AND pd.sale_price > 0
                             AND pd.original_price > pd.sale_price
                         THEN ROUND(((pd.original_price - pd.sale_price) / pd.original_price) * 100, 0)
-                        ELSE 0 
+                        ELSE 0
                     END as discount_percent'),
-                    
+
                     // total_sold and total_sold_formatted
                     DB::raw('p.purchase_count as total_sold'),
                     DB::raw('FORMAT(p.purchase_count, 0) as total_sold_formatted')
@@ -1273,21 +1321,21 @@ class ProductController extends Controller
     {
         try {
             $product = Product::find($productId);
-            
+
             if (!$product) {
                 return false;
             }
-            
+
             // Tính tổng số lượng đã mua từ bảng order_items
             $totalQuantity = OrderItem::where('product_id', $productId)
                 ->sum('quantity');
-            
+
             // Cập nhật purchase_count
             $product->purchase_count = (int) $totalQuantity;
             $product->save();
-            
+
             return true;
-            
+
         } catch (\Exception $e) {
             Log::error('Lỗi cập nhật purchase_count: ' . $e->getMessage());
             return false;
