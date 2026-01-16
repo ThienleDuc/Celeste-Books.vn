@@ -35,9 +35,8 @@ const EditProfile = () => {
     return { full_name: "", email: "", phone: "", birthday: "", gender: "" };
   });
 
-  // ✅ 3. THÊM: State lưu thông báo lỗi
+  // 3. State lưu thông báo lỗi
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
   const [loading, setLoading] = useState(false);
 
   /* ================= FETCH USER ================= */
@@ -82,24 +81,20 @@ const EditProfile = () => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
 
-    // ✅ Khi người dùng nhập lại, xóa lỗi của ô đó đi cho đỡ ngứa mắt
     if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  // ✅ 4. THÊM: Hàm kiểm tra lỗi logic
+  // 4. Hàm kiểm tra lỗi logic
   const validateForm = () => {
       const newErrors: { [key: string]: string } = {};
 
-      // Kiểm tra Họ tên
       if (!form.full_name.trim()) {
           newErrors.full_name = "Họ tên không được để trống.";
       }
 
-      // Kiểm tra Số điện thoại
       if (form.phone) {
-          // Regex chỉ cho phép số
           const isNumeric = /^\d+$/.test(form.phone);
           if (!isNumeric) {
               newErrors.phone = "Số điện thoại chỉ được chứa số.";
@@ -108,14 +103,9 @@ const EditProfile = () => {
           } else if (!form.phone.startsWith("0")) {
              newErrors.phone = "Số điện thoại phải bắt đầu bằng số 0.";
           }
-      } else {
-          // Nếu bạn muốn bắt buộc nhập SĐT thì mở dòng dưới ra
-          // newErrors.phone = "Vui lòng nhập số điện thoại.";
       }
 
       setErrors(newErrors);
-
-      // Nếu không có lỗi nào (Object rỗng) thì trả về true
       return Object.keys(newErrors).length === 0;
   };
 
@@ -123,9 +113,7 @@ const EditProfile = () => {
   const handleSubmit = async () => {
     if (!userId) return;
 
-    // ✅ Chạy kiểm tra trước khi gửi
     if (!validateForm()) {
-        // Có thể alert thêm để người dùng chú ý
         alert("Thông tin không hợp lệ. Vui lòng kiểm tra lại!");
         return; 
     }
@@ -195,7 +183,6 @@ const EditProfile = () => {
                         value={form.full_name} 
                         onChange={handleChange} 
                    />
-                   {/* 👇 Hiển thị lỗi ngay dưới input */}
                    {errors.full_name && <small className="text-danger">{errors.full_name}</small>}
                 </div>
 
@@ -214,16 +201,23 @@ const EditProfile = () => {
                         className={`form-control ${errors.phone ? "is-invalid" : ""}`} 
                         value={form.phone} 
                         onChange={handleChange} 
-                        maxLength={10} // Giới hạn nhập tối đa 10 ký tự trên giao diện luôn
+                        maxLength={10} 
                    />
-                   {/* 👇 Hiển thị lỗi ngay dưới input */}
                    {errors.phone && <small className="text-danger">{errors.phone}</small>}
                 </div>
 
-                {/* Ngày sinh */}
+                {/* Ngày sinh - ĐÃ SỬA: Thêm style border để hiện khung rõ hơn */}
                 <div className="col-md-6 mb-3">
                    <label className="fw-semibold">Ngày sinh</label>
-                   <input type="date" name="birthday" className="form-control" value={form.birthday} onChange={handleChange} />
+                   <input 
+                        type="date" 
+                        name="birthday" 
+                        className="form-control" 
+                        // 👇 Code thêm vào để ép hiển thị viền màu xám chuẩn
+                        style={{ border: "1px solid #ced4da", borderRadius: "0.25rem" }}
+                        value={form.birthday} 
+                        onChange={handleChange} 
+                    />
                 </div>
 
                 {/* Giới tính */}

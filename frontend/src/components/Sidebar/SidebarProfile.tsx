@@ -5,10 +5,8 @@ import axiosClient from "../../api/axios";
 
 const SidebarProfile = () => {
   const BACKEND_URL = "http://127.0.0.1:8000";
-  // Link ảnh mặc định (dùng chung cho cả app)
   const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-  // ✅ 1. KHỞI TẠO STATE TỪ LOCALSTORAGE (Load tức thì)
   const [user, setUser] = useState<any>(() => {
     try {
       const savedUser = localStorage.getItem("user_info");
@@ -18,7 +16,6 @@ const SidebarProfile = () => {
     }
   });
 
-  // ✅ 2. HÀM GỌI API (Chạy ngầm)
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("access_token");
@@ -32,7 +29,6 @@ const SidebarProfile = () => {
         
         if (res.data && res.data.data) {
           const userData = res.data.data;
-          // Lưu ngược vào cache và cập nhật state
           localStorage.setItem("user_info", JSON.stringify(userData));
           setUser(userData);
         }
@@ -44,40 +40,28 @@ const SidebarProfile = () => {
 
   useEffect(() => {
     fetchUserData();
-
-    // Lắng nghe sự kiện update từ trang khác
     const handleUpdateSignal = () => {
       fetchUserData();
     };
-
     window.addEventListener("user-profile-updated", handleUpdateSignal);
     return () => {
       window.removeEventListener("user-profile-updated", handleUpdateSignal);
     };
   }, []);
 
-  // ✅ 3. XỬ LÝ URL ẢNH (Logic mới)
   const getAvatarSrc = () => {
     const url = user?.profile?.avatar_url;
-    
-    // Nếu không có url -> Trả về ảnh mặc định
     if (!url) return DEFAULT_AVATAR;
-
-    // Nếu là ảnh Google (bắt đầu bằng http) -> Dùng nguyên link
     if (url.startsWith("http")) return url;
-
-    // Nếu là ảnh server local -> Nối domain
     const cleanPath = url.replace(/^\//, "");
     return `${BACKEND_URL}/storage/${cleanPath}`;
   };
 
-  // Xử lý hiển thị Tên
   const getDisplayName = () => {
     if (!user) return "Đang tải...";
     return user.profile?.full_name || user.username || "Người dùng";
   };
 
-  // Xử lý hiển thị Role
   const getRoleName = () => {
      return user?.role?.name || "Thành viên";
   }
@@ -92,23 +76,27 @@ const SidebarProfile = () => {
           
           {/* --- HEADER: AVATAR + TEXT --- */}
           <div className="p-3 d-flex align-items-center border-bottom">
+            {/* ✅ ĐÃ SỬA LẠI PHẦN ẢNH TẠI ĐÂY */}
             <img
               src={getAvatarSrc()}
               alt="avatar"
-              className="rounded-circle me-3"
-              style={{ objectFit: "cover" }}
-              width={50}
-              height={50}
-              // ✅ 4. XỬ LÝ KHI ẢNH LỖI (onError)
+              className="rounded-circle me-3 border shadow-sm"
+              style={{ 
+                  width: "50px", 
+                  height: "50px", 
+                  minWidth: "50px", 
+                  objectFit: "cover",
+                  aspectRatio: "1/1"
+              }}
               onError={(e) => {
                 e.currentTarget.src = DEFAULT_AVATAR;
               }}
             />
-            <div className="text-start">
+            <div className="text-start overflow-hidden">
               <p className="mb-0 text-muted" style={{ fontSize: "0.75rem" }}>
                 Tài khoản của
               </p>
-              <strong className="text-truncate d-block" style={{ maxWidth: "140px" }}>
+              <strong className="text-truncate d-block" style={{ maxWidth: "100%" }}>
                 {getDisplayName()}
               </strong>
             </div>

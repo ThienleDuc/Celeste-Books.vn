@@ -35,15 +35,31 @@ class CartItem extends Model
     protected $keyType = 'int';
 
     public $timestamps = false;
-    
+
     protected $fillable = [
         'id',
         'cart_id',
         'product_id',
         'product_details_id',
-        'quantity', 
+        'quantity',
         'price_at_time',
         'created_at',
         'updated_at',
     ];
+
+     // Định nghĩa quan hệ với Product và ProductDetail và ShoppingCart
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id', 'id');
+    }
+
+    public function productDetail()
+    {
+        return $this->belongsTo(ProductDetail::class, 'product_details_id', 'id');
+    }
+
+    public function cart()
+    {
+        return $this->belongsTo(ShoppingCart::class, 'cart_id', 'id');
+    }
 }

@@ -8,13 +8,13 @@ interface RedirectConfig {
 
 export const redirects = {
   afterLogin: {
-    A: "/dashboard",
+    A: "/admin/products",
     C: "/",
     default: "*",
   } as RedirectConfig,
 
   afterRegister: {
-    A: "/dashboard",
+    A: "/",
     C: "/",
     default: "*",
   } as RedirectConfig,
