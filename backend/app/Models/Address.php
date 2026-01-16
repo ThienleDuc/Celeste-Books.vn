@@ -66,5 +66,5 @@ class Address extends Model
             'province_id' // Local key on communes table
         );
     }
-     public $timestamps = false;
+    public $timestamps = false;
 }

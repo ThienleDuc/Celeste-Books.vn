@@ -322,14 +322,6 @@ class AuthController extends Controller
             ], 500);
         }
 
-        // 8. Ghi log / notification
-        UserNotification::add(
-            $user->id,
-            'Đăng nhập',
-            "Người dùng {$user->username} vừa đăng nhập",
-            'account'
-        );
-
         // 9. TRẢ KẾT QUẢ (QUAN TRỌNG)
         return response()->json([
             'success' => true,
@@ -461,14 +453,6 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'token_id' => $currentToken?->id,
             ]);
-
-            // 4. Notification (đúng tên hành động)
-            UserNotification::add(
-                $user->id,
-                'Đăng xuất',
-                "Người dùng {$user->username} vừa đăng xuất tài khoản",
-                'account'
-            );
 
             // 5. Response
             return response()->json([

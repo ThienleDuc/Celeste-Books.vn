@@ -5,14 +5,15 @@ import authApi from "../../api/auth.api";
 import type { UserMe } from "../../api/auth.api";
 import { useNavigate, Link } from "react-router-dom";
 import { getRedirectPath } from "../../utils/redirect";
+import { getAvatarUrl, handleImageError } from "../../utils/imageHelper";
 
-const DEFAULT_AVATAR = "69ac12ab-e056-47b3-b0f1-e27966d80ce0.jpg";
-
-/* Helper xử lý avatar */
-const getAvatarSrc = (avatar?: string | null) => {
-  if (!avatar) return `/img/${DEFAULT_AVATAR}`;
-  if (avatar.startsWith("http")) return avatar; // phòng khi API trả full URL
-  return `/img/${avatar}`;
+/**
+ * Helper để lấy src cho avatar từ URL
+ * @param avatarUrl URL avatar từ profile
+ * @returns URL avatar đã được xử lý
+ */
+const getAvatarSrc = (avatarUrl: string | null | undefined): string => {
+  return getAvatarUrl(avatarUrl);
 };
 
 const UserDropdown = () => {
@@ -102,9 +103,7 @@ const UserDropdown = () => {
                 src={getAvatarSrc(user.profile?.avatar_url)}
                 alt="Avatar"
                 className="user-avatar"
-                onError={(e) => {
-                  e.currentTarget.src = `/img/${DEFAULT_AVATAR}`;
-                }}
+                onError={handleImageError}
               />
             </>
           ) : (
@@ -134,6 +133,7 @@ const UserDropdown = () => {
                 src={getAvatarSrc(user.profile?.avatar_url)}
                 alt="Avatar"
                 className="user-avatar-sm"
+                onError={handleImageError}
               />
               <div>
                 <div className="fw-semibold">

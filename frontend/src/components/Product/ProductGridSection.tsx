@@ -160,7 +160,7 @@ const ProductCard = memo(({ product, colMd, rank, isIncreasingView, onViewProduc
                   Loading
                 </>
               ) : (
-                'Xem'
+                'Xem sản phẩm'
               )}
             </button>
           </div>

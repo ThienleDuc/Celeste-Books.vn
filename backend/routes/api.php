@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
@@ -14,16 +13,13 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductNotificationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProvinceController;
+use App\Http\Controllers\CommuneController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-
-});
 
 // ==================== MESSAGE ROUTES ====================
 Route::prefix('messages')->group(function () {
@@ -138,29 +134,40 @@ Route::prefix('role-permissions')->group(function () {
 // ==================== USER ROUTES ====================
 Route::prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
+    Route::get('/getAllUser', [UserController::class, 'getAllUserWithPagination']);
+    Route::get('/getUserById/{id}', [UserController::class, 'getUserById']);
     Route::post('/', [UserController::class, 'store']);
+    Route::delete('/delete/{id}', [UserController::class, 'destroy']);
+    Route::put('/toggle-status/{id}', [UserController::class, 'toggleStatus']);
+    Route::put('/update/{id}', [UserController::class, 'update']);
+    Route::post('/avatar-x/{id}', [UserController::class, 'uploadAvatar']);
+
     Route::get('/statistics', [UserController::class, 'statistics']);
-    Route::get('/role/{roleId}', [UserController::class, 'getByRole'])
-        ->where('roleId', '[0-9]+');
-    
+    Route::get('/role/{roleId}', [UserController::class, 'getByRole']);
+
     Route::prefix('{id}')->group(function () {
         Route::get('/', [UserController::class, 'show']);
           
         Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
         Route::get('/', [UserController::class, 'show']); 
         Route::put('/', [UserController::class, 'updateBasicInfo']);
-        Route::put('/update', [UserController::class, 'update']);
         Route::post('/avatar', [UserController::class, 'uploadAvatar']);
-        Route::put('/password', [UserController::class, 'changePassword']);
-        Route::put('/toggle-status', [UserController::class, 'toggleStatus']);
-        Route::delete('/', [UserController::class, 'destroy']);
-        
+        Route::put('/password', [UserController::class, 'changePassword']);        
         Route::prefix('notifications')->group(function () {
             Route::get('/', [UserNotificationController::class, 'myNotifications']);
             Route::get('/count-unread', [UserNotificationController::class, 'countUnread']);
         });
     });
 });
+
+Route::prefix('/users/{userId}/addresses')->group(function () {
+    Route::get('/', [UserController::class, 'getUserAddresses']);           // GET: Lấy danh sách địa chỉ
+    Route::post('/', [UserController::class, 'addAddress']);                // POST: Thêm địa chỉ mới
+    Route::put('/{addressId}', [UserController::class, 'updateAddress']);   // PUT: Cập nhật địa chỉ
+    Route::delete('/{addressId}', [UserController::class, 'deleteAddress']); // DELETE: Xóa địa chỉ
+    Route::put('/{addressId}/set-default', [UserController::class, 'setDefaultAddress']); // PUT: Đặt địa chỉ mặc định
+});
+
 
 // ==================== NOTIFICATION ROUTES ====================
 Route::prefix('notifications')->group(function () {
@@ -254,6 +261,17 @@ Route::prefix('product-details')->group(function () {
         // Lấy chi tiết sản phẩm theo ID
     Route::get('/{id}', [ProductController::class, 'show']);
         
+});
+
+Route::prefix(('provinces'))->group(function () {
+    Route::get('/', [ProvinceController::class, 'getAllProvinces']);
+    Route::get('/by-commune/{communeId}', [ProvinceController::class, 'getProvinceByCommuneId']);
+});
+
+Route::prefix(('communes'))->group(function () {
+    Route::get('/{provinceId}', [CommuneController::class, 'getCommunesByProvince']);
+    Route::get('/detail/{id}', [CommuneController::class, 'getCommuneDetail']);
+
 });
 
 // ==================== ADDRESS ROUTES ====================

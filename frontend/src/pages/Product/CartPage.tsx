@@ -169,53 +169,53 @@ const CartPage = () => {
      CHECKOUT HANDLER
      ========================================================= */
     const handleCheckout = () => {
-    if (selectedItems.length === 0) return;
+      if (selectedItems.length === 0) return;
 
-    // Chuyển đổi selectedItems thành định dạng phù hợp cho trang thanh toán
-    const checkoutProducts: CheckoutProduct[] = selectedItems.map(item => ({
-      id: item.id,
-      productId: item.productId,
-      quantity: item.quantity,
-      priceAtTime: item.priceAtTime,
-      name: getProductName(item.productId),
-      image: getProductImage(item.productId),
-      productType: getProductType(item.productId),
-    }));
+      // Chuyển đổi selectedItems thành định dạng phù hợp cho trang thanh toán
+      const checkoutProducts: CheckoutProduct[] = selectedItems.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        priceAtTime: item.priceAtTime,
+        name: getProductName(item.productId),
+        image: getProductImage(item.productId),
+        productType: getProductType(item.productId),
+      }));
 
-    // Tạo checkout data object
-    const checkoutData = {
-      userId: effectiveUserId,
-      products: checkoutProducts,
-      totalQuantity,
-      totalPrice,
-      timestamp: new Date().toISOString()
+      // Tạo checkout data object
+      const checkoutData = {
+        userId: effectiveUserId,
+        products: checkoutProducts,
+        totalQuantity,
+        totalPrice,
+        timestamp: new Date().toISOString()
+      };
+
+      // ========== GIẢI PHÁP TỐI ƯU ==========
+      
+      // 1. Lưu vào localStorage (backup, chống mất dữ liệu khi refresh)
+      const storageKey = `checkout_${effectiveUserId}`;
+      localStorage.setItem(storageKey, JSON.stringify(checkoutData));
+      
+      // Set expiration time (24 hours)
+      const expiration = new Date().getTime() + (24 * 60 * 60 * 1000);
+      localStorage.setItem(`${storageKey}_expiry`, expiration.toString());
+
+      // 2. Truyền chỉ ID sản phẩm qua URL (nếu cần)
+      // Chỉ truyền product IDs, không phải toàn bộ thông tin
+      const productIds = checkoutProducts.map(p => p.productId).join(',');
+      const queryParams = new URLSearchParams({
+        userId: effectiveUserId,
+        products: productIds, // Chỉ IDs, không phải toàn bộ JSON
+        count: totalQuantity.toString(),
+        amount: totalPrice.toString(),
+      });
+
+      // 3. Sử dụng router state cho toàn bộ dữ liệu
+      navigate(`/thanh-toan/${effectiveUserId}?${queryParams.toString()}`, {
+        state: checkoutData
+      });
     };
-
-    // ========== GIẢI PHÁP TỐI ƯU ==========
-    
-    // 1. Lưu vào localStorage (backup, chống mất dữ liệu khi refresh)
-    const storageKey = `checkout_${effectiveUserId}`;
-    localStorage.setItem(storageKey, JSON.stringify(checkoutData));
-    
-    // Set expiration time (24 hours)
-    const expiration = new Date().getTime() + (24 * 60 * 60 * 1000);
-    localStorage.setItem(`${storageKey}_expiry`, expiration.toString());
-
-    // 2. Truyền chỉ ID sản phẩm qua URL (nếu cần)
-    // Chỉ truyền product IDs, không phải toàn bộ thông tin
-    const productIds = checkoutProducts.map(p => p.productId).join(',');
-    const queryParams = new URLSearchParams({
-      userId: effectiveUserId,
-      products: productIds, // Chỉ IDs, không phải toàn bộ JSON
-      count: totalQuantity.toString(),
-      amount: totalPrice.toString(),
-    });
-
-    // 3. Sử dụng router state cho toàn bộ dữ liệu
-    navigate(`/thanh-toan/${effectiveUserId}?${queryParams.toString()}`, {
-      state: checkoutData
-    });
-  };
 
   /* =========================================================
      RENDER

@@ -158,22 +158,21 @@ const CarouselItem = memo(({ product, rank, isIncreasingView, onViewProduct }: C
                 )}
               </span>
             </div>
+            <button
+              onClick={(e) => onViewProduct(product, e)}
+              className="view-product-link btn btn-sm btn-outline-primary flex-shrink-0"
+              disabled={isIncreasingView}
+            >
+              {isIncreasingView ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                  Loading
+                </>
+              ) : (
+                'Xem sản phẩm'
+              )}
+            </button>
           </div>
-
-          <button
-            onClick={(e) => onViewProduct(product, e)}
-            className="view-product-link btn btn-sm btn-outline-primary flex-shrink-0"
-            disabled={isIncreasingView}
-          >
-            {isIncreasingView ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                Loading
-              </>
-            ) : (
-              'Xem sản phẩm'
-            )}
-          </button>
         </div>
       </div>
     </div>
