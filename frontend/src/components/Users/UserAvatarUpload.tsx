@@ -150,9 +150,7 @@ const UserAvatarUpload: React.FC<UserAvatarUploadProps> = ({
         console.warn('No avatar_url found in response:', response.data);
         throw new Error('Không nhận được URL avatar từ server');
       }
-      
-      console.log('New avatar URL received:', newAvatarUrl);
-      
+            
       await Swal.fire({
         title: 'Thành công!',
         text: successMessage,
@@ -252,7 +250,6 @@ const UserAvatarUpload: React.FC<UserAvatarUploadProps> = ({
                 });
                 
                 // Thử load lại với URL mặc định
-                console.log('Falling back to default avatar');
                 target.src = '/img/linh_vat_logo.png';
                 
                 handleImageError(e);
@@ -281,7 +278,6 @@ const UserAvatarUpload: React.FC<UserAvatarUploadProps> = ({
           </h3>
           <div className="text-muted small">
             <div>User ID: {userId}</div>
-            <div>Avatar URL: {avatarSrc}</div>
             <div>Status: {isActive ? 'Active' : 'Inactive'}</div>
           </div>
         </div>

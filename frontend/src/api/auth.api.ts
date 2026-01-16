@@ -135,9 +135,7 @@ export const authApi = {
 
   /* ---------- CURRENT USER (CÓ CACHE) ---------- */
   me() {
-    return axiosClient.get<ApiResponse<UserMe>>("/auth/me", { 
-      cache: true 
-    });
+    return axiosClient.get<ApiResponse<UserMe>>("/auth/me");
   },
 
   /* ---------- LOGOUT (XÓA CACHE) ---------- */
