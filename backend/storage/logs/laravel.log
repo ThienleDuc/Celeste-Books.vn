@@ -1107,3 +1107,4 @@
 [2026-01-16 15:13:13] local.DEBUG: Sanctum token received {"raw_token":"31|HtZLPSBypIsWp2yAIQxVN8zBIvwB7bRbQYEVLZJZ","id":"31","plain_token_length":40} 
 [2026-01-16 15:13:33] local.DEBUG: Sanctum token received {"raw_token":"31|HtZLPSBypIsWp2yAIQxVN8zBIvwB7bRbQYEVLZJZ","id":"31","plain_token_length":40} 
 [2026-01-16 15:13:36] local.DEBUG: Sanctum token received {"raw_token":"31|HtZLPSBypIsWp2yAIQxVN8zBIvwB7bRbQYEVLZJZ","id":"31","plain_token_length":40} 
+[2026-01-16 15:17:59] local.DEBUG: Sanctum token received {"raw_token":"32|EJzotLsjXQU2qLfjUMx3ReeCnAJ98dWYp9WIqisi","id":"32","plain_token_length":40} 
