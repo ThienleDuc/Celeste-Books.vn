@@ -258,6 +258,8 @@ Route::prefix('products')->group(function () {
 
     // routes/api.php
     Route::get('/featured', [ProductController::class, 'featured']);
+    Route::get('/{id}', [ProductController::class, 'getProductById']);
+        
 
 });
 
@@ -269,7 +271,7 @@ Route::prefix('product-details')->group(function () {
     // Thêm chi tiết sản phẩm mới
     Route::post('/', [ProductDetailController::class, 'store']);
 
-    // Cập nhật chi tiết sản phẩm theo ID
+    
     Route::put('/{id}', [ProductDetailController::class, 'update'])
         ->where('id', '[0-9]+');
 
@@ -309,8 +311,10 @@ Route::prefix('addresses')->group(function () {
 Route::prefix('review')->group(function () {
     //show contact list of messages
     Route::get('/', [\App\Http\Controllers\ReviewController::class, 'getReviews']);
+    //check reviewed - PHẢI ĐẶT TRƯỚC /{id} VÀ CÓ AUTH MIDDLEWARE
+    Route::middleware('auth:sanctum')->get('/check-reviewed', [\App\Http\Controllers\ReviewController::class, 'checkReviewed']);
     //show detail messages
-    Route::get('/{id}', [\App\Http\Controllers\ReviewController::class, 'getDetailReview']);
+    Route::get('/{id}', [\App\Http\Controllers\ReviewController::class, 'getReviewByProductId']);
     //create message
     Route::post('/', [\App\Http\Controllers\ReviewController::class, 'createReview']);
     //update message
@@ -332,11 +336,12 @@ Route::prefix('review-image')->group(function () {
     //delete message
     Route::delete('/{id}', [\App\Http\Controllers\ReviewImageController::class, 'deleteReviewImage']);
 });
-
-
-Route::prefix('oders')->group(function() {
-    Route::get('/all-purchases', [OrderController::class, 'getAllPurchasedProducts']);
+//============PRODUCT IMAGE ROUTES=========
+Route::prefix('/product-images')->group(function() {
+    Route::get('{productId}', [\App\Http\Controllers\ProductImageController::class, 'getProductImageByProductId']);
 });
+
+
 Route::prefix('oders')->group(function() {
     Route::get('/user/{userId}', [OrderController::class, 'getUserOrders']);
     Route::get('/{id}', [OrderController::class, 'getOrderDetails']);
@@ -384,6 +389,9 @@ Route::prefix('orders')->group(function () {
     Route::put('/{orderId}/status', [OrderController::class, 'updateOrderStatus']);
     Route::get('/status/{status}', [OrderController::class, 'getOrdersByStatus']);
     Route::get('/search', [OrderController::class, 'searchOrders']);
+
+    Route::get('/', [OrderController::class, 'getOrders']);
+    Route::put('/{id}', [OrderController::class, 'updateStatus']);
 });
 
 // VNPay routes với prefix 'vnpay'
