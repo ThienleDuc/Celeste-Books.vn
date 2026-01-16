@@ -182,10 +182,6 @@ const Login = () => {
         >
           {loading ? "Đang xử lý..." : "Đăng nhập"}
         </button>
-<<<<<<< HEAD
-
-=======
->>>>>>> 8a6b60d75bdff1e1b9168cf61eaf0092c4652e97
         <button type="button" onClick={() => navigate('http://localhost:8000/auth/google')} className="btn btn-google w-100">
           <i className="bi bi-google google-icon"></i>
           <span className="google-text">Đăng nhập với Google</span>
