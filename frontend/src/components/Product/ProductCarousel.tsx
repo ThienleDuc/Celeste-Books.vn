@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { formatNumber } from "../../utils/formatNumber";
 import productsApi, { type Product } from "../../api/produts.api";
 import { formatDecimal } from "../../utils/formatDecimal";
+import { getProductImageUrl, handleImageError } from '../../utils/imageHelper';
 
 // --- INTERFACES ---
 interface ProductCarouselProps {
@@ -20,20 +21,8 @@ interface CarouselItemProps {
   onViewProduct: (product: Product, e: React.MouseEvent) => void;
 }
 
-// --- CONSTANTS ---
-const DEFAULT_IMG = "book1.jpg";
-
-// --- HELPERS ---
-const getProductImg = (productImg?: string | null) => {
-  if (!productImg) return `/img/${DEFAULT_IMG}`;
-  if (productImg.startsWith("http")) return productImg;
-  return `/img/${productImg}`;
-};
-
 // --- SUB-COMPONENT: CAROUSEL ITEM (Optimized) ---
-// Tách ra để dùng memo, tránh re-render toàn bộ list khi chỉ có 1 item thay đổi hoặc khi carousel trượt
 const CarouselItem = memo(({ product, rank, isIncreasingView, onViewProduct }: CarouselItemProps) => {
-  // Tính toán logic hiển thị giá bên trong item để tận dụng memo
   const originalPrice = product.original_price || 0;
   const salePrice = product.sale_price || 0;
   const hasDiscount = originalPrice > salePrice;
@@ -46,21 +35,23 @@ const CarouselItem = memo(({ product, rank, isIncreasingView, onViewProduct }: C
     return 0;
   }, [product.discount_percent, hasDiscount, originalPrice, salePrice]);
 
+  // Lấy URL ảnh sản phẩm
+  const productImage = useMemo(() => {
+    return getProductImageUrl(product.image || product.primary_image || "");
+  }, [product.image, product.primary_image]);
+
   return (
     <div
       className="card product-card col-10 col-sm-6 col-md-4 col-lg-3 flex-shrink-0 position-relative me-3"
     >
       <div className="card-img-wrapper position-relative">
         <img
-          src={getProductImg(product.primary_image)}
+          src={productImage}
           className="card-img-top"
           alt={product.name}
-          loading="lazy" // Tối ưu: Lazy load ảnh
-          decoding="async" // Tối ưu: Giải mã ảnh không chặn UI
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = `/img/${DEFAULT_IMG}`;
-          }}
+          loading="lazy"
+          decoding="async"
+          onError={handleImageError}
         />
 
         {hasDiscount && discountPercent > 0 && (
@@ -210,15 +201,13 @@ const ProductCarousel = ({
     return () => { isMounted = false; };
   }, []);
 
-  // Hàm xử lý click xem sản phẩm (Sử dụng useCallback để tránh tạo lại function)
+  // Hàm xử lý click xem sản phẩm
   const handleViewProduct = useCallback(async (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
     
     const productId = product.id;
     const currentViews = product.views || 0;
     
-    // Check trực tiếp từ Set hiện tại thông qua functional update nếu cần,
-    // nhưng ở đây check state hiện có là đủ vì logic click là đồng bộ
     if (increasingViewIds.has(productId)) {
       navigate(`/san-pham/${product.slug || productId}`);
       return;
@@ -249,7 +238,7 @@ const ProductCarousel = ({
       } catch (error) {
         console.error(`Lỗi khi tăng view: ${productId}`, error);
       } finally {
-        // Cleanup state sau 1s để tránh memory leak nếu component unmount
+        // Cleanup state sau 1s
         setTimeout(() => {
           setIncreasingViewIds(prev => {
             const newSet = new Set(prev);
@@ -270,7 +259,6 @@ const ProductCarousel = ({
   const scrollToIndex = useCallback((i: number) => {
     if (!carouselRef.current || products.length === 0) return;
 
-    // Tính toán width dựa trên items thực tế để chính xác hơn
     const totalScrollWidth = carouselRef.current.scrollWidth;
     const itemWidth = totalScrollWidth / products.length;
 
@@ -306,7 +294,6 @@ const ProductCarousel = ({
     const id = setInterval(() => {
       setIndex((prevIndex) => {
         const maxIndex = products.length - visibleItems;
-        // Logic loop lại từ đầu nếu hết danh sách
         const nextIndex = (prevIndex + 1) > maxIndex ? 0 : prevIndex + 1;
         scrollToIndex(nextIndex);
         return nextIndex;

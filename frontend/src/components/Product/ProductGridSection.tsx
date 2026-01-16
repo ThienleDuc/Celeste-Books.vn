@@ -1,9 +1,11 @@
+// src/components/Products/ProductGridSection.tsx
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import Pagination from "../Utils/Pagination";
 import { formatNumber } from "../../utils/formatNumber";
 import productsApi, { type ProductListParams, type Product } from "../../api/produts.api";
 import { formatDecimal } from "../../utils/formatDecimal";
 import { useNavigate } from "react-router-dom";
+import { getProductImageUrl, handleImageError } from '../../utils/imageHelper';
 
 // --- INTERFACES ---
 interface ProductGridSectionProps {
@@ -19,15 +21,6 @@ interface ProductGridSectionProps {
   onPageChangeExternal?: (page: number) => void;
   onViewUpdated?: (productId: number | string, newViews: number) => void;
 }
-
-// --- CONSTANTS & HELPERS ---
-const DEFAULT_IMG = "book1.jpg";
-
-const getProductImg = (productImg?: string | null) => {
-  if (!productImg) return `/img/${DEFAULT_IMG}`;
-  if (productImg.startsWith("http")) return productImg;
-  return `/img/${productImg}`;
-};
 
 // --- SUB-COMPONENT: PRODUCT CARD (Optimized with memo) ---
 interface ProductCardProps {
@@ -52,22 +45,22 @@ const ProductCard = memo(({ product, colMd, rank, isIncreasingView, onViewProduc
     return 0;
   }, [product.discount_percent, hasDiscount, originalPrice, salePrice]);
 
-  const mainImage = product.image || product.primary_image || "";
+  // Xử lý URL ảnh sản phẩm
+  const mainImage = useMemo(() => {
+    return getProductImageUrl(product.image || product.primary_image || "");
+  }, [product.image, product.primary_image]);
 
   return (
     <div className={`col-12 col-sm-6 col-md-${colMd}`}>
       <div className="card product-card h-100 shadow-sm d-flex flex-column">
         <div className="card-img-wrapper position-relative">
           <img
-            src={getProductImg(mainImage)}
+            src={mainImage}
             className="card-img-top"
             alt={product.name}
             loading="lazy" // Tối ưu: Lazy load
             decoding="async" // Tối ưu: Giải mã ảnh không chặn main thread
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = `/img/${DEFAULT_IMG}`;
-            }}
+            onError={handleImageError}
           />
 
           {hasDiscount && discountPercent > 0 && (

@@ -74,7 +74,7 @@ export const userAddressApi = {
    */
   getUserAddresses(userId: string) {
     return axiosClient.get<AddressListResponse>(
-      `/users/${userId}/addresses`
+      `/admin/users/${userId}/addresses`
     );
   },
 
@@ -85,7 +85,7 @@ export const userAddressApi = {
    */
   addAddress(userId: string, data: CreateAddressPayload) {
     return axiosClient.post<AddressResponse>(
-      `/users/${userId}/addresses`,
+      `/admin/users/${userId}/addresses`,
       data
     );
   },
@@ -100,7 +100,7 @@ export const userAddressApi = {
     data: UpdateAddressPayload
   ) {
     return axiosClient.put<AddressResponse>(
-      `/users/${userId}/addresses/${addressId}`,
+      `/admin/users/${userId}/addresses/${addressId}`,
       data
     );
   },
@@ -111,7 +111,7 @@ export const userAddressApi = {
    */
   deleteAddress(userId: string, addressId: number) {
     return axiosClient.delete<SimpleAddressResponse>(
-      `/users/${userId}/addresses/${addressId}`
+      `/admin/users/${userId}/addresses/${addressId}`
     );
   },
 
@@ -121,7 +121,7 @@ export const userAddressApi = {
    */
   setDefaultAddress(userId: string, addressId: number) {
     return axiosClient.put<SimpleAddressResponse>(
-      `/users/${userId}/addresses/${addressId}/set-default`
+      `/admin/users/${userId}/addresses/${addressId}/set-default`
     );
   },
 };

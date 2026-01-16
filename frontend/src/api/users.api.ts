@@ -1,7 +1,7 @@
 // src/api/users.api.ts
 import axios from "axios";
 import type { UserMe } from "./auth.api";
-import axiosClient, { clearCache } from "./axios";
+import axiosClient from "./axios";
 
 /* ===================== TYPES ===================== */
 
@@ -268,7 +268,7 @@ export const userApi = {
     const payload = prepareCreateUserPayload(data);
     console.log('Create user payload:', payload);
     
-    return axiosClient.post<ApiResponse<UserWithRelations>>('/users', payload);
+    return axiosClient.post<ApiResponse<UserWithRelations>>('/admin/users', payload);
   },
 
   /* ---------- UPDATE USER ---------- */
@@ -276,12 +276,12 @@ export const userApi = {
     const payload = prepareUpdateUserPayload(data);
     console.log('Update user payload:', payload);
     
-    return axiosClient.put<ApiResponse<UserWithRelations>>(`/users/update/${id}`, payload);
+    return axiosClient.put<ApiResponse<UserWithRelations>>(`/admin/users/update/${id}`, payload);
   },
 
   /* ---------- GET ALL USERS WITH PAGINATION & FILTERS ---------- */
   getAllUsersWithPagination(params?: UserPaginationParams) {
-    return axiosClient.get<ApiResponse<PaginationData>>('/users/getAllUser', { 
+    return axiosClient.get<ApiResponse<PaginationData>>('/admin/users/getAllUser', { 
       params: {
         ...params,
         ...(params?.is_active !== undefined && typeof params.is_active === 'boolean' 
@@ -293,12 +293,12 @@ export const userApi = {
 
   /* ---------- GET USER DETAIL ---------- */
   getUserDetail(id: string | number) {
-    return axiosClient.get<ApiResponse<UserDetail>>(`/users/getUserById/${id}`);
+    return axiosClient.get<ApiResponse<UserDetail>>(`/admin/users/getUserById/${id}`);
   },
 
   /* ---------- GET USER ADDRESSES ---------- */
   getUserAddresses(userId: string | number) {
-    return axiosClient.get<ApiResponse<UserAddress[]>>(`/users/${userId}/addresses`);
+    return axiosClient.get<ApiResponse<UserAddress[]>>(`/admin/users/${userId}/addresses`);
   },
 
   /* ---------- UPLOAD AVATAR ---------- */
@@ -307,7 +307,7 @@ export const userApi = {
     formData.append('avatar', avatarFile);
     
     return axiosClient.post<ApiResponse<UploadAvatarResponse>>(
-      `/users/avatar-x/${id}`, 
+      `/admin/users/avatar-x/${id}`, 
       formData,
       {
         headers: {
@@ -319,9 +319,10 @@ export const userApi = {
 
   /* ---------- TOGGLE USER STATUS ---------- */
   toggleStatus(id: string) {
-    return axiosClient.put<ApiResponse<UserWithRelations>>(`/users/toggle-status/${id}`);
+    return axiosClient.put<ApiResponse<UserWithRelations>>(`/admin/users/toggle-status/${id}`);
   },
 
+  /* ---------- DELETE USER ---------- */
   /* ---------- DELETE USER ---------- */
   deleteUser: async (targetUserId: string): Promise<ApiResponse> => {
     try {
@@ -350,7 +351,7 @@ export const userApi = {
 
       // 2. Gọi API xóa user với current_user_id
       const response = await axiosClient.delete<ApiResponse>(
-        `/users/delete/${targetUserId}`,
+        `/admin/users/delete/${targetUserId}`,
         {
           params: {
             current_user_id: currentUserId
@@ -358,9 +359,9 @@ export const userApi = {
         }
       );
       
-      // 3. Xóa cache liên quan
-      clearCache('/users');
-      clearCache('/auth/me'); // Xóa cache của thông tin user
+      // 3. Xóa cache liên quan - NẾU clearCache không tồn tại, comment hoặc xóa
+      // clearCache('/admin/users');
+      // clearCache('/auth/me');
       
       return response.data;
     } catch (error: unknown) {

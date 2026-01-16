@@ -134,20 +134,7 @@ Route::prefix('role-permissions')->group(function () {
 // ==================== USER ROUTES ====================
 Route::prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
-    Route::get('/getAllUser', [UserController::class, 'getAllUserWithPagination']);
-    Route::get('/getUserById/{id}', [UserController::class, 'getUserById']);
-    Route::post('/', [UserController::class, 'store']);
-    Route::delete('/delete/{id}', [UserController::class, 'destroy']);
-    Route::put('/toggle-status/{id}', [UserController::class, 'toggleStatus']);
-    Route::put('/update/{id}', [UserController::class, 'update']);
-    Route::post('/avatar-x/{id}', [UserController::class, 'uploadAvatar']);
-
-    Route::get('/statistics', [UserController::class, 'statistics']);
-    Route::get('/role/{roleId}', [UserController::class, 'getByRole']);
-
-    Route::prefix('{id}')->group(function () {
-        Route::get('/', [UserController::class, 'show']);
-          
+    Route::prefix('{id}')->group(function () {          
         Route::get('/purchased-products', [UserController::class, 'getPurchasedProducts']);
         Route::get('/', [UserController::class, 'show']); 
         Route::put('/', [UserController::class, 'updateBasicInfo']);
@@ -160,7 +147,17 @@ Route::prefix('users')->group(function () {
     });
 });
 
-Route::prefix('/users/{userId}/addresses')->group(function () {
+Route::prefix('admin/users')->group(function () {
+    Route::get('/getAllUser', [UserController::class, 'getAllUserWithPagination']);
+    Route::get('/getUserById/{id}', [UserController::class, 'getUserById']);
+    Route::post('/', [UserController::class, 'store']);
+    Route::delete('/delete/{id}', [UserController::class, 'destroy']);
+    Route::put('/toggle-status/{id}', [UserController::class, 'toggleStatus']);
+    Route::put('/update/{id}', [UserController::class, 'update']);
+    Route::post('/avatar-x/{id}', [UserController::class, 'uploadAvatar']);
+});
+
+Route::prefix('/admin/users/{userId}/addresses')->group(function () {
     Route::get('/', [UserController::class, 'getUserAddresses']);           // GET: Lấy danh sách địa chỉ
     Route::post('/', [UserController::class, 'addAddress']);                // POST: Thêm địa chỉ mới
     Route::put('/{addressId}', [UserController::class, 'updateAddress']);   // PUT: Cập nhật địa chỉ

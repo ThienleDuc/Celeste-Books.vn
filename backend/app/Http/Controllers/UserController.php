@@ -1206,11 +1206,11 @@ class UserController extends Controller
     {
         // Validate theo schema
         $data = $request->validate([
-            'label'           => 'nullable|string|max:50',
+            'label'           => 'required|string|max:50',
             'receiver_name'   => 'required|string|max:50',
             'phone'           => 'required|digits:10', // CHAR(10)
             'street_address'  => 'required|string|max:255',
-            'commune_id'      => 'nullable|integer|exists:communes,id',
+            'commune_id'      => 'required|integer|exists:communes,id',
             'is_default'      => 'sometimes|boolean'
         ]);
 
@@ -1288,14 +1288,14 @@ class UserController extends Controller
      */
     public function updateAddress(Request $request, $userId, $addressId)
     {
-        // Validate theo schema giống addAddress
+        // TẤT CẢ trường đều required khi update
         $data = $request->validate([
-            'label'           => 'nullable|string|max:50',
-            'receiver_name'   => 'sometimes|required|string|max:50',
-            'phone'           => 'sometimes|required|digits:10', // CHAR(10) - đồng bộ với addAddress
-            'street_address'  => 'sometimes|required|string|max:255',
-            'commune_id'      => 'sometimes|nullable|integer|exists:communes,id',
-            'is_default'      => 'sometimes|boolean'
+            'label'           => 'required|string|max:50',
+            'receiver_name'   => 'required|string|max:50',
+            'phone'           => 'required|digits:10',
+            'street_address'  => 'required|string|max:255',
+            'commune_id'      => 'required|integer|exists:communes,id',
+            'is_default'      => 'required|boolean'
         ]);
 
         DB::beginTransaction();
@@ -1324,27 +1324,23 @@ class UserController extends Controller
             }
 
             // Nếu đặt làm mặc định, bỏ mặc định của các địa chỉ khác
-            if (isset($data['is_default']) && $data['is_default']) {
+            if ($data['is_default'] === true) {
                 DB::table('addresses')
                     ->where('user_id', $userId)
-                    ->where('id', '!=', $addressId) // Không update địa chỉ hiện tại
+                    ->where('id', '!=', $addressId)
                     ->update(['is_default' => false]);
             }
 
-            // Nếu phone được update, kiểm tra định dạng digits:10 đã được validation đảm bảo
-            // Không cần padding như code cũ vì validation digits:10 đã đảm bảo đúng 10 số
-
-            // Chuẩn bị dữ liệu update
-            $updateData = [];
-            if (isset($data['label'])) $updateData['label'] = $data['label'];
-            if (isset($data['receiver_name'])) $updateData['receiver_name'] = $data['receiver_name'];
-            if (isset($data['phone'])) $updateData['phone'] = $data['phone'];
-            if (isset($data['street_address'])) $updateData['street_address'] = $data['street_address'];
-            if (isset($data['commune_id'])) $updateData['commune_id'] = $data['commune_id'];
-            if (isset($data['is_default'])) $updateData['is_default'] = $data['is_default'];
-            
-            // Luôn cập nhật updated_at
-            $updateData['updated_at'] = now();
+            // Chuẩn bị dữ liệu update - KHÔNG có updated_at vì model không dùng timestamps
+            $updateData = [
+                'label' => $data['label'],
+                'receiver_name' => $data['receiver_name'],
+                'phone' => $data['phone'],
+                'street_address' => $data['street_address'],
+                'commune_id' => $data['commune_id'],
+                'is_default' => $data['is_default']
+                // KHÔNG CÓ: 'updated_at' => now()
+            ];
 
             // Cập nhật địa chỉ
             DB::table('addresses')
@@ -1352,7 +1348,7 @@ class UserController extends Controller
                 ->where('user_id', $userId)
                 ->update($updateData);
 
-            // Lấy địa chỉ đã cập nhật (cùng format với addAddress)
+            // Lấy địa chỉ đã cập nhật
             $updatedAddress = DB::table('addresses as a')
                 ->select(
                     'a.*',
@@ -1390,7 +1386,7 @@ class UserController extends Controller
             
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi cập nhật địa chỉ'
+                'message' => 'Có lỗi xảy ra khi cập nhật địa chỉ: ' . $e->getMessage()
             ], 500);
         }
     }
