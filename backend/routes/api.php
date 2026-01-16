@@ -216,8 +216,19 @@ Route::prefix('categories')->group(function () {
 
 // ==================== PRODUCT ROUTES ====================
 Route::prefix('products')->group(function () {
+      // Sắp xếp sản phẩm theo các tiêu chí
+    Route::get('/sort', [ProductController::class, 'sort']);
     // Lấy danh sách sản phẩm (có phân trang, lọc, sắp xếp)
+    // routes/api.php
 
+    // Tìm kiếm sản phẩm (endpoint riêng cho search)
+    Route::get('/search', [ProductController::class, 'searchByName']);
+
+
+    Route::get('/featured', [ProductController::class, 'featured']);
+        // Lấy sản phẩm gợi ý
+    Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
+        ->where('id', '[0-9]+');
     Route::get('list/', [ProductController::class, 'getListProducts']);
 
     // Tăng lượt xem sản phẩm
@@ -227,9 +238,7 @@ Route::prefix('products')->group(function () {
     // Lấy chi tiết sản phẩm theo ID
     Route::get('/{id}', [ProductController::class, 'show']);
 
-    // Lấy sản phẩm gợi ý
-    Route::get('/{id}/suggest', [ProductController::class, 'suggest'])
-        ->where('id', '[0-9]+');
+
 
 
     Route::get('/', [ProductController::class, 'index']);
@@ -247,22 +256,14 @@ Route::prefix('products')->group(function () {
         ->where('id', '[0-9]+');
 
 
-    // Tìm kiếm sản phẩm (endpoint riêng cho search)
-    Route::get('/search', [ProductController::class, 'searchByName']);
 
-
-    // Sắp xếp sản phẩm theo các tiêu chí
-    Route::get('/sort', [ProductController::class, 'sort']);
 
 
     // POST: Tăng lượt views sản phẩm
     Route::post('/{id}/views', [ProductController::class, 'incrementViews'])
         ->where('id', '[0-9]+');
 
-    // routes/api.php
-    Route::get('/featured', [ProductController::class, 'featured']);
-    Route::get('/{id}', [ProductController::class, 'getProductById']);
-        
+
 
 });
 

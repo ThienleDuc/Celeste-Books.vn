@@ -128,18 +128,14 @@ const Profile = () => {
   const getAvatarUrl = () => {
     const url = user?.profile?.avatar_url;
     
-    // 1. Nếu không có url -> Trả về ảnh mặc định
     if (!url) {
-        // 👇 Link ảnh mặc định (bạn có thể thay bằng đường dẫn file nội bộ: "/img/default-avatar.png")
         return "https://cdn-icons-png.flaticon.com/512/149/149071.png";
     }
 
-    // 2. Nếu là ảnh Google/Facebook (bắt đầu bằng http) -> Dùng nguyên link
     if (url.startsWith("http")) {
         return url;
     }
 
-    // 3. Nếu là ảnh upload lên server -> Nối thêm domain backend
     return `${BACKEND_URL}/storage/${url}`;
   };
 
@@ -167,7 +163,7 @@ const Profile = () => {
           {/* CỘT TRÁI - INFO */}
           <div className="col-12 col-md-8">
             <h5 className="title-section mb-3">Thông tin chi tiết</h5>
-            <div className="card shadow-sm">
+            <div className="card shadow-sm h-100">
               <div className="card-body">
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -223,30 +219,33 @@ const Profile = () => {
           </div>
 
           {/* CỘT PHẢI - AVATAR */}
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-4 mt-4 mt-md-0">
             <h5 className="title-section mb-3">Ảnh đại diện</h5>
-            <div className="card shadow-sm">
-              <div className="card-body">
-                <div className="text-center mb-3">
-                  {/* ✅ SỬA: Dùng hàm getAvatarUrl để hiển thị */}
+            <div className="card shadow-sm h-100">
+              
+              {/* ✅ FIX: Chỉ dùng align-items-center (căn ngang), BỎ justify-content-center (căn dọc) */}
+              <div className="card-body d-flex flex-column align-items-center py-5">
+                
+                <div className="mb-4">
                   <img
                     src={getAvatarUrl()}
                     alt="avatar"
-                    className="rounded-circle"
-                    style={{ width: 150, height: 150, objectFit: "cover" }}
-                    // Nếu link ảnh bị lỗi (404), tự động chuyển về ảnh mặc định
+                    className="rounded-circle shadow-sm border"
+                    style={{ width: 160, height: 160, objectFit: "cover" }}
                     onError={(e) => { 
                         e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png"; 
                     }}
                   />
                 </div>
-                <div className="text-center">
-                  <label className="btn btn-danger px-4">
-                    <i className="bi bi-upload me-1"></i>Chọn ảnh
+
+                <div className="text-center w-100">
+                  <label className="btn btn-danger px-4 mb-2">
+                    <i className="bi bi-upload me-2"></i>Chọn ảnh mới
                     <input type="file" accept=".jpg,.jpeg,.png,.gif" className="d-none" onChange={handleAvatarChange} />
                   </label>
-                  <p className="text-muted small mt-2">JPG, PNG, GIF — dưới 2MB</p>
+                  <p className="text-muted small mb-0">Định dạng: JPG, PNG, GIF (Max 2MB)</p>
                 </div>
+
               </div>
             </div>
           </div>
