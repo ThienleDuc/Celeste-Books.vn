@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Breadcrumbs, Link, Typography } from "@mui/material";
 import axiosClient from "../../api/axios";
+import ReviewModal from "./ReviewProduct"; // Import component ReviewModal đã tạo
 
 /* ================= INTERFACES ================= */
 interface Product {
@@ -31,6 +32,8 @@ interface OrderItem {
   total_price: string;
   product: Product;
   product_detail: ProductDetail;
+  // --- THÊM DÒNG NÀY: Để theo dõi trạng thái đánh giá của từng món ---
+  is_reviewed?: boolean; 
 }
 
 interface ShippingAddress {
@@ -60,7 +63,7 @@ interface Order {
   shipping_address?: ShippingAddress;
 }
 
-/* ================= CONSTANTS ================= */
+/* ================= CONSTANTS (Giữ nguyên) ================= */
 const ORDER_STATUS_MAP: Record<string, { text: string; class: string }> = {
   pending: { text: "Chờ xử lý", class: "bg-warning text-dark" },
   processing: { text: "Đang xử lý", class: "bg-info text-white" },
@@ -87,8 +90,15 @@ const PageChiTietDonHang = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
+  // --- STATE ---
+  const [selectedProductId, setSelectedProductId] = useState<number>(0); 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedOrderItemId, setSelectedOrderItemId] = useState<number>(0); 
+  
+  // XÓA: const [reviewed, setReviewed] = useState<boolean>(false); // <-- Đã xóa dòng này vì gây lỗi logic chung
+  
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetail = async () => {
@@ -115,6 +125,35 @@ alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
     fetchOrderDetail();
   }, [id, navigate]); 
 
+  // --- HÀM MỞ MODAL ---
+  const handleOpenReviewModal = (productId: number, itemId: number) => {
+    console.log("Review Product:", productId, "Order Item:", itemId);
+    setSelectedProductId(productId);
+    setSelectedOrderItemId(itemId); 
+    setIsReviewOpen(true);
+  };
+
+  // --- HÀM XỬ LÝ KHI SUBMIT XONG (ĐÃ SỬA) ---
+  const handleSubmitReviewSuccess = (data: any) => {
+      console.log("Đã đánh giá xong:", data);
+      
+      setIsReviewOpen(false);
+
+      // --- LOGIC MỚI: Cập nhật trạng thái 'is_reviewed' cho đúng item vừa đánh giá ---
+      if (order) {
+          const updatedItems = order.items.map((item) => {
+              // Tìm item trùng ID với item vừa được chọn đánh giá
+              if (item.id === selectedOrderItemId) {
+                  return { ...item, is_reviewed: true }; // Đánh dấu là đã đánh giá
+              }
+              return item;
+          });
+
+          // Cập nhật lại state Order để giao diện tự render lại
+          setOrder({ ...order, items: updatedItems });
+      }
+  };
+
   if (loading) return (
       <div className="container py-4 text-center">
           <div className="spinner-border spinner-border-sm text-primary mx-auto" role="status"></div>
@@ -136,6 +175,7 @@ alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
         order.shipping_address.commune?.province?.name
       ].filter(Boolean).join(", ")
     : "";
+    
 
   return (
     <div className="container my-3">
@@ -220,14 +260,25 @@ alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
                             <div className="fw-bold text-danger">{Number(item.total_price).toLocaleString()}₫</div>
                             <div className="text-muted small">{Number(item.price).toLocaleString()}₫/sp</div>
                           </td>
+                          
+                          {/* --- CỘT ĐÁNH GIÁ ĐÃ SỬA --- */}
                           <td className="py-2 text-center align-middle">
                             {order.status === "delivered" && (
-                              <button 
-                                className="btn btn-outline-success btn-sm py-1 px-2"
-                                onClick={() => alert(`Đánh giá sản phẩm: ${item.product.name}`)}
-                              >
-                                <i className="bi bi-star me-1"></i>Đánh giá
-                              </button>
+                              <>
+                                {/* Kiểm tra trạng thái của CHÍNH ITEM ĐÓ */}
+                                {item.is_reviewed ? (
+                                  <span className="text-success fw-medium small">
+                                      <i className="bi bi-check-circle-fill me-1"></i>Đã đánh giá
+                                  </span>
+                                ) : (
+                                  <button 
+                                    className="btn btn-outline-success btn-sm py-1 px-2"
+                                    onClick={() => handleOpenReviewModal(item.product.id, item.id)}
+                                  >
+                                    <i className="bi bi-star me-1"></i>Đánh giá
+                                  </button>
+                                )}
+                              </>
                             )}
                           </td>
                         </tr>
@@ -274,7 +325,6 @@ alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
 
         {/* THÔNG TIN ĐƠN HÀNG */}
         <div className="col-lg-4">
-          {/* THÔNG TIN GIAO HÀNG */}
           <div className="card border-0 shadow-sm">
             <div className="card-body">
               <h6 className="fw-bold mb-3 d-flex align-items-center">
@@ -301,7 +351,6 @@ alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
             </div>
 </div>
 
-          {/* THÔNG TIN THANH TOÁN */}
           <div className="card border-0 shadow-sm mt-3">
             <div className="card-body">
               <h6 className="fw-bold mb-3 d-flex align-items-center">
@@ -320,7 +369,6 @@ alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
             </div>
           </div>
 
-          {/* NÚT HÀNH ĐỘNG */}
           <div className="mt-3">
             <button className="btn btn-outline-secondary w-100 py-2" onClick={() => navigate("/don-hang-cua-toi")}>
               <i className="bi bi-arrow-left me-2"></i>Quay lại danh sách
@@ -328,6 +376,15 @@ alert("Có lỗi xảy ra khi tải thông tin đơn hàng.");
           </div>
         </div>
       </div>
+
+      {/* RENDER COMPONENT REVIEW MODAL TẠI ĐÂY */}
+      <ReviewModal 
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        productId={selectedProductId}
+        orderItemId={selectedOrderItemId}
+        onSubmit={handleSubmitReviewSuccess}
+      />
     </div>
   );
 };

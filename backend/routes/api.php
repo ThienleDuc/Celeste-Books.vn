@@ -258,6 +258,8 @@ Route::prefix('products')->group(function () {
 
     // routes/api.php
     Route::get('/featured', [ProductController::class, 'featured']);
+    Route::get('/{id}', [ProductController::class, 'getProductById']);
+        
 
 });
 
@@ -269,7 +271,7 @@ Route::prefix('product-details')->group(function () {
     // Thêm chi tiết sản phẩm mới
     Route::post('/', [ProductDetailController::class, 'store']);
 
-    // Cập nhật chi tiết sản phẩm theo ID
+    
     Route::put('/{id}', [ProductDetailController::class, 'update'])
         ->where('id', '[0-9]+');
 

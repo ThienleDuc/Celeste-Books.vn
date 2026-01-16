@@ -1293,4 +1293,39 @@ class ProductController extends Controller
             return false;
         }
     }
+    //get product by id 
+   public function getProductById($id)
+{
+    try {
+        // Sử dụng addSelect để query trực tiếp từ bảng product_images
+        $product = Product::select('products.*') // Lấy tất cả cột của bảng products
+            ->addSelect([
+                'image' => ProductImage::select('image_url') // Chỉ lấy cột image_url
+                    ->whereColumn('product_id', 'products.id') // So khớp khóa ngoại
+                    ->orderBy('sort_order', 'asc') // Ưu tiên ảnh đầu tiên
+                    ->limit(1) // Giới hạn 1 dòng
+            ])
+            ->find($id);
+       
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Không tìm thấy sản phẩm'
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Lấy sản phẩm thành công',
+            'data'    => $product
+        ], 200);
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Lỗi server',
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+}
 }

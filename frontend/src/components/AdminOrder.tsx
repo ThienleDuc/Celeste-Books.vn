@@ -21,7 +21,6 @@ const AdminOrderPage = () => {
     const [orders, setOrders] = useState<Order[]>([]); 
     const [loading, setLoading] = useState<boolean>(false);
 
-    // Helper: Format tiền tệ (Bạn bị thiếu hàm này trong code cũ)
     const formatCurrency = (amount: number | string) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(amount));
     };

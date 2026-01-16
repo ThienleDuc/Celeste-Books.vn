@@ -8,15 +8,16 @@ use Illuminate\Http\Request;
 use  App\Models\OrderItem;
 class ReviewController extends Controller
 {  
-     public function getReviewByProductId(Request $request, $id) {
+    public function getReviewByProductId(Request $request, $id) {
     try {
+        // 1. Lấy danh sách ID các OrderItem thuộc về Product này
         $orderItemIds = OrderItem::where('product_id', $id)->pluck('id');
 
-        $reviews = Review::with(['user:id,username,email']) // Thêm 'email' nếu muốn lấy cả email
+        // 2. Query lấy Review
+        $reviews = Review::with('user') // Sửa: Lấy toàn bộ thông tin user để tránh sai tên cột
             ->whereIn('order_item_id', $orderItemIds)
+            ->orderBy('created_at', 'desc') // Sửa: Sắp xếp mới nhất lên đầu
             ->get();
-
-       
 
         return response()->json([
             'status' => 'success',
@@ -31,8 +32,6 @@ class ReviewController extends Controller
         ], 500);
     }
 }
-
-
     public function getReviews(Request $request){
         try {
             $getReview= Review::orderBy("created_at","desc")

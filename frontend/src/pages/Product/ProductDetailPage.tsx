@@ -9,15 +9,10 @@ import Swal from "sweetalert2";
 /* ===== COMPONENTS ===== */
 import ProductRightSection from "../../components/Product/ProductRightDetailSection";
 import ThumbnailCarousel from "../../components/Utils/ThumbnailCarousel";
-import ReviewProductSection from "../../components/Product/ReviewProductSection"; 
-import ProductRecommendedSection from "../../components/Product/ProductRecommendedSection";
+ import ProductRecommendedSection from "../../components/Product/ProductRecommendedSection";
 import ProductSuggestedSection from "../../components/Product/ProductSuggestedSection";
 import ProductLayout from "../../layouts/_ProductLayout";
-
-<<<<<<< HEAD
-/* ===== MODELS ===== */
-// import type { ProductFull } from "../../models/Product/product.model";
-=======
+import ProductReviewsSection from "../../components/Product/ProductReviewsSection";
 /* ===== API ===== */
 import authApi from "../../api/auth.api";
 
@@ -33,7 +28,6 @@ const Toast = Swal.mixin({
     toast.onmouseleave = Swal.resumeTimer;
   },
 });
->>>>>>> 8a6b60d75bdff1e1b9168cf61eaf0092c4652e97
 
 const ProductDetailPage = () => {
   /* ================= ROUTER ================= */
@@ -510,11 +504,8 @@ let errorMessage = 'Lỗi hệ thống, vui lòng thử lại sau';
             </div>
           </div>
 
-<<<<<<< HEAD
             
           {/* ================= RIGHT COLUMN ================= */}
-=======
->>>>>>> 8a6b60d75bdff1e1b9168cf61eaf0092c4652e97
           <div className="col-12 col-md-7">
             <div
               className="card shadow-sm overflow-auto overflow-scrollbar-webkit-none"
@@ -533,11 +524,10 @@ let errorMessage = 'Lỗi hệ thống, vui lòng thử lại sau';
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* ================== REVIEWS ================== */}
         <ProductReviewsSection 
           
-          productId={product.id}
+          product_id={product.id}
         />
 
         {/* ================== SUGGESTED ================== */}
@@ -554,40 +544,6 @@ let errorMessage = 'Lỗi hệ thống, vui lòng thử lại sau';
           itemsPerLoad={6}
           colMd={2}
         />
-=======
-        {/* ===== PHẦN REVIEW ===== */}
-        <h5 className="title-section mt-5">Đánh giá sản phẩm</h5>
-        <div className="card shadow-sm mb-4">
-            <div className="card-body">
-                <div className="row">
-{/* Cột trái: Thống kê sao */}
-                    <div className="col-12 col-md-4 border-end">
-                        <div className="text-center mb-3">
-                            <h2 className="fw-bold mb-1">{avgRating} <small className="text-muted">/5</small></h2>
-                            <p className="text-muted mb-0">{reviews.length} đánh giá</p>
-                        </div>
-                        {ratingData.map((r) => (
-                            <div key={r.stars} className="d-flex align-items-center gap-2 mb-2">
-                                <span style={{ width: 60 }}>{r.stars} sao</span>
-                                <div className="progress flex-grow-1" style={{ height: 8 }}>
-                                    <div className="progress-bar bg-warning" style={{ width: `${r.percent}%` }} />
-                                </div>
-                                <span className="text-muted">{Math.round(r.percent)}%</span>
-                            </div>
-                        ))}
-                    </div>
-                    {/* Cột phải: Danh sách review */}
-                    <div className="col-12 col-md-8 ps-md-4">
-                        <ReviewProductSection reviews={reviews} />
-                    </div>
-                </div>
-            </div>
-        </div>
-        {/* ================================================= */}
-        
-        <ProductSuggestedSection title="Sản phẩm liên quan" productId={product.id} itemsPerLoad={6} colMd={2} />
-        <ProductRecommendedSection title="Sản phẩm giới thiệu" itemsPerLoad={6} colMd={2} />
->>>>>>> 8a6b60d75bdff1e1b9168cf61eaf0092c4652e97
       </div>
     </ProductLayout>
   );
