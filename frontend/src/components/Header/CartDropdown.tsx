@@ -33,16 +33,15 @@ const CartDropdown = () => {
   const dropdownRef = useRef<HTMLLIElement | null>(null);
   const navigate = useNavigate();
 
-  // Lấy User ID từ localStorage (hoặc dùng Context nếu có)
+  // Lấy User ID từ localStorage
   const userInfoStr = localStorage.getItem("user_info");
   const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-  const userId = userInfo?.id || "C01"; // Fallback C01 để test nếu chưa login
+  const userId = userInfo?.id;
 
   // --- 2. HÀM FETCH GIỎ HÀNG TỪ BE ---
   const fetchCart = async () => {
     if (!userId) return;
     try {
-      // Gọi API lấy giỏ hàng
       const response = await axios.get(`http://127.0.0.1:8000/api/shopping-carts/${userId}`);
       if (response.data.success && response.data.data) {
         setCartItems(response.data.data.items || []);
@@ -52,15 +51,13 @@ const CartDropdown = () => {
     }
   };
 
-  // Gọi API khi component mount và khi mở dropdown
+  // Gọi API khi component mount
   useEffect(() => {
     fetchCart();
     
-    // (Tùy chọn) Lắng nghe sự kiện custom nếu bạn muốn cập nhật ngay khi bấm "Thêm vào giỏ"
-    // Bạn cần dispatch event này ở ProductDetailPage: window.dispatchEvent(new Event('cartUpdated'));
     const handleCartUpdate = () => fetchCart();
     window.addEventListener('cartUpdated', handleCartUpdate);
-
+    
     return () => window.removeEventListener('cartUpdated', handleCartUpdate);
   }, [userId]);
 
@@ -78,19 +75,15 @@ const CartDropdown = () => {
   // --- 3. TÍNH TỔNG SỐ LƯỢNG ---
   const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  // --- 4. HÀM CHUYỂN TRANG ---
-  const handleViewCart = () => {
-    setOpen(false); // Đóng dropdown
-    navigate(`/gio-hang/${userId}`); // Chuyển sang CartPage với userId
-  };
-
   // Hàm lấy icon dựa trên dữ liệu BE trả về
   const getProductIcon = (type: string | undefined) => {
-    // Logic map từ string BE ("Sách giấy") sang icon
-    if (type === "Sách giấy") return <i className="bi bi-book text-primary"></i>;
-    if (type === "Sách điện tử") return <i className="bi bi-tablet-landscape text-success"></i>;
-    return <i className="bi bi-box"></i>;
+    if (type === "Sách giấy") return "bi bi-book";
+    if (type === "Sách điện tử") return "bi bi-tablet-landscape";
+    return "bi bi-box";
   };
+
+  // Nếu chưa đăng nhập -> Không hiển thị gì
+  if (!userId) return null;
 
   return (
     <ul className="navbar-nav ms-3">
@@ -100,64 +93,77 @@ const CartDropdown = () => {
           className="dropdown-toggle nav-link p-0 border-0 bg-transparent position-relative"
           onClick={() => {
             setOpen(!open);
-            if (!open) fetchCart(); // Fetch lại khi mở để đảm bảo dữ liệu mới nhất
+            if (!open) fetchCart(); // Fetch lại khi mở dropdown
           }}
           aria-expanded={open}
         >
           <i className="bi bi-cart fs-5 cart-icon"></i>
           {/* Badge Số lượng */}
           {totalQuantity > 0 && (
-            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>
-              {totalQuantity > 99 ? '99+' : totalQuantity}
+            <span className="notification-badge">
+              {totalQuantity > 99 ? "99+" : totalQuantity}
             </span>
           )}
         </button>
 
         {/* Dropdown Menu */}
-        <div className={`dropdown-menu cart-dropdown-menu end-0 ${open ? "show" : ""}`} style={{ width: "300px", right: 0, left: "auto" }}>
-          <div className="dropdown-header cart-header fw-bold border-bottom mb-2">
-            Giỏ hàng ({totalQuantity})
+        <div className={`dropdown-menu cart-dropdown-menu ${open ? "show" : ""}`} style={{ right: 0, left: "auto" }}>
+          <div className="dropdown-header cart-header fw-bold">
+            Giỏ hàng
           </div>
 
-          <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-            {cartItems.length === 0 ? (
-              <div className="dropdown-item text-center text-muted py-3">Giỏ hàng trống</div>
-            ) : (
-              cartItems.map((item) => (
-                <div key={item.id} className="dropdown-item px-3 py-2 border-bottom">
-                  <div className="d-flex justify-content-between align-items-start w-100">
-                    
-                    {/* Cột Tên & Loại */}
-                    <div className="d-flex flex-column" style={{ width: "70%" }}>
-                        <div className="d-flex align-items-center gap-2 mb-1">
-                            {getProductIcon(item.product_detail?.product_type)}
-                            <span className="fw-bold text-truncate" style={{ maxWidth: "180px" }} title={item.product?.name}>
-                                {item.product?.name}
-                            </span>
-                        </div>
-                        <small className="text-muted">
-                            {item.product_detail?.product_type} x {item.quantity}
-                        </small>
-                    </div>
-
-                    {/* Cột Giá */}
-                    <div className="text-end fw-bold text-primary" style={{ width: "30%" }}>
-                      {Number(item.price_at_time).toLocaleString()}₫
+          {cartItems.length === 0 ? (
+            <div className="dropdown-item text-center text-muted p-3">
+              <small>Không có sản phẩm nào</small>
+            </div>
+          ) : (
+            cartItems.map((item) => (
+              <a 
+                key={item.id} 
+                href="#!" 
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpen(false);
+                  navigate(`/gio-hang/${userId}`);
+                }}
+              >
+                <div className="d-flex justify-content-between align-items-start w-100">
+                  {/* Cột icon + tên */}
+                  <div className="item-info d-flex align-items-center gap-2" style={{ overflow: "hidden" }}>
+                    <i className={`${getProductIcon(item.product_detail?.product_type)} fs-5`}></i>
+                    <div>
+                      <span className="text-truncate d-block" style={{ fontSize: "0.9rem", maxWidth: "180px" }}>
+                        {item.product?.name}
+                      </span>
+                      <small className="text-muted text-truncate d-block" style={{ fontSize: "0.8rem" }}>
+                        {item.product_detail?.product_type} x {item.quantity}
+                      </small>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
 
-          <div className="p-2">
-            <button 
-                onClick={handleViewCart} 
-                className="btn btn-primary w-100 btn-sm"
-            >
-              Xem giỏ hàng 
-            </button>
-          </div>
+                  {/* Cột giá tiền */}
+                  <div className="ms-2 flex-shrink-0 text-end fw-bold text-primary">
+                    {Number(item.price_at_time).toLocaleString()}₫
+                  </div>
+                </div>
+              </a>
+            ))
+          )}
+
+          <div className="dropdown-divider"></div>
+
+          <a 
+            href={`/gio-hang/${userId}`} 
+            className="dropdown-item text-center text-primary fw-semibold"
+            onClick={(e) => {
+              e.preventDefault();
+              setOpen(false);
+              navigate(`/gio-hang/${userId}`);
+            }}
+          >
+            Xem giỏ hàng
+          </a>
         </div>
       </li>
     </ul>
