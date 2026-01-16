@@ -25,18 +25,24 @@ class Order extends Model
         'payment_status',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+
     
     // ✔️ Đơn hàng có nhiều sản phẩm
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id');
     }
-
+    //Nhánh Final
     // ✔️ Người đặt hàng
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    // public function user()
+    // {
+    //     return $this->belongsTo(User::class);
+    // }
 
     // ✔️ Địa chỉ giao hàng
 
@@ -44,5 +50,6 @@ class Order extends Model
     {
         return $this->belongsTo(Address::class, 'shipping_address_id');
     }
+
 
 }

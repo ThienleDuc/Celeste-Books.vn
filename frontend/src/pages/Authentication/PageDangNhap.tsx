@@ -191,7 +191,7 @@ const Login = () => {
       <div className="text-center mt-3">
         <small>
           Chưa có tài khoản? <a href="/dang-ky">Đăng ký</a>
-        </small>
+        </small>git
       </div>
     </>
   );

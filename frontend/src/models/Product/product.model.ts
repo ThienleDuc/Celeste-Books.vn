@@ -113,7 +113,7 @@ const shuffleArray = <T>(arr: T[]): T[] =>
 /* =========================================================
    SAMPLE PRODUCTS
    ========================================================= */
-export const sampleProducts: ProductFull[] = Array.from({ length: 50 }, (_, i) => {
+export const sampleProducts: ProductFull[] = Array.from({ length: 11 }, (_, i) => {
   const productId = i + 1;
   const name = names[i % names.length];
   const createdAt = `2025-01-${((i % 28) + 1).toString().padStart(2, "0")}`;
