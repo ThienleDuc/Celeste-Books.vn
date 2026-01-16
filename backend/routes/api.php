@@ -173,6 +173,15 @@ Route::prefix('users')->group(function () {
     });
 });
 
+Route::prefix('/users/{userId}/addresses')->group(function () {
+    Route::get('/', [UserController::class, 'getUserAddresses']);           // GET: Lấy danh sách địa chỉ
+    Route::post('/', [UserController::class, 'addAddress']);                // POST: Thêm địa chỉ mới
+    Route::put('/{addressId}', [UserController::class, 'updateAddress']);   // PUT: Cập nhật địa chỉ
+    Route::delete('/{addressId}', [UserController::class, 'deleteAddress']); // DELETE: Xóa địa chỉ
+    Route::put('/{addressId}/set-default', [UserController::class, 'setDefaultAddress']); // PUT: Đặt địa chỉ mặc định
+});
+
+
 // ==================== NOTIFICATION ROUTES ====================
 Route::prefix('notifications')->group(function () {
     Route::get('/', [UserNotificationController::class, 'index']);

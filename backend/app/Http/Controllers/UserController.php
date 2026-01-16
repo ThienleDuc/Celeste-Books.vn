@@ -694,4 +694,105 @@ public function updateBasicInfo(Request $request, $id)
         ], 500);
     }
 }
+
+public function addAddress(Request $request, $userId)
+    {
+        // Validate theo schema
+        $data = $request->validate([
+            'label'           => 'nullable|string|max:50',
+            'receiver_name'   => 'required|string|max:50',
+            'phone'           => 'required|digits:10', // CHAR(10)
+            'street_address'  => 'required|string|max:255',
+            'commune_id'      => 'nullable|integer|exists:communes,id',
+            'is_default'      => 'sometimes|boolean'
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Nếu set mặc định → bỏ mặc định các địa chỉ khác
+            if (!empty($data['is_default'])) {
+                DB::table('addresses')
+                    ->where('user_id', $userId)
+                    ->update(['is_default' => false]);
+            }
+
+            // Nếu là địa chỉ đầu tiên → auto mặc định
+            $hasAddress = DB::table('addresses')
+                ->where('user_id', $userId)
+                ->exists();
+
+            if (!$hasAddress) {
+                $data['is_default'] = true;
+            }
+
+            // Insert địa chỉ
+            $addressId = DB::table('addresses')->insertGetId([
+                'user_id'        => $userId,
+                'label'          => $data['label'] ?? null,
+                'receiver_name'  => $data['receiver_name'],
+                'phone'          => $data['phone'],
+                'street_address' => $data['street_address'],
+                'commune_id'     => $data['commune_id'] ?? null,
+                'is_default'     => $data['is_default'] ?? false,
+                'created_at'     => now(),
+            ]);
+
+            // Lấy địa chỉ vừa thêm (kèm tỉnh / xã)
+            $newAddress = DB::table('addresses as a')
+                ->select(
+                    'a.*',
+                    'c.name as commune_name',
+                    'p.name as province_name',
+                    DB::raw("
+                        CONCAT(
+                            a.street_address,
+                            IF(c.name IS NOT NULL, CONCAT(', ', c.name), ''),
+                            IF(p.name IS NOT NULL, CONCAT(', ', p.name), '')
+                        ) as full_address
+                    ")
+                )
+                ->leftJoin('communes as c', 'a.commune_id', '=', 'c.id')
+                ->leftJoin('provinces as p', 'c.province_id', '=', 'p.id')
+                ->where('a.id', $addressId)
+                ->first();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Thêm địa chỉ thành công',
+                'data'    => $newAddress
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Add address error', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+'message' => 'Có lỗi xảy ra khi thêm địa chỉ'
+            ], 500);
+        }
+    }
+
+    public function getUserAddresses($userId)
+    {
+$addresses = DB::select("
+            SELECT a.*, 
+                c.name as commune_name, 
+                p.name as province_name,
+                CONCAT(a.street_address, ', ', c.name, ', ', p.name) as full_address
+            FROM addresses a
+            LEFT JOIN communes c ON a.commune_id = c.id
+            LEFT JOIN provinces p ON c.province_id = p.id
+            WHERE a.user_id = ?
+            ORDER BY a.is_default DESC, a.created_at DESC
+        ", [$userId]);
+return response()->json([
+'success' => true,
+'data' => $addresses
+        ]);
+    }
+
 }

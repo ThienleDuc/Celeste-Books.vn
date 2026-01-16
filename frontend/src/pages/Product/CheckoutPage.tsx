@@ -34,6 +34,14 @@ import {
   sampleDistanceFees  
 } from '../../models/Checkout/discount.model';
 
+interface AddressSelectorProps {
+    userId: string;
+    selectedAddressId: number | undefined;
+    onSelectAddress: (address: AddressFull | null) => void;
+    addresses: AddressFull[];
+    onAddressAdded: () => void; // Thêm prop này để trigger reload dữ liệu
+  }
+
 interface LocalStorageCartData {
     userId: string;
     products: any[];
@@ -56,6 +64,16 @@ const CheckoutPage: React.FC = () => {
     const [productDiscounts, setProductDiscounts] = useState<OrderProductDiscount[]>([]);
     const [shippingDiscounts, setShippingDiscounts] = useState<OrderShippingDiscount[]>([]);
     const [shippingFeeConfig, setShippingFeeConfig] = useState<any>(null);
+    const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+    const [isSubmittingAddress, setIsSubmittingAddress] = useState(false);
+    const isFirstLoad = React.useRef(true);
+    const [newAddressData, setNewAddressData] = useState({
+        receiver_name: '',
+        phone: '',
+        street_address: '',
+        commune_id: null as number | null, // Nếu bạn có chọn xã phường
+        is_default: false
+    });
     
     // State với proper types
     const [selectedAddress, setSelectedAddress] = useState<AddressFull | null>(null);
@@ -150,6 +168,51 @@ const CheckoutPage: React.FC = () => {
         if (sampleOrders.length === 0) return 1;
         const maxId = Math.max(...sampleOrders.map(order => order.id));
         return maxId + 1;
+    };
+
+
+    const handleAddAddress = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!userId) return;
+    
+        setIsSubmittingAddress(true);
+        try {
+            const payload = {
+                ...newAddressData,
+                // Đảm bảo phone là string 10 số theo validate của Laravel
+                phone: newAddressData.phone.replace(/\D/g, '') 
+            };
+    
+            const response = await checkoutApi.addAddress(userId, payload);
+    
+            if (response.data.success) {
+                // 1. Cập nhật lại danh sách địa chỉ từ server (để lấy đầy đủ full_address)
+                const addressRes = await checkoutApi.getUserAddresses(userId);
+                const updatedAddresses = addressRes.data?.data || [];
+                setAddresses(updatedAddresses);
+    
+                // 2. Tự động chọn địa chỉ vừa mới thêm
+                const newlyCreated = response.data.data;
+                setSelectedAddress(newlyCreated);
+    
+                // 3. Đóng form và reset data
+                setShowAddAddressForm(false);
+                setNewAddressData({
+                    receiver_name: '',
+                    phone: '',
+                    street_address: '',
+                    commune_id: null,
+                    is_default: false
+                });
+                
+                alert("Thêm địa chỉ thành công!");
+            }
+        } catch (error: any) {
+            console.error("Lỗi thêm địa chỉ:", error);
+            alert(error.response?.data?.message || "Không thể thêm địa chỉ. Vui lòng kiểm tra lại.");
+        } finally {
+            setIsSubmittingAddress(false);
+        }
     };
 
     // Hàm lấy order item id mới = max id của OrderItem + 1
@@ -269,45 +332,38 @@ const CheckoutPage: React.FC = () => {
 
 useEffect(() => {
     const loadInitialData = async () => {
+        if (!isFirstLoad.current) return; // Chặn loop
+        isFirstLoad.current = false;
+
         setIsLoading(true);
-        // Reset state cũ để tránh lặp dữ liệu khi chuyển mode
-        setCartItems([]); 
-        
         try {
-            const effectiveUserId = String(userId || 'C01');
+            const effectiveUserId = String(userId || 'C004');
             const queryParams = new URLSearchParams(location.search);
-            
-            const storageKey = `checkout_${effectiveUserId}`;
-            const storageData = JSON.parse(localStorage.getItem(storageKey) || '{}');
-            const currentCheckoutType = queryParams.get('checkoutType') || storageData.checkoutType || 'cart';
+            const currentCheckoutType = queryParams.get('checkoutType') || 'cart';
 
-            // 1. Lấy địa chỉ
-            const addressRes = await checkoutApi.getUserAddresses(effectiveUserId);
-            const addrList = addressRes.data?.data || [];
-            setAddresses(addrList);
-            setSelectedAddress(addrList.find((a: any) => a.is_default === 1) || addrList[0]);
+            // Gọi đồng thời để tránh waterfall request
+            const [addressRes, cartRes] = await Promise.all([
+                checkoutApi.getUserAddresses(effectiveUserId).catch(e => e), // Bọc catch để tránh sập cả trang
+                currentCheckoutType === 'buy_now' 
+                    ? checkoutApi.getLatestCartItem(effectiveUserId)
+                    : checkoutApi.getUserCart(effectiveUserId)
+            ]);
 
-            // 2. Xử lý phân luồng
-            if (currentCheckoutType === 'buy_now') {
-                const latestRes = await checkoutApi.getLatestCartItem(effectiveUserId);
-                
-                if (latestRes.data?.success && latestRes.data.data) {
-                    const item = latestRes.data.data;
-                    const mappedItem: any = {
-                        id: item.cart_item_id,        // Mapping cart_item_id -> id
-                        cartId: 0,                   // Giá trị giả lập nếu model yêu cầu
-                        productId: item.product_id,
-                        productDetailtId: item.product_detail_id,
-                        quantity: item.quantity,
-                        priceAtTime: Number(item.price_at_time),
-                        // Giữ lại các trường snake_case để các component hiển thị dùng được
-                        product_name: item.product_name,
-                        primary_image: item.primary_image,
-                        product_type: item.product_type,
-                        item_total: Number(item.item_total)
-                    };
-            
-                    setCartItems([mappedItem]); 
+            // 1. Xử lý địa chỉ
+            if (addressRes.data?.success) {
+                const addrList = addressRes.data.data || [];
+                setAddresses(addrList);
+                setSelectedAddress(addrList.find((a: any) => a.is_default === 1) || addrList[0] || null);
+            }
+
+            // 2. Xử lý dữ liệu giỏ hàng (Buy Now)
+            if (currentCheckoutType === 'buy_now' && cartRes.data?.success) {
+                const item = cartRes.data.data;
+                if (item) {
+                    const price = parseFloat(String(item.price_at_time));
+                    const qty = Number(item.quantity);
+                    
+                    setCartItems([item]); // Laravel trả về snake_case, giữ nguyên để hiển thị
                     setCartData({
                         userId: effectiveUserId,
                         checkoutType: 'buy_now',
@@ -316,67 +372,27 @@ useEffect(() => {
                             productId: item.product_id,
                             product_detail_id: item.product_detail_id,
                             productType: item.product_type,
-                            quantity: item.quantity,
-                            priceAtTime: Number(item.price_at_time)
+                            quantity: qty,
+                            priceAtTime: price
                         }],
-                        totalPrice: Number(item.item_total),
-                        totalQuantity: item.quantity,
+                        totalPrice: price * qty,
+                        totalQuantity: qty,
                         timestamp: Date.now().toString()
                     });
                 }
-            }else {
-               /* --- TRƯỜNG HỢP GIỎ HÀNG (cart) --- */
-const cartRes = await checkoutApi.getUserCart(effectiveUserId);
-
-if (cartRes.data?.success && cartRes.data.data) {
-    const rawItems = cartRes.data.data.items;
-    
-    // 1. Lọc trùng bằng Map để đảm bảo mỗi cart_item_id chỉ xuất hiện 1 lần
-    const uniqueMap = new Map();
-    rawItems.forEach((item: any) => {
-        // Sử dụng cart_item_id làm khóa duy nhất
-        const key = item.cart_item_id;
-        if (!uniqueMap.has(key)) {
-            uniqueMap.set(key, item);
-        }
-    });
-
-    const finalItems = Array.from(uniqueMap.values());
-
-    // 2. Tính toán lại Tổng số lượng và Tổng tiền để tránh lỗi từ Backend/Nối chuỗi
-    const totalQty = finalItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-    const totalPrice = finalItems.reduce((sum, item) => {
-        const price = parseFloat(item.price_at_time || item.sale_price || 0);
-        return sum + (price * Number(item.quantity || 0));
-    }, 0);
-    setCartItems(finalItems);
-    setCartData({
-        userId: effectiveUserId,
-        checkoutType: 'cart',
-        products: finalItems.map((item: any) => ({
-            id: item.cart_item_id,
-            productId: item.product_id,
-            product_detail_id: item.product_detail_id,
-            productType: item.product_type,
-            quantity: Number(item.quantity),
-            priceAtTime: parseFloat(item.price_at_time || item.sale_price || 0)
-        })),
-        totalPrice: totalPrice,
-        totalQuantity: totalQty,
-        timestamp: Date.now().toString()
-    });
-}
+            } else if (cartRes.data?.success) {
+                // Xử lý luồng giỏ hàng bình thường...
+                setCartItems(cartRes.data.data.items || []);
             }
         } catch (error) {
             console.error("Lỗi checkout:", error);
-            setErrorMessage("Không thể tải dữ liệu.");
         } finally {
             setIsLoading(false);
         }
     };
 
     loadInitialData();
-}, [userId, location.search]); // location.search giúp trigger lại khi đổi URL
+}, [userId]); 
 
 useEffect(() => {
     const fetchDiscountAndShippingData = async () => {
@@ -683,6 +699,86 @@ const calculateSubtotal = (): number => {
     const renderStep = () => {
         switch(currentStep) {
             case 1:
+                return (
+                    <div className="checkout-address-step">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5 className="fw-bold m-0">Địa chỉ nhận hàng</h5>
+                            <button 
+                                className="btn btn-outline-primary btn-sm"
+                                onClick={() => setShowAddAddressForm(true)}
+                            >
+                                <i className="bi bi-plus-lg"></i> Thêm địa chỉ mới
+                            </button>
+                        </div>
+            
+                        <AddressSelector
+                            userId={String(userId || 'A01')}
+                            selectedAddressId={Number(selectedAddress?.id)}
+                            onSelectAddress={setSelectedAddress}
+                            addresses={addresses}
+                        />
+            
+                        {/* Modal Form Thêm Địa Chỉ Mới */}
+                        {showAddAddressForm && (
+                            <div className="address-modal-overlay">
+                                <div className="address-modal-content">
+                                    <div className="modal-header border-bottom pb-3 d-flex justify-content-between">
+                                        <h5 className="modal-title fw-bold">Thêm địa chỉ mới</h5>
+                                        <button type="button" className="btn-close" onClick={() => setShowAddAddressForm(false)}></button>
+                                    </div>
+                                    
+                                    <form onSubmit={handleAddAddress} className="pt-4">
+                                        <div className="row g-3">
+                                            <div className="col-md-6">
+                                                <label className="form-label small fw-bold">Tên người nhận</label>
+                                                <input 
+                                                    type="text" className="form-control" required placeholder="VD: Nguyễn Văn A"
+                                                    value={newAddressData.receiver_name}
+                                                    onChange={e => setNewAddressData({...newAddressData, receiver_name: e.target.value})}
+                                                />
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label small fw-bold">Số điện thoại</label>
+                                                <input 
+                                                    type="tel" className="form-control" required placeholder="10 chữ số"
+                                                    value={newAddressData.phone}
+                                                    onChange={e => setNewAddressData({...newAddressData, phone: e.target.value})}
+                                                />
+                                            </div>
+                                            <div className="col-12">
+                                                <label className="form-label small fw-bold">Địa chỉ chi tiết (Số nhà, tên đường)</label>
+                                                <textarea 
+                                                    className="form-control" rows={3} required
+                                                    value={newAddressData.street_address}
+                                                    onChange={e => setNewAddressData({...newAddressData, street_address: e.target.value})}
+                                                ></textarea>
+                                            </div>
+                                            <div className="col-12">
+                                                <div className="form-check">
+                                                    <input 
+                                                        className="form-check-input" type="checkbox" id="defaultAddr"
+                                                        checked={newAddressData.is_default}
+                                                        onChange={e => setNewAddressData({...newAddressData, is_default: e.target.checked})}
+                                                    />
+                                                    <label className="form-check-label small" htmlFor="defaultAddr">
+                                                        Đặt làm địa chỉ mặc định
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+            
+                                        <div className="modal-footer border-top mt-4 pt-3 d-flex gap-2 justify-content-end">
+                                            <button type="button" className="btn btn-light" onClick={() => setShowAddAddressForm(false)}>Hủy</button>
+                                            <button type="submit" className="btn btn-primary" disabled={isSubmittingAddress}>
+                                                {isSubmittingAddress ? 'Đang lưu...' : 'Lưu địa chỉ'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
                 return (
                     <AddressSelector
                     userId={String(userId || 'A01')} // Đảm bảo truyền string
