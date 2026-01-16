@@ -217,7 +217,7 @@ const handleAddToCart = async () => {
       clearTimeout(timeoutId);
 
       if (response.data.success) {
-        window.dispatchEvent(new Event('cart-updated'));
+          window.dispatchEvent(new Event('cartUpdated'));
         
         Toast.fire({
           icon: 'success',
