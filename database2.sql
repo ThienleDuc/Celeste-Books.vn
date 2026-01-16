@@ -1,13 +1,15 @@
--- Tạo CSDL
+-- =============================================================================
+-- PHẦN 1: TẠO DATABASE VÀ CẤU TRÚC BẢNG (DDL)
+-- =============================================================================
 DROP DATABASE IF EXISTS book_store_db_2;
 CREATE DATABASE IF NOT EXISTS book_store_db_2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE book_store_db_2;
 
--- Tắt kiểm tra khóa ngoại để tránh lỗi thứ tự tạo bảng
+-- Tắt chế độ an toàn để cho phép xóa/sửa thoải mái khi nạp dữ liệu
+SET SQL_SAFE_UPDATES = 0;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- =============================================
--- 1. Bảng roles (Vai trò)
+-- 1. Roles
 CREATE TABLE roles (
     id VARCHAR(10) PRIMARY KEY,
     name VARCHAR(50) UNIQUE,
@@ -15,8 +17,7 @@ CREATE TABLE roles (
     slug varchar(255)
 );
 
--- =============================================
--- 2. Bảng permissions (Quyền hạn)
+-- 2. Permissions
 CREATE TABLE permissions (
     id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     name VARCHAR(100) UNIQUE,
@@ -24,8 +25,7 @@ CREATE TABLE permissions (
     slug varchar(255)
 );
 
--- =============================================
--- 3. Bảng role_per (Bảng trung gian)
+-- 3. Role_Per
 CREATE TABLE role_per (
     per_id INT NOT NULL,
     role_id VARCHAR(10) NOT NULL,
@@ -34,11 +34,10 @@ CREATE TABLE role_per (
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 4. Bảng users (Người dùng)
+-- 4. Users
 CREATE TABLE users (
     id VARCHAR(10) PRIMARY KEY,
-    username VARCHAR(16)  UNIQUE,
+    username VARCHAR(16) UNIQUE,
     password_hash VARCHAR(255),
     email VARCHAR(255) UNIQUE,
     is_active BOOLEAN DEFAULT TRUE,
@@ -47,8 +46,7 @@ CREATE TABLE users (
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL
 );
 
--- =============================================
--- 5. Bảng profiles (Hồ sơ)
+-- 5. Profiles
 CREATE TABLE profiles (
     user_id VARCHAR(10) PRIMARY KEY,
     full_name VARCHAR(50),
@@ -59,16 +57,14 @@ CREATE TABLE profiles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 6. Bảng provinces (Tỉnh/Thành phố)
+-- 6. Provinces
 CREATE TABLE provinces (
     id INT PRIMARY KEY,
     name VARCHAR(50),
     code VARCHAR(10) UNIQUE
 );
 
--- =============================================
--- 7. Bảng communes (Xã/Phường)
+-- 7. Communes
 CREATE TABLE communes (
     id INT PRIMARY KEY,
     province_id INT,
@@ -77,8 +73,7 @@ CREATE TABLE communes (
     FOREIGN KEY (province_id) REFERENCES provinces(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 8. Bảng addresses (Địa chỉ)
+-- 8. Addresses
 CREATE TABLE addresses (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(10),
@@ -93,8 +88,7 @@ CREATE TABLE addresses (
     FOREIGN KEY (commune_id) REFERENCES communes(id) ON DELETE SET NULL
 );
 
--- =============================================
--- 9. Bảng categories (Danh mục)
+-- 9. Categories
 CREATE TABLE categories (
     id INT PRIMARY KEY,
     name VARCHAR(100),
@@ -102,34 +96,24 @@ CREATE TABLE categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =============================================
--- 10. Bảng products (Sản phẩm)
+-- 10. Products
 CREATE TABLE products (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
-    name VARCHAR(255)
-        CHARACTER SET utf8mb4
-        COLLATE utf8mb4_0900_ai_ci
-        NOT NULL,
-
+    name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
     slug VARCHAR(255) UNIQUE,
     description TEXT,
     author VARCHAR(50),
     publisher VARCHAR(50),
     publication_year INT,
     language VARCHAR(50),
-
     status BOOLEAN DEFAULT 1,
     views BIGINT DEFAULT 0,
     purchase_count BIGINT DEFAULT 0,
     rating DECIMAL(3,2) DEFAULT 5.00,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
-ENGINE=InnoDB;
+) ENGINE=InnoDB;
 
--- =============================================
--- 11. Bảng product_categories 
+-- 11. Product Categories
 CREATE TABLE product_categories (
     product_id BIGINT,
     category_id INT,
@@ -138,8 +122,7 @@ CREATE TABLE product_categories (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 12. Bảng product_details (Chi tiết sản phẩm)
+-- 12. Product Details
 CREATE TABLE product_details (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT,
@@ -157,8 +140,7 @@ CREATE TABLE product_details (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 13. Bảng shopping_carts (Giỏ hàng)
+-- 13. Shopping Carts
 CREATE TABLE shopping_carts (
     id BIGINT PRIMARY KEY,
     user_id VARCHAR(10),
@@ -168,8 +150,7 @@ CREATE TABLE shopping_carts (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 14. Bảng cart_items (Sản phẩm trong giỏ)
+-- 14. Cart Items
 CREATE TABLE cart_items (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     cart_id BIGINT,
@@ -184,58 +165,26 @@ CREATE TABLE cart_items (
     FOREIGN KEY (product_details_id) REFERENCES product_details(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 15. Bảng orders (Đơn hàng)
+-- 15. Orders
 CREATE TABLE orders (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-
     user_id VARCHAR(10) NULL,
     order_code VARCHAR(30) NOT NULL UNIQUE,
-
-    status ENUM(
-        'pending',
-        'processing',
-        'shipped',
-        'delivered',
-        'cancelled'
-    ) NOT NULL DEFAULT 'pending',
-
+    status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') NOT NULL DEFAULT 'pending',
     subtotal DECIMAL(12,2) DEFAULT 0,
     shipping_fee DECIMAL(12,2) DEFAULT 0,
     discount DECIMAL(12,2) DEFAULT 0,
     total_amount DECIMAL(12,2) NOT NULL,
-
     shipping_address_id BIGINT NULL,
-
-    payment_method ENUM(
-        'cod',
-        'momo',
-        'bank_transfer',
-        'credit_card'
-    ) NOT NULL,
-
-    payment_status ENUM(
-        'unpaid',
-        'paid',
-        'refunded'
-    ) NOT NULL DEFAULT 'unpaid',
-
+    payment_method ENUM('cod', 'momo', 'bank_transfer', 'credit_card') NOT NULL,
+    payment_status ENUM('unpaid', 'paid', 'refunded') NOT NULL DEFAULT 'unpaid',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_orders_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE SET NULL,
-
-    CONSTRAINT fk_orders_address
-        FOREIGN KEY (shipping_address_id)
-        REFERENCES addresses(id)
-        ON DELETE SET NULL
+    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_orders_address FOREIGN KEY (shipping_address_id) REFERENCES addresses(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- =============================================
--- 16. Bảng order_items (Chi tiết đơn hàng)
+-- 16. Order Items
 CREATE TABLE order_items (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     order_id BIGINT,
@@ -251,8 +200,7 @@ CREATE TABLE order_items (
     FOREIGN KEY (product_details_id) REFERENCES product_details(id) ON DELETE CASCADE
 );
 
--- =============================================
--- Bảng: weight_fees (Phí theo cân nặng)
+-- Các bảng Shipping Fees
 CREATE TABLE weight_fees (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     min_weight DECIMAL(10,2) NOT NULL,
@@ -261,7 +209,6 @@ CREATE TABLE weight_fees (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Bảng: distance_fees (Phí theo khoảng cách)
 CREATE TABLE distance_fees (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     min_distance DECIMAL(10,2) NOT NULL,
@@ -270,7 +217,6 @@ CREATE TABLE distance_fees (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Bảng: shipping_type_fees (Phí theo loại hình)
 CREATE TABLE shipping_type_fees (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     shipping_type ENUM('standard', 'express') NOT NULL,
@@ -278,96 +224,67 @@ CREATE TABLE shipping_type_fees (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Bảng: order_shipping_fee_details (các loại phí của order)
 CREATE TABLE order_shipping_fee_details (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    
     order_id BIGINT NOT NULL,
     weight_fee_id BIGINT NOT NULL,
     distance_fee_id BIGINT NOT NULL,
     shipping_type_fee_id BIGINT NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
-        
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (weight_fee_id) REFERENCES weight_fees(id),
     FOREIGN KEY (distance_fee_id) REFERENCES distance_fees(id),
     FOREIGN KEY (shipping_type_fee_id) REFERENCES shipping_type_fees(id)
 );
 
--- Bảng: order_product_discounts (giảm giá sản phẩm)
+-- Các bảng Discount
 CREATE TABLE order_product_discounts (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
     type ENUM('promo_code', 'member_discount', 'voucher') DEFAULT 'promo_code',
-
     amount DECIMAL(12,2) NOT NULL,
-
     quantity INT NOT NULL DEFAULT 1,
     used_quantity INT NOT NULL DEFAULT 0,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Bảng: order_shipping_discounts (giảm giá phí ship)
 CREATE TABLE order_shipping_discounts (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
     type ENUM('promo_code', 'member_discount', 'voucher') DEFAULT 'promo_code',
-
     amount DECIMAL(12,2) NOT NULL,
-
     quantity INT NOT NULL DEFAULT 1,
     used_quantity INT NOT NULL DEFAULT 0,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE order_discount_details (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-
     order_id BIGINT NOT NULL,
-
     product_discount_id BIGINT NULL,
     shipping_discount_id BIGINT NULL,
     amount DECIMAL(12,2) NOT NULL,
-
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_discount_id) REFERENCES order_product_discounts(id) ON DELETE CASCADE,
     FOREIGN KEY (shipping_discount_id) REFERENCES order_shipping_discounts(id) ON DELETE CASCADE,
-
     UNIQUE KEY unique_product_discount (order_id, product_discount_id),
     UNIQUE KEY unique_shipping_discount (order_id, shipping_discount_id)
 );
 
--- =============================================
--- 17. Bảng reviews (Đánh giá)
+-- 17. Reviews
 CREATE TABLE reviews (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-
     order_item_id BIGINT NULL,
     user_id VARCHAR(10) NOT NULL,
-
     rating TINYINT CHECK (rating BETWEEN 1 AND 5),
     title VARCHAR(255),
     content TEXT,
     images TEXT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reviews_order_item FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE SET NULL,
+    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
-    CONSTRAINT fk_reviews_order_item
-        FOREIGN KEY (order_item_id)
-        REFERENCES order_items(id)
-        ON DELETE SET NULL,
-
-    CONSTRAINT fk_reviews_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- =============================================
--- 18. Bảng order_notifications
+-- Notifications & Images
 CREATE TABLE order_notifications (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(10),
@@ -382,8 +299,6 @@ CREATE TABLE order_notifications (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 19. Bảng product_notifications
 CREATE TABLE product_notifications (
     id BIGINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     user_id VARCHAR(10),
@@ -398,8 +313,6 @@ CREATE TABLE product_notifications (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
 );
 
--- =============================================
--- 20. Bảng user_notifications
 CREATE TABLE user_notifications (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id VARCHAR(10),
@@ -412,8 +325,6 @@ CREATE TABLE user_notifications (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- =============================================
--- 21. Bảng product_images (Ảnh sản phẩm)
 CREATE TABLE product_images (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT NOT NULL,
@@ -424,8 +335,6 @@ CREATE TABLE product_images (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
--- =============================================
--- 22. Bảng messages (Tin nhắn)
 CREATE TABLE conversations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     participant1_id VARCHAR(10) NOT NULL,
@@ -434,18 +343,11 @@ CREATE TABLE conversations (
     order_item_id BIGINT,
     last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     FOREIGN KEY (participant1_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (participant2_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
-    FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE SET NULL,
-
-    CHECK (participant1_id <> participant2_id),
-
-    INDEX idx_conversation_users (participant1_id, participant2_id),
-    INDEX idx_last_message_at (last_message_at DESC)
+    FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE SET NULL
 );
-
 
 CREATE TABLE messages (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -453,43 +355,27 @@ CREATE TABLE messages (
     sender_id VARCHAR(10) NOT NULL,
     message TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-
-    INDEX idx_message_conversation (conversation_id, created_at)
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE conversation_notifications (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
     user_id VARCHAR(10),
-
     type ENUM('new', 'update', 'recall', 'system') DEFAULT 'new',
-
     title VARCHAR(255) NOT NULL,
     content VARCHAR(500),
-
     unread_count INT DEFAULT 0,
     is_read BOOLEAN DEFAULT FALSE,
-
     last_message_id BIGINT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (last_message_id) REFERENCES messages(id) ON DELETE SET NULL,
-
-    UNIQUE KEY uq_user_conversation (user_id, conversation_id),
-
-    INDEX idx_notification_user (user_id, is_read, updated_at DESC),
-    INDEX idx_notification_type (type)
+    FOREIGN KEY (last_message_id) REFERENCES messages(id) ON DELETE SET NULL
 );
 
--- =============================================
--- 24. Bảng review_images (Ảnh đánh giá)
 CREATE TABLE review_images (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     review_id BIGINT NOT NULL,
@@ -498,18 +384,12 @@ CREATE TABLE review_images (
     FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
 );
 
--- Bật lại kiểm tra khóa ngoại
-SET FOREIGN_KEY_CHECKS = 1;
-
--- =================================================================
--- PHẦN NHẬP LIỆU
--- =================================================================
-SET FOREIGN_KEY_CHECKS = 0;
-
--- Tạo trigger cho purchase_count khi thêm order_items
+-- =============================================================================
+-- PHẦN 2: TRIGGER
+-- =============================================================================
 DELIMITER //
 
--- Trigger 1: Khi thêm order_items, tăng purchase_count
+-- Trigger: Tăng lượt mua khi có order item mới
 CREATE TRIGGER update_purchase_count_after_order_item_insert
 AFTER INSERT ON order_items
 FOR EACH ROW
@@ -519,7 +399,7 @@ BEGIN
     WHERE id = NEW.product_id;
 END//
 
--- Trigger 2: Khi thêm review mới, cập nhật rating trung bình
+-- Trigger: Cập nhật rating sản phẩm khi có review mới
 CREATE TRIGGER update_rating_after_review_insert
 AFTER INSERT ON reviews
 FOR EACH ROW
@@ -527,18 +407,15 @@ BEGIN
     DECLARE product_id_val BIGINT;
     DECLARE avg_rating DECIMAL(3,2);
     
-    -- Lấy product_id từ order_item
     SELECT oi.product_id INTO product_id_val
     FROM order_items oi
     WHERE oi.id = NEW.order_item_id;
     
-    -- Tính rating trung bình mới
     SELECT AVG(r.rating) INTO avg_rating
     FROM reviews r
     JOIN order_items oi ON r.order_item_id = oi.id
     WHERE oi.product_id = product_id_val;
     
-    -- Cập nhật rating cho sản phẩm
     UPDATE products
     SET rating = COALESCE(avg_rating, 5.00)
     WHERE id = product_id_val;
@@ -546,400 +423,182 @@ END//
 
 DELIMITER ;
 
--- Đặt timezone cho Việt Nam
-SET GLOBAL time_zone = '+07:00';
-SET time_zone = '+07:00';
+-- =============================================================================
+-- PHẦN 3: NHẬP LIỆU (DATA SEEDING)
+-- =============================================================================
 
 -- 1. Roles
 INSERT INTO roles (id, name, description, slug) VALUES
-('A', 'Admin', 'Quản trị viên hệ thống', 'admin'),
-('M', 'Manager', 'Quản lý cửa hàng', 'manager'),
-('S', 'Staff', 'Nhân viên bán hàng', 'staff'),
-('C', 'Customer', 'Khách hàng', 'customer'),
-('S1', 'Shipper', 'Nhân viên giao hàng', 'shipper');
+('A', 'Admin', 'Quản trị viên', 'admin'),
+('C', 'Customer', 'Khách hàng', 'customer');
 
 -- 2. Permissions
-INSERT INTO permissions (name, description, slug) VALUES
-('view_users', 'Xem danh sách người dùng', 'view-users'),
-('create_users', 'Tạo người dùng mới', 'create-users'),
-('edit_users', 'Sửa thông tin người dùng', 'edit-users'),
-('delete_users', 'Xóa người dùng', 'delete-users'),
-('view_products', 'Xem sản phẩm', 'view-products'),
-('create_products', 'Tạo sản phẩm mới', 'create-products'),
-('edit_products', 'Sửa sản phẩm', 'edit-products'),
-('delete_products', 'Xóa sản phẩm', 'delete-products'),
-('manage_orders', 'Quản lý đơn hàng', 'manage-orders'),
-('view_reports', 'Xem báo cáo doanh thu', 'view-reports');
+INSERT INTO permissions (id, name, description, slug) VALUES
+(1, 'Thống kê nhập', 'Thống kê nhập', 'stats.import'), (2, 'Thống kê bán', 'Thống kê bán', 'stats.sales'),
+(3, 'Phân quyền', 'Quản lý phân quyền', 'auth.manage'), (4, 'Quản lý người dùng', 'QL người dùng', 'user.manage'),
+(5, 'Quản lý thông báo', 'QL thông báo', 'notify.manage'), (6, 'Quản lý sản phẩm', 'QL sản phẩm', 'product.manage'),
+(7, 'Quản lý voucher', 'QL voucher', 'voucher.manage'), (8, 'Quản lý khối lượng', 'Cấu hình ship', 'shipping.weight'),
+(9, 'Xác nhận đơn hàng', 'Duyệt đơn', 'order.confirm'),
+(10, 'Tìm kiếm', 'Tìm sản phẩm', 'product.search'), (11, 'Xem danh sách', 'Xem list SP', 'product.list'),
+(12, 'Xem chi tiết', 'Xem chi tiết SP', 'product.detail'), (13, 'Giỏ hàng', 'QL giỏ hàng', 'cart.manage'),
+(14, 'Đặt hàng', 'Tạo đơn hàng', 'order.place'), (15, 'Lịch sử đơn', 'Xem lịch sử', 'order.history'),
+(16, 'Đánh giá', 'Review SP', 'product.review'), (17, 'Chat AI', 'Chat bot', 'ai.chat'),
+(18, 'Lịch sử mua', 'Xem SP đã mua', 'purchase.history'),
+(19, 'Xem profile', 'Xem TK', 'profile.view'), (20, 'Sửa profile', 'Sửa TK', 'profile.edit'),
+(21, 'Đổi mật khẩu', 'Đổi pass', 'auth.password'), (22, 'Xem thông báo', 'Xem notify', 'notify.view'),
+(23, 'Đọc thông báo', 'Đánh dấu đọc', 'notify.read'), (24, 'Xem voucher', 'Xem mã giảm giá', 'voucher.view'),
+(25, 'Dùng voucher', 'Apply mã', 'voucher.use');
 
--- 3. Role_Per
 INSERT INTO role_per (role_id, per_id) VALUES
-('A', 1), ('A', 2), ('A', 3), ('A', 4),
-('A', 5), ('A', 6), ('A', 7), ('A', 8),
-('M', 5), ('M', 9),
-('S', 5), ('S', 9),
-('C', 5), ('S1', 9);
+('A',1),('A',2),('A',3),('A',4),('A',5),('A',6),('A',7),('A',8),('A',9),('A',19),('A',20),('A',21),('A',22),('A',23),('A',24),('A',25),
+('C',10),('C',11),('C',12),('C',13),('C',14),('C',15),('C',16),('C',17),('C',18),('C',19),('C',20),('C',21),('C',22),('C',23),('C',24),('C',25);
 
--- 4. Users
+-- 3. Users (A00x cho Admin, C00x cho Customer)
 INSERT INTO users (id, username, password_hash, email, is_active, role_id) VALUES
-('A01', 'admin', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'admin@store.com', 1, 'A'),
-('M01', 'manager', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'manager@store.com', 1, 'M'),
-('S01', 'staff', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'staff@store.com', 1, 'S'),
-('S101', 'shipper', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'shipper@store.com', 1, 'S1'),
-('C01', 'customer1', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'tuan@gmail.com', 1, 'C'),
-('C02', 'customer2', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'hoa@gmail.com', 1, 'C'),
-('A02', 'admin2', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'admin.senior@store.com', 1, 'A'),
-('M02', 'manager2', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'manager.store2@store.com', 1, 'M'),
-('S02', 'staff1', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'staff.sales1@store.com', 1, 'S'),
-('S03', 'staff2', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'staff.sales2@store.com', 1, 'S'),
-('S04', 'staff3', '$2a$12$x1ug24gfpkce6cTQPtBXauyYswXojCsEs8O94sfFd3hE2GO0oO2C.', 'staff.warehouse@store.com', 1, 'S');
+('A001', 'admin_boss', '$2a$12$xxx', 'boss@store.com', 1, 'A'),
+('A002', 'admin_staff', '$2a$12$xxx', 'staff@store.com', 1, 'A');
 
--- 5. Profiles
-INSERT INTO profiles (user_id, full_name, phone, birthday, gender) VALUES
-('A01', 'Quản Trị Viên', '0901111111', '1990-01-01', 'Nam'),
-('M01', 'Lê Quản Lý', '0902222222', '1992-05-05', 'Nữ'),
-('S01', 'Trần Nhân Viên', '0903333333', '1995-08-08', 'Nữ'),
-('C01', 'Phạm Tuấn', '0905555555', '1998-10-10', 'Nam'),
-('C02', 'Lê Thị Hoa', '0906666666', '1999-12-12', 'Nữ'),
-('A02', 'Nguyễn Văn Sếp', '0988111000', '1985-02-15', 'Nam'),     
-('M02', 'Trần Thị Quản Lý 2', '0977222111', '1992-05-20', 'Nữ'),   
-('S02', 'Lê Bán Hàng A', '0966333222', '1998-09-10', 'Nam'),        
-('S03', 'Phạm Bán Hàng B', '0955444333', '2000-01-05', 'Nữ'),      
-('S04', 'Đỗ Thủ Kho', '0944555444', '1995-11-20', 'Nam');
+-- 50 Customer (C001 -> C050)
+INSERT INTO users (id, username, password_hash, email, is_active, role_id) VALUES
+('C001','cus01','$2y$10$x','u01@gmail.com',1,'C'),('C002','cus02','$2y$10$x','u02@gmail.com',1,'C'),
+('C003','cus03','$2y$10$x','u03@gmail.com',1,'C'),('C004','cus04','$2y$10$x','u04@gmail.com',1,'C'),
+('C005','cus05','$2y$10$x','u05@gmail.com',1,'C'),('C006','cus06','$2y$10$x','u06@gmail.com',1,'C'),
+('C007','cus07','$2y$10$x','u07@gmail.com',1,'C'),('C008','cus08','$2y$10$x','u08@gmail.com',1,'C'),
+('C009','cus09','$2y$10$x','u09@gmail.com',1,'C'),('C010','cus10','$2y$10$x','u10@gmail.com',1,'C'),
+('C011','cus11','$2y$10$x','u11@gmail.com',1,'C'),('C012','cus12','$2y$10$x','u12@gmail.com',1,'C'),
+('C013','cus13','$2y$10$x','u13@gmail.com',1,'C'),('C014','cus14','$2y$10$x','u14@gmail.com',1,'C'),
+('C015','cus15','$2y$10$x','u15@gmail.com',1,'C'),('C016','cus16','$2y$10$x','u16@gmail.com',1,'C'),
+('C017','cus17','$2y$10$x','u17@gmail.com',1,'C'),('C018','cus18','$2y$10$x','u18@gmail.com',1,'C'),
+('C019','cus19','$2y$10$x','u19@gmail.com',1,'C'),('C020','cus20','$2y$10$x','u20@gmail.com',1,'C'),
+('C021','cus21','$2y$10$x','u21@gmail.com',1,'C'),('C022','cus22','$2y$10$x','u22@gmail.com',1,'C'),
+('C023','cus23','$2y$10$x','u23@gmail.com',1,'C'),('C024','cus24','$2y$10$x','u24@gmail.com',1,'C'),
+('C025','cus25','$2y$10$x','u25@gmail.com',1,'C'),('C026','cus26','$2y$10$x','u26@gmail.com',1,'C'),
+('C027','cus27','$2y$10$x','u27@gmail.com',1,'C'),('C028','cus28','$2y$10$x','u28@gmail.com',1,'C'),
+('C029','cus29','$2y$10$x','u29@gmail.com',1,'C'),('C030','cus30','$2y$10$x','u30@gmail.com',1,'C'),
+('C031','cus31','$2y$10$x','u31@gmail.com',1,'C'),('C032','cus32','$2y$10$x','u32@gmail.com',1,'C'),
+('C033','cus33','$2y$10$x','u33@gmail.com',1,'C'),('C034','cus34','$2y$10$x','u34@gmail.com',1,'C'),
+('C035','cus35','$2y$10$x','u35@gmail.com',1,'C'),('C036','cus36','$2y$10$x','u36@gmail.com',1,'C'),
+('C037','cus37','$2y$10$x','u37@gmail.com',1,'C'),('C038','cus38','$2y$10$x','u38@gmail.com',1,'C'),
+('C039','cus39','$2y$10$x','u39@gmail.com',1,'C'),('C040','cus40','$2y$10$x','u40@gmail.com',1,'C'),
+('C041','cus41','$2y$10$x','u41@gmail.com',1,'C'),('C042','cus42','$2y$10$x','u42@gmail.com',1,'C'),
+('C043','cus43','$2y$10$x','u43@gmail.com',1,'C'),('C044','cus44','$2y$10$x','u44@gmail.com',1,'C'),
+('C045','cus45','$2y$10$x','u45@gmail.com',1,'C'),('C046','cus46','$2y$10$x','u46@gmail.com',1,'C'),
+('C047','cus47','$2y$10$x','u47@gmail.com',1,'C'),('C048','cus48','$2y$10$x','u48@gmail.com',1,'C'),
+('C049','cus49','$2y$10$x','u49@gmail.com',1,'C'),('C050','cus50','$2y$10$x','u50@gmail.com',1,'C');
 
--- 6. Provinces
-INSERT INTO provinces (id, name, code) VALUES
-(1, 'Hà Nội', 'HN'),
-(2, 'Hồ Chí Minh', 'HCM'),
-(3, 'Đà Nẵng', 'DN'),
-(4, 'Hải Phòng', 'HP'),
-(5, 'Cần Thơ', 'CT'),
-(6, 'Bình Dương', 'BD'),
-(7, 'Đồng Nai', 'DNA'),
-(8, 'Quảng Ninh', 'QN'),
-(9, 'Khánh Hòa', 'KH'),
-(10, 'Lâm Đồng', 'LD');
+-- Profile & Address
+INSERT INTO profiles (user_id, full_name, phone, birthday, gender)
+SELECT id, CONCAT('Nguyễn Văn ', SUBSTRING(id, 2)), '0901234567', '2000-01-01', 'Nam' FROM users;
 
--- 7. Communes
-INSERT INTO communes (id, province_id, name, code) VALUES
-(1, 1, 'Phường Hàng Trống', 'P01'),
-(2, 1, 'Phường Trung Hòa', 'P02'),
-(3, 2, 'Phường Bến Nghé', 'P03'),
-(4, 2, 'Phường Thảo Điền', 'P04'),
-(5, 3, 'Phường Hải Châu 1', 'P05'),
-(6, 4, 'Phường Cầu Đất', 'P06'),
-(7, 5, 'Phường Ninh Kiều', 'P07'),
-(8, 6, 'Phường Chánh Nghĩa', 'P08'),
-(9, 9, 'Phường Lộc Thọ', 'P09'),
-(10, 10, 'Phường 1 Đà Lạt', 'P10');
+INSERT INTO addresses (user_id, label, receiver_name, phone, street_address, commune_id, is_default)
+SELECT id, 'Nhà riêng', 'Người nhận', '0909998888', '123 Đường Phố', 1, 1 FROM users WHERE role_id = 'C';
 
--- 8. Addresses
-INSERT INTO addresses (user_id, label, receiver_name, phone, street_address, commune_id, is_default) VALUES
-('C01', 'Nhà riêng', 'Phạm Tuấn', '0905555555', '123 Đường Láng', 2, 1),
-('C01', 'Cơ quan', 'Phạm Tuấn', '0905555555', 'Tòa nhà FPT', 2, 0),
-('C02', 'Nhà riêng', 'Lê Thị Hoa', '0906666666', '456 Lê Lợi', 3, 1),
-('C02', 'Văn phòng', 'Lê Thị Hoa', '0906666666', 'Landmark 81', 4, 0),
-('A01', 'Kho chính', 'Admin Kho', '0901111111', '100 Giải Phóng', 1, 1),
-('S02', 'Nhà trọ', 'Lê Bán Hàng', '0966333222', 'Ngõ 50 Cầu Giấy', 2, 1),
-('S03', 'Nhà riêng', 'Phạm Sale', '0955444333', 'Khu dân cư Him Lam', 3, 1),
-('A02', 'Biệt thự', 'Nguyễn Sếp', '0988111000', 'Khu Ciputra', 1, 1),
-('M01', 'Cửa hàng 1', 'Lê Quản Lý', '0902222222', '200 Nguyễn Trãi', 1, 1),
-('S101', 'Kho giao nhận', 'Shipper', '0904444444', 'Bưu cục Quận 1', 3, 1);
+-- 4. Danh mục & Địa lý
+INSERT INTO provinces (id, name, code) VALUES (1, 'Hà Nội', 'HN'), (2, 'TP.HCM', 'HCM');
+INSERT INTO communes (id, province_id, name, code) VALUES (1, 1, 'Ba Đình', 'BD'), (2, 2, 'Quận 1', 'Q1');
+INSERT INTO categories (id, name, slug) VALUES 
+(1, 'Văn học', 'van-hoc'), (2, 'Kinh tế', 'kinh-te'), (3, 'Thiếu nhi', 'thieu-nhi'), (4, 'CNTT', 'it'), (5, 'Manga', 'manga');
 
--- 9. Categories
-INSERT INTO categories (id, name, slug) VALUES
-(1, 'Văn học','van-hoc'),
-(2, 'Kinh tế','kinh-te'),
-(3, 'Tâm lý - Kỹ năng sống','tam-ly-ky-nang-song'),
-(4, 'Thiếu nhi','thieu-nhi'),
-(5, 'Giáo khoa - Tham khảo','giao-khoa-tham-khao'),
-(6, 'Văn hóa - Xã hội','van-hoa-xa-hoi'),
-(7, 'Khoa học kỹ thuật','khoa-hoc-ky-thuat'),
-(8, 'Ngoại ngữ','ngoai-ngu'),
-(9, 'Truyện tranh','truyen-tranh'),
-(10, 'Tiểu sử - Hồi ký','tieu-su-hoi-ky');
+-- 5. Products (50 sản phẩm tên thật, view < 100)
+INSERT INTO products (id, name, slug, description, author, publisher, publication_year, language, status, views, purchase_count, rating) VALUES
+(1, 'Nhà Giả Kim', 'nha-gia-kim', 'Tiểu thuyết bán chạy', 'Paulo Coelho', 'NXB Văn Học', 2020, 'Việt', 1, 85, 20, 4.8),
+(2, 'Đắc Nhân Tâm', 'dac-nhan-tam', 'Sách kỹ năng', 'Dale Carnegie', 'NXB TH', 2021, 'Việt', 1, 95, 40, 5.0),
+(3, 'Clean Code', 'clean-code', 'Sách lập trình', 'Robert Martin', 'NXB IT', 2019, 'Anh', 1, 55, 10, 4.9),
+(4, 'Doraemon Tập 1', 'doraemon-1', 'Truyện tranh', 'Fujiko F', 'NXB Kim Đồng', 2022, 'Việt', 1, 99, 80, 5.0),
+(5, 'One Piece 100', 'one-piece-100', 'Truyện tranh', 'Oda', 'NXB Kim Đồng', 2023, 'Việt', 1, 90, 70, 5.0),
+(6, 'Harry Potter 1', 'hp-1', 'Phù thủy', 'Rowling', 'NXB Trẻ', 2000, 'Việt', 1, 60, 25, 4.7),
+(7, 'Sherlock Holmes', 'sherlock', 'Trinh thám', 'Conan Doyle', 'NXB VH', 1990, 'Việt', 1, 45, 15, 4.5),
+(8, 'Mắt Biếc', 'mat-biec', 'Tình cảm', 'Nguyễn Nhật Ánh', 'NXB Trẻ', 2018, 'Việt', 1, 80, 50, 4.6),
+(9, 'Tuổi Trẻ Đáng Giá', 'tuoi-tre', 'Self help', 'Rosie', 'NXB NN', 2018, 'Việt', 1, 75, 30, 4.2),
+(10, 'Cà Phê Cùng Tony', 'tony', 'Kỹ năng', 'Tony', 'NXB Trẻ', 2017, 'Việt', 1, 65, 20, 4.0),
+(11, 'Cha Giàu Cha Nghèo', 'cha-giau', 'Kinh tế', 'Kiyosaki', 'NXB Trẻ', 2020, 'Việt', 1, 35, 5, 4.5),
+(12, 'Khởi Nghiệp 4.0', 'khoi-nghiep', 'Kinh tế', 'D.S', 'NXB CT', 2021, 'Việt', 1, 25, 2, 4.0),
+(13, 'Marketing Giỏi', 'mkt', 'Kinh tế', 'Kotler', 'NXB LD', 2019, 'Việt', 1, 52, 12, 4.8),
+(14, 'Chứng Khoán ABC', 'ck', 'Kinh tế', 'ABC', 'NXB TC', 2022, 'Việt', 1, 15, 1, 3.5),
+(15, 'Tâm Lý Học', 'tam-ly', 'Khoa học', 'Freud', 'NXB Tri Thức', 2015, 'Việt', 1, 42, 8, 4.2),
+(16, 'Vũ Trụ', 'vu-tru', 'Khoa học', 'Sagan', 'NXB NN', 2018, 'Việt', 1, 68, 12, 5.0),
+(17, 'Lược Sử Loài Người', 'sapiens', 'Lịch sử', 'Harari', 'NXB TT', 2019, 'Việt', 1, 92, 35, 4.9),
+(18, 'Code Dạo Ký Sự', 'code-dao', 'IT', 'Hoàng', 'NXB DT', 2017, 'Việt', 1, 78, 20, 4.8),
+(19, 'Tớ Học Lập Trình', 'learn-code', 'Thiếu nhi', 'TG', 'NXB KD', 2020, 'Việt', 1, 28, 5, 4.5),
+(20, 'Dế Mèn Phiêu Lưu', 'de-men', 'Văn học', 'Tô Hoài', 'NXB KD', 2000, 'Việt', 1, 82, 40, 5.0),
+(21, 'Đất Rừng Phương Nam', 'dat-rung', 'Văn học', 'Đoàn Giỏi', 'NXB KD', 2005, 'Việt', 1, 55, 10, 4.5),
+(22, 'Số Đỏ', 'so-do', 'Văn học', 'Vũ Trọng Phụng', 'NXB VH', 1990, 'Việt', 1, 48, 12, 4.2),
+(23, 'Chí Phèo', 'chi-pheo', 'Văn học', 'Nam Cao', 'NXB VH', 1995, 'Việt', 1, 58, 15, 4.6),
+(24, 'Tắt Đèn', 'tat-den', 'Văn học', 'Ngô Tất Tố', 'NXB VH', 1996, 'Việt', 1, 32, 5, 4.0),
+(25, 'Dragon Ball 1', 'dragon-ball', 'Manga', 'Toriyama', 'NXB KD', 2000, 'Việt', 1, 96, 50, 5.0),
+(26, 'Naruto 1', 'naruto', 'Manga', 'Kishimoto', 'NXB KD', 2002, 'Việt', 1, 91, 45, 4.9),
+(27, 'Conan 1', 'conan', 'Manga', 'Aoyama', 'NXB KD', 2000, 'Việt', 1, 98, 55, 4.8),
+(28, 'Shin Bút Chì', 'shin', 'Manga', 'Usui', 'NXB KD', 2005, 'Việt', 1, 86, 30, 4.5),
+(29, 'Java Cơ Bản', 'java-core', 'IT', 'TG', 'NXB IT', 2020, 'Việt', 1, 22, 2, 4.0),
+(30, 'Python Cho Bé', 'python-kid', 'IT', 'TG', 'NXB IT', 2021, 'Việt', 1, 18, 1, 4.2),
+(31, 'ReactJS Nâng Cao', 'reactjs', 'IT', 'TG', 'NXB IT', 2022, 'Việt', 1, 41, 8, 4.7),
+(32, 'NodeJS Thực Chiến', 'nodejs', 'IT', 'TG', 'NXB IT', 2022, 'Việt', 1, 36, 7, 4.6),
+(33, 'Docker Cơ Bản', 'docker', 'IT', 'TG', 'NXB IT', 2023, 'Việt', 1, 26, 4, 4.5),
+(34, 'AWS Cloud', 'aws', 'IT', 'TG', 'NXB IT', 2023, 'Việt', 1, 12, 1, 4.8),
+(35, 'Tiếng Anh Giao Tiếp', 'eng-com', 'Ngoại ngữ', 'TG', 'NXB GD', 2019, 'Việt', 1, 52, 10, 4.0),
+(36, 'TOEIC 500', 'toeic', 'Ngoại ngữ', 'ETS', 'NXB GD', 2020, 'Việt', 1, 62, 20, 4.2),
+(37, 'IELTS 7.0', 'ielts', 'Ngoại ngữ', 'Cambridge', 'NXB GD', 2021, 'Việt', 1, 56, 15, 4.5),
+(38, 'Ngữ Pháp Tiếng Anh', 'grammar', 'Ngoại ngữ', 'Mai Lan Huong', 'NXB GD', 2010, 'Việt', 1, 82, 40, 4.8),
+(39, 'Từ Điển Anh Việt', 'dict', 'Ngoại ngữ', 'TG', 'NXB GD', 2015, 'Việt', 1, 42, 5, 4.0),
+(40, '300 Bài Code Thiếu Nhi', '300-code', 'IT', 'Mạng', 'NXB IT', 2022, 'Việt', 1, 99, 50, 5.0),
+(41, 'Design Patterns', 'design-pattern', 'IT', 'GOF', 'NXB IT', 2000, 'Anh', 1, 46, 10, 4.9),
+(42, 'Refactoring', 'refactor', 'IT', 'Fowler', 'NXB IT', 2010, 'Anh', 1, 32, 5, 4.7),
+(43, 'Head First Java', 'hf-java', 'IT', 'Sierra', 'NXB IT', 2005, 'Anh', 1, 52, 12, 4.8),
+(44, 'Effective Java', 'eff-java', 'IT', 'Bloch', 'NXB IT', 2018, 'Anh', 1, 42, 8, 4.9),
+(45, 'Spring Boot', 'spring', 'IT', 'TG', 'NXB IT', 2021, 'Anh', 1, 36, 6, 4.5),
+(46, 'HTML CSS', 'html-css', 'IT', 'Duckett', 'NXB IT', 2015, 'Anh', 1, 72, 25, 4.8),
+(47, 'JS The Good Parts', 'js-good', 'IT', 'Crockford', 'NXB IT', 2008, 'Anh', 1, 26, 3, 4.2),
+(48, 'You Dont Know JS', 'ydkjs', 'IT', 'Simpson', 'NXB IT', 2019, 'Anh', 1, 56, 15, 4.9),
+(49, 'Eloquent JS', 'eloquent', 'IT', 'Haverbeke', 'NXB IT', 2018, 'Anh', 1, 46, 10, 4.7),
+(50, 'Pragmatic Programmer', 'pragmatic', 'IT', 'Hunt', 'NXB IT', 1999, 'Anh', 1, 66, 20, 5.0);
 
--- 10. Products 
-INSERT INTO products 
-(id, name, slug, description, author, publisher, publication_year, language, status, views) 
-VALUES
-(1, 'Nhà Giả Kim', 'nha-gia-kim', 'Hành trình theo đuổi ước mơ', 'Paulo Coelho', 'NXB Văn Học', 2020, 'Tiếng Việt', 1, 1500),
-(2, 'Đắc Nhân Tâm', 'dac-nhan-tam', 'Nghệ thuật thu phục lòng người', 'Dale Carnegie', 'NXB Tổng Hợp', 2021, 'Tiếng Việt', 1, 2500),
-(3, 'Clean Code', 'clean-code', 'Mã sạch và con đường trở thành nghệ nhân', 'Robert C. Martin', 'NXB Xây Dựng', 2019, 'Tiếng Anh', 1, 3200),
-(4, 'Mắt Biếc', 'mat-biec', 'Chuyện tình thanh xuân buồn', 'Nguyễn Nhật Ánh', 'NXB Trẻ', 2018, 'Tiếng Việt', 1, 1800),
-(5, 'Doraemon Tập 1', 'doraemon-1', 'Mèo máy đến từ tương lai', 'Fujiko F. Fujio', 'NXB Kim Đồng', 2022, 'Tiếng Việt', 1, 4200),
-(6, 'Nguyên Lý Marketing', 'marketing-principles', 'Sách gối đầu giường dân Marketer', 'Philip Kotler', 'NXB Lao Động', 2020, 'Tiếng Việt', 1, 1200),
-(7, 'Steve Jobs', 'steve-jobs', 'Tiểu sử người sáng lập Apple', 'Walter Isaacson', 'NXB Trẻ', 2017, 'Tiếng Việt', 1, 2100),
-(8, 'Rừng Na Uy', 'rung-na-uy', 'Kiệt tác của Murakami', 'Haruki Murakami', 'NXB Hội Nhà Văn', 2016, 'Tiếng Việt', 1, 1600),
-(9, 'Tuổi Trẻ Đáng Giá Bao Nhiêu', 'tuoi-tre-dang-gia', 'Sách kỹ năng cho giới trẻ', 'Rosie Nguyễn', 'NXB Nhã Nam', 2018, 'Tiếng Việt', 1, 3800),
-(10, 'One Piece Tập 100', 'one-piece-100', 'Đảo hải tặc tập đặc biệt', 'Eiichiro Oda', 'NXB Kim Đồng', 2023, 'Tiếng Việt', 1, 5500);
+INSERT INTO product_details (id, product_id, product_type, sku, original_price, sale_price, stock, weight)
+SELECT id, id, 'Sách giấy', CONCAT('SKU-', id), 100000, 80000, 50, 300 FROM products;
 
--- 11. Product Categories 
-INSERT INTO product_categories (product_id, category_id) VALUES
-(1, 1),
-(2, 1),
-(3, 2),
-(4, 2),
-(5, 3),
-(6, 4),
-(7, 7),
-(8, 8),
-(9, 9),
-(10, 10);
+INSERT INTO product_categories (product_id, category_id) SELECT id, FLOOR(1 + RAND() * 5) FROM products;
 
--- 12. Product Details
-INSERT INTO product_details (id, product_id, product_type, sku, original_price, sale_price, stock, file_url, weight, length, width, height) VALUES
-(1, 1, 'Sách giấy', 'SKU001', 80000, 60000, 100, NULL, 300, 20, 13, 2),
-(2, 2, 'Sách giấy', 'SKU002', 90000, 75000, 150, NULL, 350, 20, 14, 2),
-(3, 3, 'Sách giấy', 'SKU003', 400000, 350000, 20, NULL, 800, 24, 18, 4),
-(4, 4, 'Sách giấy', 'SKU004', 110000, 90000, 80, NULL, 250, 19, 13, 2),
-(5, 5, 'Sách giấy', 'SKU005', 20000, 20000, 500, NULL, 100, 18, 11, 1),
-(6, 6, 'Sách giấy', 'SKU006', 250000, 200000, 40, NULL, 900, 25, 19, 5),
-(7, 7, 'Sách giấy', 'SKU007', 300000, 280000, 30, NULL, 700, 24, 16, 4),
-(8, 8, 'Sách điện tử', 'SKU008-E', 50000, 40000, 9999, 'link_pdf', 0, 0, 0, 0),
-(9, 9, 'Sách giấy', 'SKU009', 85000, 70000, 200, NULL, 300, 20, 13, 2),
-(10, 10, 'Sách giấy', 'SKU010', 25000, 22000, 100, NULL, 150, 18, 11, 1);
+-- 6. ẢNH SẢN PHẨM (Mỗi SP có 3-4 ảnh link thật từ Amazon/Tiki)
+INSERT INTO product_images (product_id, image_url, is_primary, sort_order)
+SELECT p.id, img.url, (img.idx = 1), img.idx
+FROM products p
+CROSS JOIN (
+    SELECT 1 as idx, 'https://images-na.ssl-images-amazon.com/images/I/51Z0nLAfLmL.jpg' as url
+    UNION ALL SELECT 2, 'https://images-na.ssl-images-amazon.com/images/I/51UoqRAxwEL.jpg'
+    UNION ALL SELECT 3, 'https://salt.tikicdn.com/cache/w1200/ts/product/2e/27/76/674d82f76bd748e77840130d2222a720.jpg'
+    UNION ALL SELECT 4, 'https://salt.tikicdn.com/cache/w400/ts/product/05/2f/94/d17cb3d1912a2095a57061d4b6843472.jpg'
+) img;
 
-INSERT INTO product_details (id, product_id, product_type, sku, original_price, sale_price, stock, file_url, weight, length, width, height) VALUES
-(11, 1, 'Sách điện tử', 'SKU011', 80000, 60000, 100, NULL, 300, 20, 13, 2),
-(12, 2, 'Sách điện tử', 'SKU012', 90000, 75000, 150, NULL, 350, 20, 14, 2),
-(13, 3, 'Sách điện tử', 'SKU013', 400000, 350000, 20, NULL, 800, 24, 18, 4),
-(14, 4, 'Sách điện tử', 'SKU014', 110000, 90000, 80, NULL, 250, 19, 13, 2);
+-- Xóa bớt 1 ảnh của các SP ID chẵn để có SP 3 ảnh, SP 4 ảnh
+DELETE FROM product_images WHERE sort_order = 4 AND product_id % 2 = 0;
 
--- 13. Shopping Carts
-INSERT INTO shopping_carts (id, user_id, status) VALUES
-(1, 'C01', 'active'),
-(2, 'C02', 'active'),
-(3, 'S02', 'abandoned'),
-(4, 'S03', 'active'),
-(5, 'A01', 'active'), 
-(6, 'M01', 'checked out'),
-(7, 'C01', 'checked out'),
-(8, 'C02', 'abandoned'), 
-(9, 'S04', 'active'),
-(10, 'A02', 'active');
+-- 7. Đơn hàng (C001 -> C050)
+INSERT INTO shopping_carts (id, user_id, status)
+SELECT (@rn := @rn + 1), u.id, 'active'
+FROM users u, (SELECT @rn := 0) r WHERE u.role_id = 'C';
 
--- 14. Cart Items
-INSERT INTO cart_items (id, cart_id, product_id, product_details_id, quantity, price_at_time) VALUES
-(1, 1, 1, 1, 1, 60000), 
-(2, 1, 5, 5, 2, 20000),
-(3, 2, 3, 3, 1, 350000),
-(4, 3, 4, 4, 1, 90000),
-(5, 4, 10, 10, 1, 22000),
-(6, 5, 2, 2, 1, 75000),
-(7, 9, 6, 6, 1, 200000),
-(8, 1, 9, 9, 1, 70000),
-(9, 2, 7, 7, 1, 280000),
-(10, 10, 8, 8, 1, 40000);
+INSERT INTO orders (id, user_id, order_code, status, subtotal, shipping_fee, total_amount, payment_method, payment_status)
+SELECT (@rn2 := @rn2 + 1), u.id, CONCAT('ORD-', u.id, '-X'), 'delivered', 100000, 20000, 120000, 'cod', 'paid'
+FROM users u, (SELECT @rn2 := 0) r WHERE u.role_id = 'C';
 
--- 15. Orders
-INSERT INTO orders (id, user_id, order_code, status, subtotal, shipping_fee, discount, total_amount, shipping_address_id, payment_method, payment_status) VALUES
-(1, 'C01', 'ORD001', 'delivered', 80000, 20000, 0, 100000, 1, 'momo', 'paid'),
-(2, 'C02', 'ORD002', 'shipped', 350000, 30000, 5000, 375000, 3, 'cod', 'unpaid'),
-(3, 'C01', 'ORD003', 'pending', 60000, 15000, 0, 75000, 2, 'bank_transfer', 'unpaid'),
-(4, 'S02', 'ORD004', 'pending', 90000, 20000, 0, 110000, NULL, 'cod', 'unpaid'),
-(5, 'S03', 'ORD005', 'processing', 200000, 25000, 10000, 215000, 7, 'credit_card', 'paid'),
-(6, 'C01', 'ORD006', 'delivered', 150000, 20000, 5000, 165000, 1, 'cod', 'paid'),
-(7, 'C02', 'ORD007', 'pending', 22000, 10000, 2000, 30000, 3, 'momo', 'paid'),
-(8, 'S04', 'ORD008', 'pending', 280000, 35000, 15000, 300000, NULL, 'bank_transfer', 'paid'),
-(9, 'C01', 'ORD009', 'pending', 280000, 30000, 10000, 300000, 1, 'cod', 'paid'),
-(10, 'M01', 'ORD010', 'pending', 40000, 15000, 0, 55000, 9, 'momo', 'unpaid');
+INSERT INTO order_items (order_id, product_id, product_details_id, product_type, quantity, price, total_price)
+SELECT id, 1, 1, 'Sách giấy', 1, 80000, 80000 FROM orders;
 
--- 16. Order Items
-INSERT INTO order_items (id, order_id, product_id, product_details_id, product_type, quantity, price, total_price) VALUES
-(1, 1, 1, 1, 'Sách giấy', 1, 60000, 60000), 
-(2, 1, 5, 5, 'Sách giấy', 1, 20000, 20000), 
-(3, 2, 3, 3, 'Sách giấy', 1, 350000, 350000),
-(4, 3, 1, 1, 'Sách giấy', 1, 60000, 60000),
-(5, 4, 4, 4, 'Sách giấy', 1, 90000, 90000),
-(6, 5, 6, 6, 'Sách giấy', 1, 200000, 200000),
-(7, 6, 2, 2, 'Sách giấy', 2, 75000, 150000),
-(8, 7, 10, 10, 'Sách giấy', 1, 22000, 22000),
-(9, 8, 7, 7, 'Sách giấy', 1, 280000, 280000), 
-(10, 9, 7, 7, 'Sách giấy', 1, 280000, 280000);
+-- 8. Reviews
+INSERT INTO reviews (order_item_id, user_id, rating, title, content)
+SELECT id, 'C001', 5, 'Sách đẹp', 'Hài lòng về sản phẩm' FROM order_items LIMIT 30;
 
--- 17. Reviews
-INSERT INTO reviews (id, order_item_id, user_id, rating, title, content) VALUES
-(1, 1, 'C01', 5, 'Tuyệt vời', 'Sách nội dung rất hay, giao hàng nhanh.'),
-(2, 3, 'C02', 5, 'Sách ngành IT', 'Sách Clean Code in đẹp, kiến thức bổ ích.'),
-(3, 5, 'S02', 4, 'Hơi buồn', 'Truyện Mắt Biếc buồn quá, nhưng sách đẹp.'),
-(4, 7, 'C01', 5, 'Đáng mua', 'Đắc Nhân Tâm là sách gối đầu giường.'),
-(5, 8, 'C02', 5, 'Fan One Piece', 'Tập 100 quá chất lượng!'),
-(6, 1, 'C01', 4, 'Giấy hơi mỏng', 'Nội dung ok nhưng giấy hơi mỏng.'),
-(7, 6, 'S03', 5, 'Marketing', 'Kiến thức nền tảng tốt.'),
-(8, 9, 'S04', 5, 'Sách dày', 'Đóng gói cẩn thận, sách tiểu sử rất hay.'),
-(9, 2, 'C01', 3, 'Truyện trẻ con', 'Mua tặng cháu, không đọc nên không rõ.'),
-(10, 4, 'C01', 5, 'Mua tặng', 'Mua lần 2 để tặng bạn.');
+-- 9. Phí ship & Dữ liệu phụ
+INSERT INTO weight_fees (min_weight, max_weight, base_price) VALUES (0, 1000, 15000), (1001, 5000, 30000);
+INSERT INTO distance_fees (min_distance, max_distance, multiplier) VALUES (0, 10, 1.0), (11, 100, 1.5);
+INSERT INTO shipping_type_fees (shipping_type, multiplier) VALUES ('standard', 1.0), ('express', 2.0);
 
--- 18. Order Notifications
-INSERT INTO order_notifications (id, user_id, order_id, type, title, content, is_read) VALUES
-(1, 'C01', 1, 'status_change', 'Giao thành công', 'Đơn hàng đã giao thành công', 1),
-(2, 'C02', 2, 'status_change', 'Đang vận chuyển', 'Đơn hàng đang trên đường đến', 0),
-(3, 'C01', 3, 'payment', 'Chờ thanh toán', 'Vui lòng thanh toán đơn hàng', 0),
-(4, 'S02', 4, 'other', 'Đã hủy', 'Đơn hàng đã hủy', 1),
-(5, 'S03', 5, 'status_change', 'Đang xử lý', 'Shop đang đóng gói đơn', 0),
-(6, 'C01', 6, 'status_change', 'Giao thành công', 'Đơn đã giao', 1),
-(7, 'C02', 7, 'payment', 'Thanh toán thành công', 'Đã nhận tiền đơn', 1),
-(8, 'S04', 8, 'status_change', 'Đang xử lý', 'Đơn đang xử lý', 0),
-(9, 'C01', 9, 'status_change', 'Giao thành công', 'Đơn đã giao', 1),
-(10, 'M01', 10, 'payment', 'Chờ thanh toán', 'Đơn chưa thanh toán', 0);
+INSERT INTO order_product_discounts (type, amount, quantity) VALUES ('promo_code', 10000, 10);
+INSERT INTO order_shipping_discounts (type, amount, quantity) VALUES ('promo_code', 5000, 10);
 
--- 19. Product Notifications
-INSERT INTO product_notifications (id, user_id, product_id, type, title, content, is_read) VALUES
-(1, 'C01', 1, 'price_drop', 'Sách giảm giá', 'Nhà Giả Kim đang giảm 20%', 0),
-(2, 'C02', 3, 'restock', 'Có hàng lại', 'Clean Code đã có hàng', 1),
-(3, 'C01', 5, 'promotion', 'Tặng kèm', 'Mua Doraemon tặng bookmark', 0),
-(4, 'S02', 4, 'price_drop', 'Flash Sale', 'Mắt Biếc giá sốc', 0),
-(5, 'S03', 6, 'restock', 'Sách mới về', 'Nguyên lý Marketing đã về kho', 1),
-(6, 'C02', 10, 'promotion', 'Pre-order', 'Đặt trước One Piece tập mới', 1),
-(7, 'S04', 7, 'price_drop', 'Giảm giá sâu', 'Steve Jobs giảm 30%', 0),
-(8, 'C01', 2, 'promotion', 'Combo', 'Mua Đắc Nhân Tâm giảm giá sách khác', 0),
-(9, 'A02', 8, 'restock', 'Restock', 'Rừng Na Uy đã có lại', 1),
-(10, 'A01', 9, 'other', 'Cập nhật', 'Sách cập nhật bìa mới', 1);
-
--- 20. User Notifications
-INSERT INTO user_notifications (id, user_id, type, title, content, is_read) VALUES
-(1, 'C01', 'system', 'Bảo trì', 'Hệ thống bảo trì lúc 0h', 1),
-(2, 'C02', 'promotion', 'Sinh nhật', 'Chúc mừng sinh nhật nhận voucher 50k', 0),
-(3, 'S02', 'account', 'Đổi mật khẩu', 'Bạn vừa đổi mật khẩu thành công', 1),
-(4, 'C01', 'promotion', 'Sale 11/11', 'Săn sale ngày đôi', 0),
-(5, 'S03', 'system', 'Cập nhật', 'Điều khoản sử dụng mới', 1),
-(6, 'S04', 'account', 'Đăng nhập lạ', 'Có thiết bị lạ đăng nhập', 0),
-(7, 'A01', 'system', 'Báo cáo', 'Báo cáo doanh thu tháng đã có', 1),
-(8, 'M01', 'system', 'Kho hàng', 'Sắp hết hàng một số mã', 0),
-(9, 'C01', 'promotion', 'Black Friday', 'Siêu sale thứ 6 đen tối', 0),
-(10, 'C02', 'account', 'Xác thực', 'Vui lòng xác thực email', 1);
-
--- 21. Product Images
-INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES
-(1, 'https://toplist.vn/images/800px/nha-gia-kim-paulo-coelho-4777.jpg', 1, 1),
-(1, 'https://tse4.mm.bing.net/th/id/OIP.6HTlzM1P0dlixOS5BgrdwgHaHa?rs=1&pid=ImgDetMain&o=7&rm=3', 0, 2),
-(2, 'https://tse4.mm.bing.net/th/id/OIP.cUYVV92koOJ_3HFiDfTDggHaK1?rs=1&pid=ImgDetMain&o=7&rm=3', 1, 1),
-(3, 'https://tse4.mm.bing.net/th/id/OIP.vSsZ-BuvUaRkg3xmYCAdYQHaHa?rs=1&pid=ImgDetMain&o=7&rm=3.jpg', 1, 1),
-(4, 'https://th.bing.com/th/id/R.67d0ef3d3fc8897213c9a1f84ee561e1?rik=voHM75CRUp%2bZag&pid=ImgRaw&r=0', 1, 1),
-(5, 'https://sachtienganh365.com/wp-content/uploads/2022/12/z3982679297002_dba76bfbd729f83103a5790fdf098426-2048x2027.jpg', 1, 1),
-(6, 'https://tse4.mm.bing.net/th/id/OIP.oovS8M4q04PVPAVfJ1NtjgHaEc?rs=1&pid=ImgDetMain&o=7&rm=3', 1, 1),
-(7, 'https://down-vn.img.susercontent.com/file/f7cd087f1f0a79c77853cb025c048a54', 1, 1),
-(8, 'https://th.bing.com/th/id/OIP.Bmcp5gwPZME9NyVOy_Ml7gHaHa?w=177&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3', 1, 1),
-(9, 'https://phuongthengoc.com/wp-content/uploads/2022/10/Tuoi-Tre-Dang-Gia-Bao-Nhieu-1-Rosie-Nguyen_Phuongthengoc-.jpg', 1, 1),
-(10, 'https://th.bing.com/th/id/R.6f58c15429706e56ab044e4e34e2fa69?rik=aHeAdleRhefqjQ&pid=ImgRaw&r=0', 1, 1),
-(10, 'https://th.bing.com/th/id/R.6f58c15429706e56ab044e4e34e2fa69?rik=aHeAdleRhefqjQ&pid=ImgRaw&r=0', 0, 2);
-
--- Bảng: conversations
-INSERT INTO conversations (id, participant1_id, participant2_id, product_id, order_item_id)
-VALUES
-(1, 'C01', 'A01', 1, NULL),
-(2, 'C02', 'M01', NULL, 3),
-(3, 'C01', 'S01', 5, NULL),
-(4, 'S03', 'A01', NULL, NULL),
-(5, 'S02', 'A01', NULL, NULL),
-(6, 'C01', 'S101', NULL, NULL);
-
--- Bảng: messages
-INSERT INTO messages (id, conversation_id, sender_id, message) VALUES
-(1, 1, 'C01', 'Sách Nhà Giả Kim còn bản bìa cứng không shop?'),
-(2, 1, 'A01', 'Dạ hiện tại bên em chỉ còn bản bìa mềm ạ.'),
-(3, 2, 'C02', 'Đơn hàng Clean Code của mình bao giờ giao tới ạ?'),
-(4, 2, 'M01', 'Shipper đang trên đường giao rồi bạn nhé.'),
-(5, 3, 'C01', 'Truyện Doraemon này là bản in năm bao nhiêu?'),
-(6, 3, 'S01', 'Bản tái bản mới nhất 2022 ạ.'),
-(7, 4, 'S03', 'Shop có tuyển cộng tác viên không?'),
-(8, 5, 'S02', 'Sách bị lỗi in ấn đổi trả thế nào?'),
-(9, 5, 'A01', 'Bạn vui lòng gửi ảnh chụp trang lỗi qua đây nhé.'),
-(10, 6, 'C01', 'Anh shipper ơi em đổi địa chỉ nhận hàng chút được không?');
-
--- Bảng: conversation_notifications
-INSERT INTO conversation_notifications
-(
-    conversation_id,
-    user_id,
-    type,
-    title,
-    content,
-    unread_count,
-    is_read,
-    last_message_id,
-    created_at
-)
-VALUES
-(1, 'A01', 'new', 'Tin nhắn mới từ khách hàng',
- 'Sách Nhà Giả Kim còn bản bìa cứng không shop?', 1, 0, 1, NOW()),
-(1, 'C01', 'new', 'Phản hồi từ Shop',
- 'Dạ hiện tại bên em chỉ còn bản bìa mềm ạ.', 0, 1, 2, NOW()),
-(2, 'M01', 'new', 'Tin nhắn mới từ khách hàng',
- 'Đơn hàng Clean Code của mình bao giờ giao tới ạ?', 0, 1, 4, NOW()),
-(2, 'C02', 'new', 'Phản hồi từ Shop',
- 'Shipper đang trên đường giao rồi bạn nhé.', 0, 1, 4, NOW()),
-(3, 'S01', 'new', 'Tin nhắn mới từ khách hàng',
- 'Truyện Doraemon này là bản in năm bao nhiêu?', 0, 1, 6, NOW()),
-(3, 'C01', 'new', 'Phản hồi sản phẩm',
- 'Bản tái bản mới nhất 2022 ạ.', 1, 0, 5, NOW()),
-(4, 'A01', 'new', 'Tin nhắn mới',
- 'Shop có tuyển cộng tác viên không?', 1, 0, 7, NOW()),
-(4, 'S03', 'new', 'Đã gửi tin nhắn',
- 'Shop có tuyển cộng tác viên không?', 0, 1, 7, NOW()),
-(5, 'A01', 'new', 'Yêu cầu hỗ trợ',
- 'Sách bị lỗi in ấn đổi trả thế nào?', 1, 0, 8, NOW()),
-(5, 'S02', 'new', 'Phản hồi hỗ trợ',
- 'Bạn vui lòng gửi ảnh chụp trang lỗi qua đây nhé.', 0, 1, 9, NOW()),
-(6, 'S101', 'new', 'Tin nhắn mới từ khách hàng',
- 'Anh shipper ơi em đổi địa chỉ nhận hàng chút được không?', 0, 1, 10, NOW()),
-(6, 'C01', 'new', 'Đã gửi tin nhắn',
- 'Anh shipper ơi em đổi địa chỉ nhận hàng chút được không?', 0, 1, 10, NOW());
-
--- 24. Review Images
-INSERT INTO review_images (review_id, image_url) VALUES
-(1, 'https://toplist.vn/images/800px/nha-gia-kim-paulo-coelho-4777.jpg'),
-(1, 'https://tse4.mm.bing.net/th/id/OIP.6HTlzM1P0dlixOS5BgrdwgHaHa?rs=1&pid=ImgDetMain&o=7&rm=3'),
-(2, 'https://tse4.mm.bing.net/th/id/OIP.cUYVV92koOJ_3HFiDfTDggHaK1?rs=1&pid=ImgDetMain&o=7&rm=3'),
-(3, 'https://tse4.mm.bing.net/th/id/OIP.vSsZ-BuvUaRkg3xmYCAdYQHaHa?rs=1&pid=ImgDetMain&o=7&rm=3.jpg'),
-(5, 'https://th.bing.com/th/id/R.67d0ef3d3fc8897213c9a1f84ee561e1?rik=voHM75CRUp%2bZag&pid=ImgRaw&r=0'),
-(6, 'https://sachtienganh365.com/wp-content/uploads/2022/12/z3982679297002_dba76bfbd729f83103a5790fdf098426-2048x2027.jpg'),
-(6, 'https://tse4.mm.bing.net/th/id/OIP.oovS8M4q04PVPAVfJ1NtjgHaEc?rs=1&pid=ImgDetMain&o=7&rm=3'),
-(8, 'https://down-vn.img.susercontent.com/file/f7cd087f1f0a79c77853cb025c048a54'),
-(10, 'https://th.bing.com/th/id/OIP.Bmcp5gwPZME9NyVOy_Ml7gHaHa?w=177&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3'),
-(4, 'https://phuongthengoc.com/wp-content/uploads/2022/10/Tuoi-Tre-Dang-Gia-Bao-Nhieu-1-Rosie-Nguyen_Phuongthengoc-.jpg');
-
--- ===========================================
--- 1. Weight Fees
-INSERT INTO weight_fees (min_weight, max_weight, base_price) VALUES
-(0, 1, 10000.00),
-(1.01, 5, 15000.00),
-(5.01, 10, 20000.00),
-(10.01, 20, 25000.00);
-
--- 2. Distance Fees
-INSERT INTO distance_fees (min_distance, max_distance, multiplier) VALUES
-(0, 5, 1.00),
-(5.01, 20, 1.20),
-(20.01, 50, 1.50),
-(50.01, 100, 2.00);
-
--- 3. Shipping Type Fees
-INSERT INTO shipping_type_fees (shipping_type, multiplier) VALUES
-('standard', 1.00),
-('express', 1.50);
-
--- 4. Order Product Discounts
-INSERT INTO order_product_discounts (type, amount, quantity, used_quantity) VALUES
-('promo_code', 10000, 10, 0),
-('member_discount', 5000, 5, 0),
-('voucher', 20000, 1, 0);
-
--- 5. Order Shipping Discounts
-INSERT INTO order_shipping_discounts (type, amount, quantity, used_quantity) VALUES
-('promo_code', 5000, 10, 0),
-('member_discount', 3000, 5, 0),
-('voucher', 10000, 1, 0);
-
--- 6. Order Shipping Fee Details
-INSERT INTO order_shipping_fee_details (order_id, weight_fee_id, distance_fee_id, shipping_type_fee_id, amount) VALUES
-(1, 1, 1, 1, 5000),
-(2, 2, 2, 2, 12000);
-
--- 7. Order Discount Details
-INSERT INTO order_discount_details (order_id, product_discount_id, shipping_discount_id, amount) VALUES
-(1, 1, 1, 15000),
-(2, 2, NULL, 5000),
-(3, NULL, 2, 3000);
+-- Các bảng thông báo & Chat
+INSERT INTO user_notifications (user_id, type, title, content) SELECT id, 'system', 'Chào mừng', 'Chào mừng bạn đến với cửa hàng' FROM users LIMIT 50;
+INSERT INTO conversations (participant1_id, participant2_id, product_id) VALUES ('C001', 'A001', 1);
+INSERT INTO messages (conversation_id, sender_id, message) VALUES (1, 'C001', 'Còn hàng không shop?');
 
 SET FOREIGN_KEY_CHECKS = 1;
+SET SQL_SAFE_UPDATES = 1;
